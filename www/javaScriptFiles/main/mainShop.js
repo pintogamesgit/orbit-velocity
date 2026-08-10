@@ -38,7 +38,7 @@ const shopData = {
       id: 'adReward',
       name: 'Ad Bonus',
       desc: 'Watch a short ad and receive a small reward',
-      icon: '??',
+      icon: '📺',
       reward: window.ORBIT_VELOCITY_PRICES.featured.adRewardCoins,
       adReward: true,
     },
@@ -46,7 +46,7 @@ const shopData = {
       id: 'galaxySkin',
       name: 'Galaxy Skin',
       desc: 'get this skin before it leaving',
-      icon: '??',
+      icon: '🏆',
       price: window.ORBIT_VELOCITY_PRICES.featured.galaxySkin,
     },
   ],
@@ -55,7 +55,7 @@ const shopData = {
       id: 'daily_pet_food',
       name: 'Pet Treat',
       desc: 'Pet bonus for 3 battles',
-      icon: '??',
+      icon: '🐾',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_pet_food,
       badge: 'NEW',
     },
@@ -63,7 +63,7 @@ const shopData = {
       id: 'daily_coin_bundle',
       name: 'Mini Coins',
       desc: '+350 coins',
-      icon: '??',
+      icon: '🪙',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_coin_bundle,
       badge: 'VALUE',
     },
@@ -71,7 +71,7 @@ const shopData = {
       id: 'daily_fire_rate',
       name: 'Rapid Fire',
       desc: '+25% fire rate (2 battles)',
-      icon: '??',
+      icon: '🔥',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_fire_rate,
       badge: 'LIMIT',
     },
@@ -79,7 +79,7 @@ const shopData = {
       id: 'daily_revive',
       name: 'Instant Revive',
       desc: 'Revive once on death',
-      icon: '??',
+      icon: '💖',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_revive,
       badge: 'RARE',
     },
@@ -88,7 +88,7 @@ const shopData = {
       id: 'daily_super_charge',
       name: 'Super Charge',
       desc: 'Start battle with full super',
-      icon: '?',
+      icon: '⚡',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_super_charge,
       badge: 'POWER',
     },
@@ -96,7 +96,7 @@ const shopData = {
       id: 'daily_random_box',
       name: 'Mystery Box',
       desc: 'Random reward',
-      icon: '??',
+      icon: '🎁',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_random_box,
       badge: '???',
     },
@@ -104,7 +104,7 @@ const shopData = {
       id: 'daily_coin_rush',
       name: 'Coin Rush',
       desc: 'Double coins for 2 battles',
-      icon: '??',
+      icon: '💰',
       price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_coin_rush,
       badge: 'VALUE',
     },
@@ -131,7 +131,7 @@ const shopData = {
       image: './images/shopAInventoryicons/playerIcones/darkReaperIcone.png',
       desc: 'Dark metallic finish',
       rarity: 'EPIC',
-      icon: '?',
+      icon: '⬛',
       price: window.ORBIT_VELOCITY_PRICES.skins.dark_reaper,
     },
     {
@@ -140,7 +140,7 @@ const shopData = {
       image: './images/shopAInventoryicons/playerIcones/celestialSacura.png',
       desc: 'Pink petals FX',
       rarity: 'EPIC',
-      icon: '??',
+      icon: '🌸',
       price: window.ORBIT_VELOCITY_PRICES.skins.celestial_sakura,
     },
     {
@@ -149,7 +149,7 @@ const shopData = {
       image: './images/shopAInventoryicons/playerIcones/goldenCoreIcone.png',
       desc: 'Gold shine aura',
       rarity: 'LEGENDARY',
-      icon: '??',
+      icon: '🏆',
       price: window.ORBIT_VELOCITY_PRICES.skins.goden_core,
     },
     {
@@ -167,7 +167,7 @@ const shopData = {
       name: '1000 Coins',
       desc: 'Small boost',
       rarity: 'RARE',
-      icon: '??',
+      icon: '🪙',
       price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_1000.price,
       add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_1000.coins,
     },
@@ -176,7 +176,7 @@ const shopData = {
       name: '3000 Coins',
       desc: 'Good value',
       rarity: 'RARE',
-      icon: '??',
+      icon: '💰',
       price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_3000.price,
       add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_3000.coins,
     },
@@ -185,7 +185,7 @@ const shopData = {
       name: '6000 Coins',
       desc: 'Big pack',
       rarity: 'EPIC',
-      icon: '??',
+      icon: '🏦',
       price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_6000.price,
       add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_6000.coins,
     },
@@ -194,7 +194,7 @@ const shopData = {
       name: '10000 Coins',
       desc: 'Mega pack',
       rarity: 'LEGENDARY',
-      icon: '??',
+      icon: '👑',
       price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_10000.price,
       add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_10000.coins,
     },
@@ -213,7 +213,7 @@ const DAILY_GIFT_POOL = [
     amount: window.ORBIT_VELOCITY_PRICES.dailyGift.small_coin_pack,
     weight: 5,
     name: 'Small Coin Pack',
-    icon: '??',
+    icon: '🪙',
   },
   {
     id: 'coin_pack',
@@ -221,7 +221,7 @@ const DAILY_GIFT_POOL = [
     amount: window.ORBIT_VELOCITY_PRICES.dailyGift.coin_pack,
     weight: 3,
     name: 'Coin Pack',
-    icon: '??',
+    icon: '💰',
   },
   {
     id: 'big_coin_pack',
@@ -229,7 +229,7 @@ const DAILY_GIFT_POOL = [
     amount: window.ORBIT_VELOCITY_PRICES.dailyGift.big_coin_pack,
     weight: 1,
     name: 'Big Coin Pack',
-    icon: '??',
+    icon: '🏦',
   },
 ];
 
@@ -580,7 +580,7 @@ function shopRenderDaily() {
       </div>
 
       <div class="offerBottom">
-        <div class="priceChip">${owned ? '-' : `${item.price} ??`}</div>
+        <div class="priceChip">${owned ? '-' : `${item.price} 🪙`}</div>
         <button class="buyMiniBtn" ${owned ? 'disabled' : ''}>
           ${owned ? shopT('ui.owned') : shopT('ui.buy')}
         </button>
@@ -634,7 +634,7 @@ function getLocalizedDailyGift(gift) {
     ...baseGift,
     ...gift,
     name: localizedName,
-    icon: gift?.icon || baseGift.icon || '??',
+    icon: gift?.icon || baseGift.icon || '🎁',
   };
 }
 
@@ -691,7 +691,7 @@ function renderDailyGiftCard() {
   if (!nameEl || !descEl || !valEl || !iconEl) return;
 
   nameEl.textContent = gift.name || shopT('shop.gift.dailyGift');
-  iconEl.textContent = gift.icon || '??';
+  iconEl.textContent = gift.icon || '🎁';
   valEl.textContent = `+${gift.amount}`;
   descEl.textContent = shopT('shop.gift.freeCoinsToday');
 }
@@ -837,7 +837,7 @@ function shopRenderSkinOffers() {
     el.className = `shopItemCard ${rarityClass} ${owned ? 'owned' : ''}`.trim();
 
     const status = owned ? shopT('ui.owned') : '';
-    const priceText = owned ? '-' : `${s.price} ??`;
+    const priceText = owned ? '-' : `${s.price} 🪙`;
     const btnText = owned ? shopT('ui.owned') : shopT('ui.buy');
     const btnDisabled = owned;
 
@@ -935,7 +935,7 @@ function shopRenderSkins() {
         `shopItemCard ${rarityClass} ${owned ? 'owned' : ''}`.trim();
 
       const status = owned ? shopT('ui.owned') : '';
-      const priceText = owned ? '-' : `${s.price} ??`;
+      const priceText = owned ? '-' : `${s.price} 🪙`;
 
       const iconHtml = s.image
         ? `<img class="skinIconImg" src="${s.image}" alt="${s.name}">`
@@ -1068,7 +1068,7 @@ function shopOpenModal(item) {
       img.decoding = 'async';
       iconEl.appendChild(img);
     } else {
-      iconEl.textContent = item.icon || '??';
+      iconEl.textContent = item.icon || '🛒';
     }
   }
   if (titleEl) titleEl.textContent = item.name || shopT('ui.item');
