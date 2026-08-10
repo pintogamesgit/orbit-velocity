@@ -1,0 +1,9 @@
+{
+  "appId": "com.orbitvelocity.game",
+  "appName": "ORBIT VELOCITY",
+  "webDir": "www",
+  "android": {
+    "webContentsDebuggingEnabled": false,
+    "loggingBehavior": "production"
+  }
+}

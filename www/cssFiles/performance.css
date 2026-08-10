@@ -1,0 +1,852 @@
+html,
+body {
+  text-rendering: optimizeSpeed;
+}
+
+.phone-frame,
+.screen,
+.page,
+.uiModal,
+.overlay {
+  contain: layout paint;
+}
+
+#gameBoard {
+  contain: strict;
+  image-rendering: auto;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform;
+}
+
+.shopGrid,
+.inventoryGrid,
+.loadoutGrid,
+.socialGrid,
+.petGrid,
+.superGrid,
+.weaponGrid,
+.cardsGrid,
+.shopSection,
+.inventorySection,
+.loadoutSection,
+.weaponCard,
+.skinCard,
+.petCard,
+.superCard,
+.shopCard,
+.inventoryCard,
+.socialItem {
+  contain: layout paint style;
+}
+
+.levelNode {
+  contain: layout style;
+}
+
+.shopGrid,
+.inventoryGrid,
+.loadoutGrid,
+.petGrid,
+.superGrid,
+.weaponGrid,
+.cardsGrid {
+  content-visibility: auto;
+  contain-intrinsic-size: 320px 520px;
+}
+
+img[loading='lazy'] {
+  content-visibility: auto;
+}
+
+@media (max-width: 700px), (pointer: coarse), (update: slow) {
+  .phone-frame {
+    box-shadow: none !important;
+  }
+
+  .page {
+    transition:
+      transform 0.36s cubic-bezier(0.22, 0.9, 0.3, 1),
+      opacity 0.24s ease !important;
+    will-change: transform;
+  }
+
+  body.page-transitioning .page *,
+  body.page-transitioning .page::before,
+  body.page-transitioning .page::after {
+    animation-play-state: paused !important;
+  }
+
+  .uiModal,
+  .overlay,
+  .loadingCard {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .uiModal {
+    transition:
+      transform 0.24s cubic-bezier(0.22, 0.9, 0.3, 1),
+      opacity 0.16s ease !important;
+    will-change: transform, opacity;
+  }
+
+  .loadingLogo::before,
+  .loading-bg::before,
+  .loading-bg::after,
+  #socialDiv.open,
+  .featuredCard::before,
+  .legendaryCard::before,
+  .superCard::before,
+  .petCard::before,
+  .skinCard::before {
+    animation-duration: 8s !important;
+    filter: none !important;
+  }
+
+  .shopGrid,
+  .inventoryGrid,
+  .loadoutGrid,
+  .petGrid,
+  .superGrid,
+  .weaponGrid,
+  .cardsGrid {
+    contain-intrinsic-size: 300px 460px;
+  }
+
+  .featuredCard::before,
+  .legendaryCard::before,
+  .superCard::before,
+  .petCard::before,
+  .skinCard::before,
+  .invSection::before,
+  .invCard::before,
+  .shopCard::before,
+  .shopSection::before,
+  .loadoutBtn::before,
+  .superInfoDiv::before,
+  #superShopDiv::before,
+  #planetSelectBox::after {
+    filter: none !important;
+  }
+
+  .shopSection,
+  .inventorySection,
+  .loadoutSection,
+  .weaponCard,
+  .skinCard,
+  .petCard,
+  .superCard,
+  .shopCard,
+  .inventoryCard,
+  .invSection,
+  .invCard,
+  .loadoutBtn {
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.38) !important;
+  }
+
+  #shopScroll,
+  .invWrap,
+  .invModalGrid,
+  #levelsContainer {
+    overscroll-behavior: contain;
+    scroll-behavior: auto !important;
+  }
+
+}
+
+/* ================= LOBBY PERFORMANCE TIERS ================= */
+.perf-mid .page,
+.perf-low .page,
+.perf-mid .uiModal,
+.perf-low .uiModal,
+.perf-mid #bottomBtns,
+.perf-low #bottomBtns {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.perf-mid .page *,
+.perf-mid .page *::before,
+.perf-mid .page *::after,
+.perf-mid .uiModal *,
+.perf-mid .uiModal *::before,
+.perf-mid .uiModal *::after {
+  animation-duration: 7s !important;
+}
+
+.perf-low .page *,
+.perf-low .page *::before,
+.perf-low .page *::after,
+.perf-low .uiModal *,
+.perf-low .uiModal *::before,
+.perf-low .uiModal *::after {
+  animation-duration: 10s !important;
+}
+
+.perf-mid .page,
+.perf-mid .uiModal,
+.perf-mid .shopSection,
+.perf-mid .featuredCard,
+.perf-mid .skinOfferCard,
+.perf-mid .coinCard,
+.perf-mid .invSection,
+.perf-mid .invCard,
+.perf-mid .loadoutBtn,
+.perf-mid .weaponItem,
+.perf-mid .petCard,
+.perf-mid .superCard,
+.perf-mid .shopModalBox,
+.perf-mid .invModalBox {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.42) !important;
+}
+
+.perf-low .page,
+.perf-low .uiModal,
+.perf-low .shopSection,
+.perf-low .featuredCard,
+.perf-low .skinOfferCard,
+.perf-low .coinCard,
+.perf-low .invSection,
+.perf-low .invCard,
+.perf-low .loadoutBtn,
+.perf-low .weaponItem,
+.perf-low .petCard,
+.perf-low .superCard,
+.perf-low .shopModalBox,
+.perf-low .invModalBox {
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.38) !important;
+}
+
+.perf-mid .page::before,
+.perf-mid .page::after,
+.perf-mid .uiModal::before,
+.perf-mid .uiModal::after,
+.perf-mid .shopSection::before,
+.perf-mid .shopSection::after,
+.perf-mid .featuredCard::before,
+.perf-mid .featuredCard::after,
+.perf-mid .invSection::before,
+.perf-mid .invSection::after,
+.perf-mid .loadoutBtn::before,
+.perf-mid .loadoutBtn::after,
+.perf-mid .superCard::before,
+.perf-mid .superCard::after,
+.perf-mid .petCard::before,
+.perf-mid .petCard::after,
+.perf-mid .skinCard::before,
+.perf-mid .skinCard::after {
+  opacity: 0.45 !important;
+  filter: none !important;
+}
+
+.perf-low .page::before,
+.perf-low .page::after,
+.perf-low .uiModal::before,
+.perf-low .uiModal::after,
+.perf-low .shopSection::before,
+.perf-low .shopSection::after,
+.perf-low .featuredCard::before,
+.perf-low .featuredCard::after,
+.perf-low .invSection::before,
+.perf-low .invSection::after,
+.perf-low .loadoutBtn::before,
+.perf-low .loadoutBtn::after,
+.perf-low .superCard::before,
+.perf-low .superCard::after,
+.perf-low .petCard::before,
+.perf-low .petCard::after,
+.perf-low .skinCard::before,
+.perf-low .skinCard::after {
+  opacity: 0.2 !important;
+  filter: none !important;
+}
+
+.perf-mid #homeScreen {
+  background: url('../images/backgroundImages/homePage.png') center bottom / cover no-repeat !important;
+}
+
+.perf-low #homeScreen {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.22)),
+    url('../images/backgroundImages/homePage.png') center bottom / cover no-repeat !important;
+}
+
+.perf-mid #centerPlanet {
+  animation: homePlanetFloat 4.9s ease-in-out infinite !important;
+  filter: saturate(1.08) contrast(1.03) !important;
+  box-shadow:
+    0 0 22px var(--glow1, rgba(0, 180, 255, 0.28)),
+    0 0 54px var(--glow2, rgba(70, 120, 255, 0.2)),
+    0 0 86px var(--glow3, rgba(255, 255, 255, 0.1)),
+    inset 0 -22px 30px rgba(0, 0, 0, 0.3),
+    inset 0 12px 20px rgba(255, 255, 255, 0.06) !important;
+}
+
+.perf-low #centerPlanet {
+  animation: homePlanetFloat 10s ease-in-out infinite !important;
+  filter: none !important;
+  box-shadow:
+    0 0 14px var(--glow1, rgba(0, 180, 255, 0.24)),
+    inset 0 -14px 20px rgba(0, 0, 0, 0.28) !important;
+}
+
+.perf-mid #centerPlanet::before {
+  display: block !important;
+  opacity: 0.72 !important;
+  filter: blur(7px) !important;
+  box-shadow:
+    0 0 30px var(--glow1, rgba(0, 180, 255, 0.34)),
+    0 0 76px var(--glow2, rgba(70, 120, 255, 0.26)),
+    inset 0 0 34px rgba(255, 255, 255, 0.1) !important;
+  animation: homeHaloBreathe 4.8s ease-in-out infinite !important;
+}
+
+.perf-low #centerPlanet::before {
+  display: block !important;
+  opacity: 0.22 !important;
+  filter: blur(2px) !important;
+  animation: homeHaloBreathe 12s ease-in-out infinite !important;
+}
+
+.perf-mid #centerPlanet::after {
+  display: block !important;
+  opacity: 0.52 !important;
+  filter: blur(1px) !important;
+  animation: homeOrbitSpin 17s linear infinite !important;
+}
+
+.perf-low #centerPlanet::after {
+  display: block !important;
+  opacity: 0.12 !important;
+  filter: none !important;
+  animation: homeOrbitSpin 24s linear infinite !important;
+}
+
+.perf-mid #startGameBtn {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 246, 151, 0.16), transparent 24%),
+    radial-gradient(circle at 18% 34%, rgba(62, 255, 212, 0.22), transparent 34%),
+    radial-gradient(circle at 82% 66%, rgba(124, 91, 255, 0.24), transparent 38%),
+    linear-gradient(
+      115deg,
+      rgba(21, 236, 255, 0.22),
+      rgba(255, 221, 92, 0.1) 46%,
+      rgba(126, 92, 255, 0.24)
+    ),
+    linear-gradient(180deg, rgba(9, 68, 116, 0.98), rgba(2, 12, 42, 0.98)) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset,
+    0 0 16px rgba(106, 242, 255, 0.62),
+    0 0 44px rgba(29, 158, 255, 0.36),
+    0 0 70px rgba(123, 87, 255, 0.18),
+    0 14px 30px rgba(0, 0, 0, 0.62),
+    inset 0 0 28px rgba(64, 220, 255, 0.18),
+    inset 0 10px 18px rgba(255, 255, 255, 0.08),
+    inset 0 -16px 26px rgba(0, 0, 0, 0.52) !important;
+  text-shadow:
+    0 0 7px rgba(255, 255, 255, 0.86),
+    0 0 14px rgba(69, 235, 255, 0.78),
+    0 3px 0 rgba(0, 0, 0, 0.55) !important;
+  animation:
+    homeBattleHover 3.4s ease-in-out infinite,
+    homeBattleCharge 3.2s ease-in-out infinite !important;
+}
+
+.perf-low #startGameBtn {
+  background:
+    radial-gradient(circle at 18% 34%, rgba(62, 255, 212, 0.14), transparent 34%),
+    radial-gradient(circle at 82% 66%, rgba(124, 91, 255, 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(9, 68, 116, 0.96), rgba(2, 12, 42, 0.98)) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+    0 0 12px rgba(106, 242, 255, 0.24),
+    0 10px 22px rgba(0, 0, 0, 0.52) !important;
+  text-shadow: 0 0 8px rgba(69, 235, 255, 0.55) !important;
+  animation: homeBattleHover 9s ease-in-out infinite !important;
+}
+
+.perf-mid #startGameBtn::before {
+  display: block !important;
+  opacity: 0.72 !important;
+  filter: saturate(1.05) !important;
+  transform: translateX(-126%) skewX(-16deg) !important;
+  animation:
+    homeBattleSweep 3.4s cubic-bezier(0.2, 0.9, 0.25, 1) infinite,
+    homeBattleScan 2.1s linear infinite !important;
+}
+
+.perf-low #startGameBtn::before {
+  display: block !important;
+  opacity: 0.2 !important;
+  transform: none !important;
+  animation: homeBattleScan 8s linear infinite !important;
+}
+
+.perf-mid #startGameBtn::after {
+  display: block !important;
+  opacity: 0.62 !important;
+  filter: blur(6px) !important;
+  animation:
+    homeButtonAura 5.8s linear infinite,
+    homeBattleAuraPulse 3.2s ease-in-out infinite !important;
+}
+
+.perf-low #startGameBtn::after {
+  display: block !important;
+  opacity: 0.16 !important;
+  filter: blur(3px) !important;
+  animation: homeButtonAura 14s linear infinite !important;
+}
+
+.perf-mid .bottomButton.active::after,
+.perf-mid .bottomButton[aria-current='page']::after {
+  animation: navSweep 6s linear infinite !important;
+}
+
+.perf-low .bottomButton.active::after,
+.perf-low .bottomButton[aria-current='page']::after {
+  opacity: 0.35 !important;
+  animation: navSweep 10s linear infinite !important;
+}
+
+.perf-low #bottomBtns,
+.perf-low .bottomButton {
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.36) !important;
+}
+
+.perf-mid img,
+.perf-low img {
+  filter: none !important;
+}
+
+.perf-low .freeGiftGlow,
+.perf-low .featuredGlow,
+.perf-mid .freeGiftGlow,
+.perf-mid .featuredGlow {
+  opacity: 0.18 !important;
+  filter: none !important;
+}
+
+/* ================= SCREEN AND MODAL MOTION ================= */
+.perf-mid .page {
+  transition:
+    transform 0.28s cubic-bezier(0.2, 0.82, 0.28, 1),
+    opacity 0.2s ease !important;
+}
+
+.perf-low .page {
+  transition:
+    transform 0.18s ease-out,
+    opacity 0.14s ease-out !important;
+}
+
+.perf-mid body.page-transitioning .page *,
+.perf-mid body.page-transitioning .page::before,
+.perf-mid body.page-transitioning .page::after,
+.perf-low body.page-transitioning .page *,
+.perf-low body.page-transitioning .page::before,
+.perf-low body.page-transitioning .page::after {
+  animation-play-state: paused !important;
+}
+
+.perf-mid .uiModal,
+.perf-mid .shopModalBox,
+.perf-mid .invModalBox,
+.perf-mid .localAchievementsPanel {
+  transition:
+    transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1),
+    opacity 0.18s ease,
+    filter 0.18s ease !important;
+}
+
+.perf-low .uiModal,
+.perf-low .shopModalBox,
+.perf-low .invModalBox,
+.perf-low .localAchievementsPanel {
+  transition:
+    transform 0.16s ease-out,
+    opacity 0.12s ease-out !important;
+}
+
+.perf-mid .uiModal:not(.open) {
+  transform: translate(-50%, -48%) scale(0.97) !important;
+}
+
+.perf-low .uiModal:not(.open) {
+  transform: translate(-50%, -49%) scale(0.99) !important;
+}
+
+.perf-mid .uiModal.open,
+.perf-low .uiModal.open {
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.perf-mid #performanceDiv.uiModal,
+.perf-low #performanceDiv.uiModal {
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.perf-mid #performanceDiv.uiModal:not(.open),
+.perf-low #performanceDiv.uiModal:not(.open) {
+  transform: scale(0.985) !important;
+}
+
+.perf-mid #performanceDiv.uiModal.open,
+.perf-low #performanceDiv.uiModal.open {
+  transform: scale(1) !important;
+}
+
+.perf-mid .uiModalAnchorBottomRight:not(.open) {
+  transform: translateY(9px) scale(0.97) !important;
+}
+
+.perf-low .uiModalAnchorBottomRight:not(.open) {
+  transform: translateY(6px) scale(0.99) !important;
+}
+
+.perf-mid .uiModalAnchorBottomRight.open,
+.perf-low .uiModalAnchorBottomRight.open {
+  transform: translateY(0) scale(1) !important;
+}
+
+.perf-mid #socialDiv.open {
+  animation: socialBreath 5.6s ease-in-out infinite !important;
+}
+
+.perf-low #socialDiv.open {
+  animation: socialBreath 9s ease-in-out infinite !important;
+  box-shadow:
+    0 0 10px rgba(0, 180, 255, 0.2),
+    0 12px 22px rgba(0, 0, 0, 0.52),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.38) !important;
+}
+
+/* ================= LEVEL MAP PERFORMANCE ================= */
+.perf-mid #mapDiv {
+  background:
+    radial-gradient(circle at 50% -8%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(5, 17, 45, 0.98), rgba(1, 5, 18, 0.98)) !important;
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.28),
+    0 18px 36px rgba(0, 0, 0, 0.68),
+    inset 0 -18px 32px rgba(0, 0, 0, 0.42) !important;
+}
+
+.perf-low #mapDiv {
+  background:
+    radial-gradient(circle at 50% -8%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(5, 17, 45, 0.98), rgba(1, 5, 18, 0.98)) !important;
+  box-shadow:
+    0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.18),
+    0 12px 24px rgba(0, 0, 0, 0.62),
+    inset 0 -12px 22px rgba(0, 0, 0, 0.36) !important;
+}
+
+.perf-mid #mapDiv::before {
+  opacity: 0.34 !important;
+  background-size: 42px 42px !important;
+}
+
+.perf-low #mapDiv::before {
+  opacity: 0.16 !important;
+  background-size: 56px 56px !important;
+}
+
+.perf-mid #mapDiv::after {
+  opacity: 0.26 !important;
+}
+
+.perf-low #mapDiv::after {
+  opacity: 0.12 !important;
+}
+
+.perf-mid #mapTitle {
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.44),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.42) !important;
+  text-shadow:
+    0 0 7px rgba(var(--map-r), var(--map-g), var(--map-b), 0.7),
+    0 2px 0 rgba(0, 0, 0, 0.7) !important;
+}
+
+.perf-low #mapTitle {
+  background:
+    linear-gradient(180deg, rgba(6, 18, 46, 0.96), rgba(2, 7, 20, 0.86)) !important;
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.42),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.36) !important;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.72) !important;
+}
+
+.perf-low #mapTitle::before {
+  opacity: 0.45 !important;
+  box-shadow: none !important;
+}
+
+.perf-mid #mapDiv #levelsContainer {
+  background:
+    radial-gradient(circle at 20% 16%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.14), transparent 32%),
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.04) 0 1px, transparent 2px),
+    linear-gradient(180deg, rgba(2, 8, 24, 0.98), var(--map-deep)) !important;
+  background-size: auto, 56px 56px, auto !important;
+}
+
+.perf-low #mapDiv #levelsContainer {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.03) 0 1px, transparent 2px),
+    linear-gradient(180deg, rgba(2, 8, 24, 0.98), var(--map-deep)) !important;
+  background-size: 72px 72px, auto !important;
+}
+
+.perf-mid #mapDiv #levelsContainer::before {
+  width: 34px !important;
+  opacity: 0.5 !important;
+  box-shadow: 0 0 22px rgba(var(--map-r), var(--map-g), var(--map-b), 0.2) !important;
+}
+
+.perf-low #mapDiv #levelsContainer::before {
+  width: 24px !important;
+  opacity: 0.34 !important;
+  box-shadow: none !important;
+}
+
+.perf-mid #levelMapStars {
+  opacity: 0.28 !important;
+  background-size: 180px 220px, 170px 210px !important;
+}
+
+.perf-low #levelMapStars {
+  opacity: 0.12 !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.72) 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 18%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.55) 0 1px, transparent 2px) !important;
+  background-size: 220px 280px, 190px 250px !important;
+}
+
+.perf-mid #mapDiv.open #levelMapStars {
+  animation: levelMapStarsDrift 30s ease-in-out infinite alternate !important;
+}
+
+.perf-low #mapDiv.open #levelMapStars {
+  animation: levelMapStarsDrift 46s ease-in-out infinite alternate !important;
+}
+
+.perf-mid .levelNode::after {
+  opacity: 0.68 !important;
+  box-shadow: 0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.38) !important;
+}
+
+.perf-low .levelNode::after {
+  width: 3px !important;
+  opacity: 0.46 !important;
+  box-shadow: none !important;
+}
+
+.perf-mid .levelsBtn {
+  box-shadow:
+    0 0 12px rgba(var(--map-r), var(--map-g), var(--map-b), 0.22),
+    0 9px 18px rgba(0, 0, 0, 0.5),
+    inset 0 -12px 18px rgba(0, 0, 0, 0.36) !important;
+}
+
+.perf-low .levelsBtn {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 28%),
+    radial-gradient(circle at 50% 105%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.22), transparent 54%),
+    linear-gradient(180deg, rgba(12, 35, 82, 0.94), rgba(2, 8, 24, 0.98)) !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.48),
+    inset 0 -10px 16px rgba(0, 0, 0, 0.34) !important;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.72) !important;
+}
+
+.perf-mid .levelsBtn::after {
+  opacity: 0.24 !important;
+  filter: blur(5px) !important;
+}
+
+.perf-low .levelsBtn::after {
+  opacity: 0.12 !important;
+  filter: none !important;
+}
+
+.perf-mid .levelsBtn.current::before {
+  opacity: 0.64 !important;
+  animation: ringSpin 5s linear infinite !important;
+}
+
+.perf-low .levelsBtn.current::before {
+  opacity: 0.38 !important;
+  animation: ringSpin 8s linear infinite !important;
+}
+
+.perf-low .levelsBtn.current {
+  transform: scale(1.03) !important;
+  box-shadow:
+    0 0 12px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42),
+    0 8px 16px rgba(0, 0, 0, 0.5),
+    inset 0 0 10px rgba(255, 255, 255, 0.08) !important;
+}
+
+.perf-mid .levelNode.final-level-node .levelsBtn::after,
+.perf-mid .levelNode .levelsBtn.final-level-btn::after,
+.perf-low .levelNode.final-level-node .levelsBtn::after,
+.perf-low .levelNode .levelsBtn.final-level-btn::after,
+.perf-mid .levelNode.boss-node .levelsBtn::before,
+.perf-low .levelNode.boss-node .levelsBtn::before {
+  filter: none !important;
+  opacity: 0.28 !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ================= MOBILE MAP STABILITY ================= */
+@media (max-width: 700px), (pointer: coarse) {
+  #mapDiv {
+    width: min(360px, calc(100vw - 32px)) !important;
+    height: min(724px, calc(100svh - 58px)) !important;
+    max-height: calc(100vh - 58px) !important;
+    transform: translate3d(-50%, -50%, 0) scale(0) !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout paint style;
+    isolation: isolate;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+      0 0 0 2px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+      0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.46),
+      0 12px 28px rgba(0, 0, 0, 0.78) !important;
+    transition:
+      --map-r 1.9s ease,
+      --map-g 1.9s ease,
+      --map-b 1.9s ease,
+      --map-deep 1.9s ease,
+      transform 0.22s ease,
+      opacity 0.18s ease,
+      visibility 0.18s ease !important;
+  }
+
+  #mapDiv.open {
+    transform: translate3d(-50%, -50%, 0) scale(1) !important;
+  }
+
+  #mapDiv.closing {
+    transform: translate3d(-50%, -50%, 0) scale(0.98) !important;
+  }
+
+  #mapDiv::before {
+    inset: 6px !important;
+    opacity: 0.28 !important;
+    background:
+      linear-gradient(90deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0.14) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 1px, transparent 1px) !important;
+    background-size: 52px 52px, 52px 52px !important;
+    box-shadow: none !important;
+    transition: none !important;
+  }
+
+  #mapDiv::after {
+    opacity: 0.16 !important;
+    filter: none !important;
+    transition: none !important;
+  }
+
+  #mapDiv #mapTitle {
+    transition: none !important;
+  }
+
+  #mapDiv #levelsContainer {
+    height: calc(100% - 76px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    contain: layout style;
+    transform: translateZ(0);
+  }
+
+  #mapDiv #levelsContainer::before {
+    box-shadow:
+      0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.48),
+      0 0 20px rgba(var(--map-r), var(--map-g), var(--map-b), 0.18) !important;
+    transition: none !important;
+  }
+
+  #mapDiv #levelsContainer::after {
+    opacity: 0.26 !important;
+    filter: none !important;
+    transition: none !important;
+  }
+
+  #mapDiv.open #levelMapStars,
+  #mapDiv.open .levelNode::before,
+  #mapDiv.open .levelNode .levelsBtn,
+  #mapDiv.open .levelNode .levelsBtn::before,
+  #mapDiv.open .levelNode .levelsBtn::after,
+  #mapDiv.open .levelNode.current-node::before,
+  #mapDiv.open .levelNode.current-node .levelsBtn::after,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked)::before,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn::after {
+    animation: none !important;
+    will-change: auto !important;
+  }
+
+  #mapDiv #levelMapStars {
+    position: sticky !important;
+    top: 0 !important;
+    display: block !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    margin-bottom: -100% !important;
+    z-index: 1 !important;
+    opacity: 0.72 !important;
+    filter: none !important;
+    background:
+      radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1.2px, transparent 2.6px),
+      radial-gradient(circle, rgba(var(--map-r), var(--map-g), var(--map-b), 0.86) 0 1.4px, transparent 2.8px),
+      radial-gradient(circle, rgba(255, 228, 129, 0.68) 0 1.1px, transparent 2.5px),
+      radial-gradient(circle, rgba(255, 255, 255, 0.54) 0 0.9px, transparent 2px) !important;
+    background-position: 0 0, 42px 70px, 88px 24px, 24px 32px !important;
+    background-size: 112px 154px, 146px 194px, 178px 224px, 72px 92px !important;
+    pointer-events: none !important;
+  }
+
+  #mapDiv .levelNode {
+    contain: layout style;
+    overflow: visible !important;
+  }
+
+  #mapDiv .levelsBtn::after {
+    filter: none !important;
+    opacity: 0.34 !important;
+  }
+
+  #mapDiv .levelsBtn.current {
+    filter: none !important;
+    box-shadow:
+      inset -14px -16px 22px rgba(0, 0, 0, 0.34),
+      inset 8px 8px 15px rgba(255, 255, 255, 0.24),
+      0 0 18px rgba(255, 255, 255, 0.54),
+      0 0 36px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.74) !important;
+  }
+}

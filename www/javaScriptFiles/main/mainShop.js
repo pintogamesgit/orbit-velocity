@@ -1,0 +1,1494 @@
+// item shop script
+function shopT(key, params = {}) {
+  const lang = localStorage.getItem('language') || 'en';
+  const str = TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.en?.[key] ?? key;
+
+  return str.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
+}
+
+function rarityT(rarity) {
+  const key = String(rarity || 'COMMON').toUpperCase();
+  return shopT(`rarity.${key}`);
+}
+
+function formatCashPrice(price) {
+  const n = Number(price || 0);
+  return `$${n.toFixed(2)}`;
+}
+
+const SHOP = {
+  ownedSkins: new Set(JSON.parse(localStorage.getItem('ownedSkins') || '[]')),
+  equippedSkin: localStorage.getItem('equippedSkin') || '',
+  ownedFeatured: localStorage.getItem('ownedFeatured') === '1',
+};
+
+const K_SHOP_HIGHLIGHT_SKIN = 'shopHighlightSkin';
+const SHOP_VISIBLE_TIMER_MS = 500;
+let shopVisibleUiTimer = 0;
+const SHOP_DOM = {};
+const normId = (id) =>
+  String(id || '')
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[_-]+/g, '');
+
+const shopData = {
+  featured: [
+    {
+      id: 'adReward',
+      name: 'Ad Bonus',
+      desc: 'Watch a short ad and receive a small reward',
+      icon: '??',
+      reward: window.ORBIT_VELOCITY_PRICES.featured.adRewardCoins,
+      adReward: true,
+    },
+    {
+      id: 'galaxySkin',
+      name: 'Galaxy Skin',
+      desc: 'get this skin before it leaving',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.featured.galaxySkin,
+    },
+  ],
+  dailyPool: [
+    {
+      id: 'daily_pet_food',
+      name: 'Pet Treat',
+      desc: 'Pet bonus for 3 battles',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_pet_food,
+      badge: 'NEW',
+    },
+    {
+      id: 'daily_coin_bundle',
+      name: 'Mini Coins',
+      desc: '+350 coins',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_coin_bundle,
+      badge: 'VALUE',
+    },
+    {
+      id: 'daily_fire_rate',
+      name: 'Rapid Fire',
+      desc: '+25% fire rate (2 battles)',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_fire_rate,
+      badge: 'LIMIT',
+    },
+    {
+      id: 'daily_revive',
+      name: 'Instant Revive',
+      desc: 'Revive once on death',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_revive,
+      badge: 'RARE',
+    },
+
+    {
+      id: 'daily_super_charge',
+      name: 'Super Charge',
+      desc: 'Start battle with full super',
+      icon: '?',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_super_charge,
+      badge: 'POWER',
+    },
+    {
+      id: 'daily_random_box',
+      name: 'Mystery Box',
+      desc: 'Random reward',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_random_box,
+      badge: '???',
+    },
+    {
+      id: 'daily_coin_rush',
+      name: 'Coin Rush',
+      desc: 'Double coins for 2 battles',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_coin_rush,
+      badge: 'VALUE',
+    },
+  ],
+  skins: [
+    {
+      id: 'default',
+      name: 'Classic',
+      image: './images/shopAInventoryicons/playerIcones/skin1Icon.png',
+      rarity: 'COMMON',
+      price: window.ORBIT_VELOCITY_PRICES.skins.default,
+    },
+    {
+      id: 'redclassic',
+      name: 'Red Classic',
+      image: './images/shopAInventoryicons/playerIcones/redSkunIcone.png',
+      desc: 'Red classic',
+      rarity: 'RARE',
+      price: window.ORBIT_VELOCITY_PRICES.skins.redclassic,
+    },
+    {
+      id: 'dark_reaper',
+      name: 'Dark Reaper',
+      image: './images/shopAInventoryicons/playerIcones/darkReaperIcone.png',
+      desc: 'Dark metallic finish',
+      rarity: 'EPIC',
+      icon: '?',
+      price: window.ORBIT_VELOCITY_PRICES.skins.dark_reaper,
+    },
+    {
+      id: 'celestial_sakura',
+      name: 'Celestial Sakura',
+      image: './images/shopAInventoryicons/playerIcones/celestialSacura.png',
+      desc: 'Pink petals FX',
+      rarity: 'EPIC',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.skins.celestial_sakura,
+    },
+    {
+      id: 'goden_core',
+      name: 'Golden Core',
+      image: './images/shopAInventoryicons/playerIcones/goldenCoreIcone.png',
+      desc: 'Gold shine aura',
+      rarity: 'LEGENDARY',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.skins.goden_core,
+    },
+    {
+      id: 'star_breaker',
+      name: 'Star Breaker',
+      image: './images/shopAInventoryicons/playerIcones/starBreakerIcone.png',
+      desc: 'Unlocked by beating Level 100',
+      rarity: 'LEGENDARY',
+      price: window.ORBIT_VELOCITY_PRICES.skins.star_breaker,
+    },
+  ],
+  coinPacks: [
+    {
+      id: 'coins_1000',
+      name: '1000 Coins',
+      desc: 'Small boost',
+      rarity: 'RARE',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_1000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_1000.coins,
+    },
+    {
+      id: 'coins_3000',
+      name: '3000 Coins',
+      desc: 'Good value',
+      rarity: 'RARE',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_3000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_3000.coins,
+    },
+    {
+      id: 'coins_6000',
+      name: '6000 Coins',
+      desc: 'Big pack',
+      rarity: 'EPIC',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_6000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_6000.coins,
+    },
+    {
+      id: 'coins_10000',
+      name: '10000 Coins',
+      desc: 'Mega pack',
+      rarity: 'LEGENDARY',
+      icon: '??',
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_10000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_10000.coins,
+    },
+  ],
+};
+
+const STORAGE_KEY_DAILY_GIFT_CLAIM = 'dailyGiftLastClaim';
+const STORAGE_KEY_DAILY_GIFT_TODAY = 'dailyGiftToday';
+const STORAGE_KEY_DAILY_GIFT_VERSION = 'dailyGiftPoolVersion';
+const DAILY_GIFT_POOL_VERSION = 3;
+
+const DAILY_GIFT_POOL = [
+  {
+    id: 'small_coin_pack',
+    type: 'coins',
+    amount: window.ORBIT_VELOCITY_PRICES.dailyGift.small_coin_pack,
+    weight: 5,
+    name: 'Small Coin Pack',
+    icon: '??',
+  },
+  {
+    id: 'coin_pack',
+    type: 'coins',
+    amount: window.ORBIT_VELOCITY_PRICES.dailyGift.coin_pack,
+    weight: 3,
+    name: 'Coin Pack',
+    icon: '??',
+  },
+  {
+    id: 'big_coin_pack',
+    type: 'coins',
+    amount: window.ORBIT_VELOCITY_PRICES.dailyGift.big_coin_pack,
+    weight: 1,
+    name: 'Big Coin Pack',
+    icon: '??',
+  },
+];
+
+const SHOP_I18N = { en: {}, he: {}, es: {} };
+
+function shopTData(lang, group, id, field) {
+  const shared = dataT?.(group, id, field, lang);
+  if (shared) return shared;
+
+  return (
+    SHOP_I18N[lang]?.[group]?.[id]?.[field] ??
+    SHOP_I18N.en?.[group]?.[id]?.[field] ??
+    null
+  );
+}
+
+function shopApplyLangToData(lang) {
+  shopData.featured.forEach((x) => {
+    x.name = shopTData(lang, 'featured', x.id, 'name') ?? x.name;
+    x.desc = shopTData(lang, 'featured', x.id, 'desc') ?? x.desc;
+  });
+
+  shopData.dailyPool.forEach((x) => {
+    x.name = shopTData(lang, 'dailyPool', x.id, 'name') ?? x.name;
+    x.desc = shopTData(lang, 'dailyPool', x.id, 'desc') ?? x.desc;
+    x.badge = shopTData(lang, 'dailyPool', x.id, 'badge') ?? x.badge;
+  });
+
+  shopData.skins.forEach((x) => {
+    x.name = shopTData(lang, 'skins', x.id, 'name') ?? x.name;
+    x.desc = shopTData(lang, 'skins', x.id, 'desc') ?? x.desc;
+  });
+
+  shopData.coinPacks.forEach((x) => {
+    x.name = shopTData(lang, 'coinPacks', x.id, 'name') ?? x.name;
+    x.desc = shopTData(lang, 'coinPacks', x.id, 'desc') ?? x.desc;
+  });
+
+  DAILY_GIFT_POOL.forEach((x) => {
+    x.name = shopTData(lang, 'dailyGiftPool', x.id, 'name') ?? x.name;
+  });
+}
+
+function syncShopState() {
+  const arr = JSON.parse(localStorage.getItem('ownedSkins') || '[]');
+  if (!arr.includes('default')) {
+    arr.push('default');
+    localStorage.setItem('ownedSkins', JSON.stringify(arr));
+  }
+
+  SHOP.ownedSkins = new Set(arr);
+  SHOP.equippedSkin = localStorage.getItem('equippedSkin') || 'default';
+  SHOP.ownedFeatured = localStorage.getItem('ownedFeatured') === '1';
+}
+
+const K_DAILY_OWNED = 'ownedDaily';
+
+function getCoins() {
+  const raw = localStorage.getItem('coins');
+  const n = raw === null ? 50 : Number(raw);
+  return Number.isFinite(n) ? n : 50;
+}
+
+function setCoins(v) {
+  const n = Number(v) || 0;
+
+  localStorage.setItem('coins', String(n));
+  window.OrbitVelocityCloud?.markDirty?.();
+
+  try {
+    coins = n;
+  } catch (_) {}
+
+  const coinsText = document.getElementById('coinsText');
+  if (coinsText) coinsText.textContent = n;
+
+  const shopCoinsText = document.getElementById('shopCoinsText');
+  if (shopCoinsText) shopCoinsText.textContent = n;
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.className = `toast show ${type}`.trim();
+  t.textContent = msg;
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(() => {
+    t.className = 'toast';
+  }, 1400);
+}
+
+function getOwnedDaily() {
+  return new Set(JSON.parse(localStorage.getItem(K_DAILY_OWNED) || '[]'));
+}
+
+function saveOwnedDaily(set) {
+  localStorage.setItem(K_DAILY_OWNED, JSON.stringify([...set]));
+}
+
+function isDailyOwned(id) {
+  return getOwnedDaily().has(id);
+}
+
+function shopInit() {
+  shopRenderFeatured();
+  shopRenderDaily();
+  shopRenderSkins();
+  shopRenderCoins();
+  shopRenderSkinOffers();
+
+  const modal = document.getElementById('shopModal');
+  if (modal) modal.addEventListener('click', () => shopCloseModal());
+
+  const closeBtn = document.getElementById('shopModalClose');
+  if (closeBtn) closeBtn.addEventListener('click', () => shopCloseModal());
+
+  setCoins(getCoins());
+  shopHighlightPendingSkin();
+}
+
+function shopRenderFeatured() {
+  const list = shopData.featured || [];
+  if (!list.length) return;
+
+  const idx = getFeaturedIndex() % list.length;
+  const f = list[idx];
+
+  document.getElementById('featuredName').textContent = f.name;
+  document.getElementById('featuredDesc').textContent = f.desc;
+  document.getElementById('featuredIcon').textContent = f.icon;
+  document.getElementById('featuredPrice').textContent = f.adReward
+    ? `+${f.reward}`
+    : f.price;
+
+  const btn = document.getElementById('featuredBuyBtn');
+  if (f.adReward) {
+    const claimed = isAdRewardClaimed();
+    btn.textContent = claimed ? shopT('ui.claimed') : shopT('shop.watchAd');
+    btn.disabled = claimed || claimAdReward.loading;
+    btn.onclick = () => claimAdReward(f);
+    return;
+  }
+
+  btn.textContent = SHOP.ownedFeatured ? shopT('ui.owned') : shopT('ui.get');
+  btn.disabled = SHOP.ownedFeatured;
+
+  btn.onclick = () => {
+    if (SHOP.ownedFeatured) return;
+    shopOpenModal({ ...f, type: 'featured' });
+  };
+}
+
+const FEATURED_ROTATE_MS = 7 * 24 * 60 * 60 * 1000;
+const K_FEATURED_START = 'featuredCycleStart';
+const K_FEATURED_INDEX = 'featuredIndex';
+
+function getFeaturedCycleStart() {
+  let t = Number(localStorage.getItem(K_FEATURED_START) || 0);
+  if (!t) {
+    t = Date.now();
+    localStorage.setItem(K_FEATURED_START, String(t));
+  }
+  return t;
+}
+
+function setFeaturedCycleStart(t) {
+  localStorage.setItem(K_FEATURED_START, String(t));
+}
+
+function getFeaturedIndex() {
+  return Number(localStorage.getItem(K_FEATURED_INDEX) || 0);
+}
+
+function setFeaturedIndex(i) {
+  localStorage.setItem(K_FEATURED_INDEX, String(i));
+}
+
+const K_AD_REWARD_DATE = 'orbitvelocity.shopAdRewardDate';
+
+function getLocalDateKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isAdRewardClaimed() {
+  return localStorage.getItem(K_AD_REWARD_DATE) === getLocalDateKey();
+}
+
+async function claimAdReward(item) {
+  if (claimAdReward.loading || isAdRewardClaimed()) return;
+  const btn = document.getElementById('featuredBuyBtn');
+  claimAdReward.loading = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = shopT('shop.loadingAd');
+  }
+
+  try {
+    const result = await window.OrbitVelocityAds?.showRewardedAd?.();
+    if (!result?.rewarded) {
+      showToast(
+        result?.shown ? shopT('shop.adRewardNotCompleted') : shopT('shop.adUnavailable'),
+        'info'
+      );
+      return;
+    }
+
+    const reward = Math.max(1, Number(item.reward) || 100);
+    localStorage.setItem(K_AD_REWARD_DATE, getLocalDateKey());
+    setCoins(getCoins() + reward);
+    showToast(shopT('shop.adRewardClaimed', { coins: reward }), 'success');
+  } catch (error) {
+    console.warn('Shop rewarded ad could not be shown.', error);
+    showToast(shopT('shop.adUnavailable'), 'info');
+  } finally {
+    claimAdReward.loading = false;
+    shopRenderFeatured();
+    updateFeaturedTimer();
+  }
+}
+
+function isShopScreenActive() {
+  SHOP_DOM.screen ||= document.getElementById('shopScreen');
+
+  return (
+    !document.hidden &&
+    SHOP_DOM.screen?.classList.contains('active')
+  );
+}
+
+function updateShopVisibleUi() {
+  if (!isShopScreenActive()) return;
+
+  updateDailyGiftUI();
+  updateFeaturedTimer();
+  updateDailyTimer();
+  updateSkinOffersTimer();
+}
+
+function startShopVisibleUiTimer() {
+  if (shopVisibleUiTimer || !isShopScreenActive()) return;
+
+  updateShopVisibleUi();
+  shopVisibleUiTimer = setInterval(() => {
+    if (!isShopScreenActive()) {
+      stopShopVisibleUiTimer();
+      return;
+    }
+
+    updateShopVisibleUi();
+  }, SHOP_VISIBLE_TIMER_MS);
+}
+
+function stopShopVisibleUiTimer() {
+  if (!shopVisibleUiTimer) return;
+  clearInterval(shopVisibleUiTimer);
+  shopVisibleUiTimer = 0;
+}
+
+function syncShopVisibleUiTimer() {
+  if (isShopScreenActive()) startShopVisibleUiTimer();
+  else stopShopVisibleUiTimer();
+}
+
+function updateFeaturedTimer() {
+  if (!isShopScreenActive()) return;
+
+  const el = SHOP_DOM.featuredTimer ||= document.getElementById('featuredTimer');
+  if (!el) return;
+
+  const list = shopData.featured || [];
+  const featured = list[getFeaturedIndex() % Math.max(1, list.length)];
+  if (featured?.adReward) {
+    el.textContent = isAdRewardClaimed()
+      ? shopT('shop.adRewardAvailableIn', { time: formatRemaining(getMsUntilNextDailyGift()) })
+      : shopT('shop.adRewardReady');
+    return;
+  }
+
+  const start = getFeaturedCycleStart();
+  const now = Date.now();
+  const elapsed = now - start;
+  const remaining = FEATURED_ROTATE_MS - (elapsed % FEATURED_ROTATE_MS);
+
+  el.textContent = shopT('shop.newFeaturedIn', {
+    time: formatRemaining(remaining),
+  });
+}
+
+function rotateFeatured() {
+  const list = shopData.featured || [];
+  if (!list.length) return;
+
+  setFeaturedIndex((getFeaturedIndex() + 1) % list.length);
+  setFeaturedCycleStart(Date.now());
+
+  if (isShopScreenActive()) shopRenderFeatured();
+  updateFeaturedTimer();
+}
+
+function startFeaturedRotation() {
+  updateFeaturedTimer();
+
+  const start = getFeaturedCycleStart();
+  const now = Date.now();
+  const elapsed = now - start;
+  const remaining = FEATURED_ROTATE_MS - (elapsed % FEATURED_ROTATE_MS);
+
+  clearTimeout(startFeaturedRotation._align);
+  startFeaturedRotation._align = setTimeout(() => {
+    rotateFeatured();
+
+    clearInterval(startFeaturedRotation._swap);
+    startFeaturedRotation._swap = setInterval(
+      rotateFeatured,
+      FEATURED_ROTATE_MS
+    );
+  }, remaining);
+}
+
+function shopRenderDaily() {
+  const row = document.getElementById('dailyOffersRow');
+  if (!row) return;
+
+  row.innerHTML = '';
+
+  const daily3 = getSelectedDaily();
+  const ownedDaily = getOwnedDaily();
+
+  daily3.forEach((item) => {
+    const owned = ownedDaily.has(item.id);
+
+    const el = document.createElement('div');
+    el.className = `offerCard ${owned ? 'owned' : ''}`.trim();
+
+    el.innerHTML = `
+      <div class="offerTop">
+        <div class="offerBadge">${item.badge}</div>
+        <div class="offerIcon">${item.icon}</div>
+      </div>
+
+      <div class="offerMid">
+        <div class="offerName">${item.name}</div>
+        <div class="offerDesc">${item.desc}</div>
+      </div>
+
+      <div class="offerBottom">
+        <div class="priceChip">${owned ? '-' : `${item.price} ??`}</div>
+        <button class="buyMiniBtn" ${owned ? 'disabled' : ''}>
+          ${owned ? shopT('ui.owned') : shopT('ui.buy')}
+        </button>
+      </div>
+    `;
+
+    const open = () => {
+      if (owned) return;
+      shopOpenModal({ ...item, type: 'daily' });
+    };
+
+    el.querySelector('.buyMiniBtn').onclick = (e) => {
+      e.stopPropagation();
+      open();
+    };
+
+    el.onclick = open;
+
+    row.appendChild(el);
+  });
+}
+
+function getTodayKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function weightedPick(list) {
+  const total = list.reduce((s, x) => s + (x.weight || 1), 0);
+  let r = Math.random() * total;
+  for (const item of list) {
+    r -= item.weight || 1;
+    if (r <= 0) return item;
+  }
+  return list[list.length - 1];
+}
+
+function getLocalizedDailyGift(gift) {
+  const baseGift = DAILY_GIFT_POOL.find((x) => x.id === gift?.id) || gift || {};
+  const lang = localStorage.getItem('language') || 'en';
+  const localizedName =
+    shopTData(lang, 'dailyGiftPool', baseGift.id, 'name') ||
+    baseGift.name ||
+    gift?.name ||
+    shopT('shop.gift.dailyGift');
+
+  return {
+    ...baseGift,
+    ...gift,
+    name: localizedName,
+    icon: gift?.icon || baseGift.icon || '??',
+  };
+}
+
+function getDailyGiftForToday() {
+  const ver = Number(localStorage.getItem(STORAGE_KEY_DAILY_GIFT_VERSION) || 0);
+  if (ver !== DAILY_GIFT_POOL_VERSION) {
+    localStorage.setItem(
+      STORAGE_KEY_DAILY_GIFT_VERSION,
+      String(DAILY_GIFT_POOL_VERSION)
+    );
+    localStorage.removeItem(STORAGE_KEY_DAILY_GIFT_TODAY);
+    localStorage.removeItem(STORAGE_KEY_DAILY_GIFT_CLAIM);
+  }
+
+  const raw = localStorage.getItem(STORAGE_KEY_DAILY_GIFT_TODAY);
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (parsed?.day === getTodayKey() && parsed?.gift?.type === 'coins') {
+      return getLocalizedDailyGift(parsed.gift);
+    }
+  }
+
+  const gift = weightedPick(DAILY_GIFT_POOL);
+  localStorage.setItem(
+    STORAGE_KEY_DAILY_GIFT_TODAY,
+    JSON.stringify({ day: getTodayKey(), gift })
+  );
+  return getLocalizedDailyGift(gift);
+}
+
+function isDailyGiftClaimed() {
+  return localStorage.getItem(STORAGE_KEY_DAILY_GIFT_CLAIM) === getTodayKey();
+}
+
+function setDailyGiftClaimed() {
+  localStorage.setItem(STORAGE_KEY_DAILY_GIFT_CLAIM, getTodayKey());
+}
+
+function getMsUntilNextDailyGift() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(0, next.getTime() - now.getTime());
+}
+
+function renderDailyGiftCard() {
+  const gift = getDailyGiftForToday();
+
+  const nameEl = document.getElementById('freeGiftName');
+  const descEl = document.getElementById('freeGiftDesc');
+  const valEl = document.getElementById('freeGiftValue');
+  const iconEl = document.getElementById('freeGiftIcon');
+
+  if (!nameEl || !descEl || !valEl || !iconEl) return;
+
+  nameEl.textContent = gift.name || shopT('shop.gift.dailyGift');
+  iconEl.textContent = gift.icon || '??';
+  valEl.textContent = `+${gift.amount}`;
+  descEl.textContent = shopT('shop.gift.freeCoinsToday');
+}
+
+function claimDailyGift() {
+  if (isDailyGiftClaimed()) {
+    updateDailyGiftUI();
+    return;
+  }
+
+  const gift = getDailyGiftForToday();
+  const coinsToAdd = Number(gift.amount || 0);
+  if (gift.type !== 'coins' || coinsToAdd <= 0) return;
+
+  setCoins(getCoins() + coinsToAdd);
+  setDailyGiftClaimed();
+  showToast(shopT('shop.dailyGiftCoins', { coins: coinsToAdd }), 'success');
+  renderDailyGiftCard();
+  updateDailyGiftUI();
+}
+
+function updateDailyGiftUI() {
+  if (!isShopScreenActive()) return;
+
+  const btn = document.getElementById('freeGiftBtn');
+  const valEl = document.getElementById('freeGiftValue');
+  const timerEl = document.getElementById('freeGiftTimer');
+  if (!btn) return;
+
+  const claimed = isDailyGiftClaimed();
+  const gift = getDailyGiftForToday();
+
+  btn.textContent = claimed ? shopT('ui.claimed') : shopT('ui.claim');
+  btn.disabled = claimed;
+
+  if (valEl) {
+    valEl.textContent = claimed ? shopT('ui.claimed') : `+${gift.amount}`;
+    valEl.closest('.pricePill')?.classList.toggle('is-claimed', claimed);
+  }
+
+  if (timerEl) {
+    timerEl.textContent = formatRemaining(getMsUntilNextDailyGift());
+  }
+}
+
+const SKIN_OFFERS_COUNT = 4;
+const K_SKIN_OFFERS_IDS = 'skinOffersSelectedIds';
+const K_SKIN_OFFERS_START = 'skinOffersCycleStart';
+const SKIN_OFFERS_ROTATE_MS = 86400000;
+
+function getSkinOffersCycleStart() {
+  let t = Number(localStorage.getItem(K_SKIN_OFFERS_START) || 0);
+  if (!t) {
+    t = Date.now();
+    localStorage.setItem(K_SKIN_OFFERS_START, String(t));
+  }
+  return t;
+}
+
+function setSkinOffersCycleStart(t) {
+  localStorage.setItem(K_SKIN_OFFERS_START, String(t));
+}
+
+function isSkinOwned(id) {
+  return id === 'default' || SHOP.ownedSkins.has(id);
+}
+
+function pickSkinOffersFresh() {
+  const allPaid = (shopData.skins || []).filter((s) => s.price > 0);
+
+  const notOwned = allPaid.filter((s) => !isSkinOwned(s.id));
+
+  const picked = pickNRandomUnique(notOwned, SKIN_OFFERS_COUNT);
+
+  if (picked.length < SKIN_OFFERS_COUNT) {
+    const need = SKIN_OFFERS_COUNT - picked.length;
+
+    const pickedIds = new Set(picked.map((x) => x.id));
+    const fillers = allPaid.filter((s) => !pickedIds.has(s.id));
+
+    picked.push(...pickNRandomUnique(fillers, need));
+  }
+
+  picked.sort((a, b) => {
+    const rank = { RARE: 0, EPIC: 1, LEGENDARY: 2, COMMON: 3 };
+    const ra = rank[(a.rarity || 'COMMON').toUpperCase()] ?? 99;
+    const rb = rank[(b.rarity || 'COMMON').toUpperCase()] ?? 99;
+    return ra - rb;
+  });
+
+  localStorage.setItem(
+    K_SKIN_OFFERS_IDS,
+    JSON.stringify(picked.map((x) => x.id))
+  );
+  setSkinOffersCycleStart(Date.now());
+  return picked;
+}
+
+function getSelectedSkinOffers() {
+  const skins = shopData.skins || [];
+  const saved = JSON.parse(localStorage.getItem(K_SKIN_OFFERS_IDS) || '[]');
+  const map = new Map(skins.map((x) => [x.id, x]));
+  const selected = saved.map((id) => map.get(id)).filter(Boolean);
+
+  if (
+    selected.length === SKIN_OFFERS_COUNT &&
+    selected.every((s) => s.price > 0)
+  )
+    return selected;
+
+  return pickSkinOffersFresh();
+}
+
+function updateSkinOffersTimer() {
+  if (!isShopScreenActive()) return;
+
+  const el = SHOP_DOM.skinOffersTimer ||= document.getElementById('skinOffersTimer');
+  if (!el) return;
+
+  const start = getSkinOffersCycleStart();
+  const now = Date.now();
+  const elapsed = now - start;
+  const remaining = SKIN_OFFERS_ROTATE_MS - (elapsed % SKIN_OFFERS_ROTATE_MS);
+
+  el.textContent = formatRemaining(remaining);
+}
+
+function shopRenderSkinOffers() {
+  syncShopState();
+
+  const grid = document.getElementById('skinOffersGrid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  const offers = getSelectedSkinOffers();
+
+  offers.forEach((s) => {
+    const owned = isSkinOwned(s.id);
+
+    const el = document.createElement('div');
+    const rarityClass = `rarity-card-${(s.rarity || 'COMMON').toUpperCase()}`;
+    el.className = `shopItemCard ${rarityClass} ${owned ? 'owned' : ''}`.trim();
+
+    const status = owned ? shopT('ui.owned') : '';
+    const priceText = owned ? '-' : `${s.price} ??`;
+    const btnText = owned ? shopT('ui.owned') : shopT('ui.buy');
+    const btnDisabled = owned;
+
+    const iconHtml = s.image
+      ? `<img class="skinIconImg" src="${s.image}" alt="${s.name}">`
+      : `<span class="skinIconEmoji">${s.icon || ''}</span>`;
+
+    const rarity = (s.rarity || 'COMMON').toUpperCase();
+
+    el.innerHTML = `
+      <div class="itemTopLine">
+        <div class="itemIcon">${iconHtml}</div>
+        <div class="skinMeta">
+          <div class="skinRarity rarity-${rarity}">${rarityT(rarity)}</div>
+          <div class="skinOwned">${status}</div>
+        </div>
+      </div>
+
+      <div class="itemName">${s.name}</div>
+      <div class="itemDesc">${s.desc || ''}</div>
+
+      <div class="itemBottomLine">
+        <div class="itemPrice">${priceText}</div>
+        <button class="itemBtn" ${
+          btnDisabled ? 'disabled' : ''
+        }>${btnText}</button>
+      </div>
+    `;
+
+    const sid = normId(s.id);
+    el.dataset.skinId = sid;
+
+    const btn = el.querySelector('.itemBtn');
+
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      if (owned) return;
+      shopOpenModal({ ...s, type: 'skin' });
+    };
+
+    el.onclick = () => {
+      if (owned) return;
+      shopOpenModal({ ...s, type: 'skin' });
+    };
+
+    grid.appendChild(el);
+  });
+  shopHighlightPendingSkin();
+}
+
+function selectNewSkinOffers() {
+  pickSkinOffersFresh();
+  if (isShopScreenActive()) shopRenderSkinOffers();
+  updateSkinOffersTimer();
+}
+
+function startSkinOffersRotation() {
+  updateSkinOffersTimer();
+
+  const start = getSkinOffersCycleStart();
+  const now = Date.now();
+  const elapsed = now - start;
+  const remaining = SKIN_OFFERS_ROTATE_MS - (elapsed % SKIN_OFFERS_ROTATE_MS);
+
+  clearTimeout(startSkinOffersRotation._align);
+  startSkinOffersRotation._align = setTimeout(() => {
+    selectNewSkinOffers();
+
+    clearInterval(startSkinOffersRotation._swap);
+    startSkinOffersRotation._swap = setInterval(
+      selectNewSkinOffers,
+      SKIN_OFFERS_ROTATE_MS
+    );
+  }, remaining);
+}
+
+function shopRenderSkins() {
+  syncShopState();
+
+  const grid = document.getElementById('skinsGrid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  shopData.skins
+    .filter((s) => s.id !== 'star_breaker')
+    .forEach((s) => {
+      const owned = s.id === 'default' || SHOP.ownedSkins.has(s.id);
+
+      const el = document.createElement('div');
+      const rarity = (s.rarity || 'COMMON').toUpperCase();
+      const rarityClass = `rarity-card-${rarity}`;
+
+      el.className =
+        `shopItemCard ${rarityClass} ${owned ? 'owned' : ''}`.trim();
+
+      const status = owned ? shopT('ui.owned') : '';
+      const priceText = owned ? '-' : `${s.price} ??`;
+
+      const iconHtml = s.image
+        ? `<img class="skinIconImg" src="${s.image}" alt="${s.name}">`
+        : `<span class="skinIconEmoji">${s.icon || ''}</span>`;
+
+      const btnText = owned ? shopT('ui.owned') : shopT('ui.buy');
+      const btnDisabled = owned;
+
+      el.innerHTML = `
+        <div class="itemTopLine">
+          <div class="itemIcon">${iconHtml}</div>
+          <div class="skinMeta">
+            <div class="skinRarity rarity-${rarity}">${rarityT(rarity)}</div>
+            <div class="skinOwned">${status}</div>
+          </div>
+        </div>
+
+        <div class="itemName">${s.name}</div>
+        <div class="itemDesc">${s.desc || ''}</div>
+
+        <div class="itemBottomLine">
+          <div class="itemPrice">${priceText}</div>
+          <button class="itemBtn" ${btnDisabled ? 'disabled' : ''}>${btnText}</button>
+        </div>
+      `;
+
+      const sid = normId(s.id);
+      el.dataset.skinId = sid;
+
+      const btn = el.querySelector('.itemBtn');
+
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (owned) return;
+        shopOpenModal({ ...s, type: 'skin' });
+      };
+
+      el.onclick = () => {
+        if (owned) return;
+        shopOpenModal({ ...s, type: 'skin' });
+      };
+
+      grid.appendChild(el);
+    });
+}
+
+function shopRenderCoins() {
+  const grid = document.getElementById('coinsGrid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  (shopData.coinPacks || []).forEach((p) => {
+    const rarity = (p.rarity || 'COMMON').toUpperCase();
+    const rarityClass = `rarity-card-${rarity}`;
+
+    const el = document.createElement('div');
+    el.className = `shopItemCard ${rarityClass}`.trim();
+
+    el.innerHTML = `
+      <div class="itemTopLine">
+        <div class="itemIcon">${p.icon}</div>
+        <div class="skinMeta">
+          <div class="skinRarity rarity-${rarity}">${rarityT(rarity)}</div>
+        </div>
+      </div>
+
+      <div class="itemName">${p.name}</div>
+      <div class="itemDesc">${p.desc}</div>
+
+      <div class="itemBottomLine">
+        <div class="itemPrice">${formatCashPrice(p.price)}</div>
+        <button class="itemBtn">${shopT('ui.buy')}</button>
+      </div>
+    `;
+
+    const open = () => shopOpenModal({ ...p, type: 'coin' });
+
+    el.querySelector('.itemBtn').onclick = (e) => {
+      e.stopPropagation();
+      open();
+    };
+    el.onclick = open;
+
+    grid.appendChild(el);
+  });
+}
+
+function shopOpenModal(item) {
+  const modal = document.getElementById('shopModal');
+  if (!modal) return;
+
+  modal.classList.remove('hidden');
+
+  const rarity = (item.rarity || 'COMMON').toUpperCase();
+  modal.classList.remove(
+    'modal-COMMON',
+    'modal-RARE',
+    'modal-EPIC',
+    'modal-LEGENDARY'
+  );
+  modal.classList.add(`modal-${rarity}`);
+
+  const box = modal.querySelector('.shopModalBox');
+  if (box) box.onclick = (e) => e.stopPropagation();
+
+  const closeBtn = document.getElementById('shopModalClose');
+  if (closeBtn)
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      shopCloseModal();
+    };
+
+  modal.onclick = () => shopCloseModal();
+
+  const iconEl = document.getElementById('shopModalIcon');
+  const titleEl = document.getElementById('shopModalTitle');
+  const descEl = document.getElementById('shopModalDesc');
+  const priceEl = document.getElementById('shopModalPrice');
+
+  if (iconEl) {
+    iconEl.textContent = '';
+    iconEl.classList.toggle('hasImage', !!item.image);
+
+    if (item.image) {
+      const img = document.createElement('img');
+      img.className = 'shopModalIconImg';
+      img.src = item.image;
+      img.alt = item.name || shopT('ui.item');
+      img.decoding = 'async';
+      iconEl.appendChild(img);
+    } else {
+      iconEl.textContent = item.icon || '??';
+    }
+  }
+  if (titleEl) titleEl.textContent = item.name || shopT('ui.item');
+  if (descEl) descEl.textContent = item.desc || '';
+
+  if (priceEl) {
+    priceEl.textContent =
+      item.type === 'coin' ? formatCashPrice(item.price) : String(item.price ?? 0);
+  }
+
+  const buyBtn = document.getElementById('shopModalBuy');
+  if (!buyBtn) return;
+
+  const skinOwned =
+    item.type === 'skin' &&
+    (item.id === 'default' || item.price === 0 || SHOP.ownedSkins.has(item.id));
+
+  const featuredOwned = item.type === 'featured' && SHOP.ownedFeatured;
+
+  buyBtn.disabled = skinOwned || featuredOwned;
+
+  buyBtn.textContent =
+    item.type === 'coin'
+      ? shopT('ui.buy')
+      : buyBtn.disabled
+        ? shopT('ui.owned')
+        : shopT('ui.buy');
+
+  buyBtn.onclick = () => {
+    if (buyBtn.disabled) return;
+    shopBuy(item);
+  };
+}
+
+function shopCloseModal() {
+  const modal = document.getElementById('shopModal');
+  modal.classList.add('hidden');
+}
+
+function shopBuy(item) {
+  const price = Number(item.price || 0);
+  const c = getCoins();
+  shopT;
+  if (item.type === 'coin') {
+    showToast(shopT('shop.paymentUnavailable'), 'info');
+    shopCloseModal();
+    return;
+  }
+
+  if (price > c) {
+    showToast(shopT('shop.notEnoughCoins'), 'error');
+    return;
+  }
+
+  setCoins(c - price);
+
+  if (item.type === 'skin') {
+    SHOP.ownedSkins.add(item.id);
+    localStorage.setItem('ownedSkins', JSON.stringify([...SHOP.ownedSkins]));
+    showToast(shopT('shop.skinPurchased'), 'success');
+    shopRenderSkins();
+    shopRenderSkinOffers();
+  }
+
+  if (item.type === 'featured') {
+    SHOP.ownedFeatured = true;
+    localStorage.setItem('ownedFeatured', '1');
+    showToast(shopT('shop.featuredUnlocked'), 'success');
+    shopRenderFeatured();
+  }
+
+  if (item.type === 'daily') {
+    showToast(shopT('shop.dealPurchased'), 'success');
+  }
+
+  shopCloseModal();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const lang = localStorage.getItem('language') || 'en';
+
+  syncShopState();
+  shopApplyLangToData(lang);
+
+  shopInit();
+  shopOnEnter();
+
+  initShopBlueScroller();
+  initShopDotsNav();
+
+  const giftBtn = document.getElementById('freeGiftBtn');
+  if (giftBtn) {
+    giftBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      claimDailyGift();
+    });
+  }
+
+  renderDailyGiftCard();
+  updateDailyGiftUI();
+
+  startDailyRotation();
+  startFeaturedRotation();
+  startSkinOffersRotation();
+  syncShopVisibleUiTimer();
+});
+
+function initShopBlueScroller() {
+  const scroller = document.getElementById('shopScroll');
+  const bar = document.getElementById('shopRail');
+  const thumb = document.getElementById('shopScrollIndicator');
+  if (!scroller || !bar || !thumb) return;
+
+  let hideTm = null;
+  let dragging = false;
+  let syncRaf = 0;
+
+  const showBar = () => {
+    bar.classList.add('show');
+    clearTimeout(hideTm);
+    hideTm = setTimeout(() => bar.classList.remove('show'), 900);
+  };
+
+  const syncThumbNow = () => {
+    syncRaf = 0;
+    const view = scroller.clientHeight;
+    const total = scroller.scrollHeight;
+
+    if (total <= view) {
+      thumb.style.height = '0px';
+      return;
+    }
+
+    const track = bar.clientHeight;
+    const minH = 32;
+
+    const h = Math.max(minH, (view / total) * track);
+    const maxTop = track - h;
+
+    const ratio = scroller.scrollTop / (total - view);
+    const top = maxTop * ratio;
+
+    thumb.style.height = `${h}px`;
+    thumb.style.transform = `translateY(${top}px)`;
+  };
+
+  const syncThumb = () => {
+    if (syncRaf) return;
+    syncRaf = requestAnimationFrame(syncThumbNow);
+  };
+
+  const setScrollFromThumbY = (clientY) => {
+    const rect = bar.getBoundingClientRect();
+    const track = rect.height;
+
+    const thumbH = thumb.offsetHeight || 1;
+    const maxTop = track - thumbH;
+
+    let y = clientY - rect.top - thumbH / 2;
+    y = Math.max(0, Math.min(y, maxTop));
+
+    const view = scroller.clientHeight;
+    const total = scroller.scrollHeight;
+
+    const ratio = y / maxTop;
+    scroller.scrollTop = ratio * (total - view);
+  };
+
+  scroller.addEventListener('scroll', syncThumb);
+  scroller.addEventListener('pointerdown', showBar, { passive: true });
+  scroller.addEventListener('pointermove', showBar, { passive: true });
+
+  thumb.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    showBar();
+    thumb.setPointerCapture(e.pointerId);
+    setScrollFromThumbY(e.clientY);
+  });
+
+  thumb.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    setScrollFromThumbY(e.clientY);
+  });
+
+  thumb.addEventListener('pointerup', () => {
+    dragging = false;
+    showBar();
+  });
+
+  window.addEventListener('resize', () => {
+    syncThumb();
+  });
+
+  syncThumb();
+}
+
+function initShopDotsNav() {
+  const scroller = document.getElementById('shopScroll');
+  const dotsWrap = document.getElementById('shopDots');
+  if (!scroller || !dotsWrap) return;
+
+  const targets = Array.from(scroller.querySelectorAll('[data-shop-target]'));
+  if (!targets.length) return;
+
+  dotsWrap.innerHTML = '';
+  let activeRaf = 0;
+  const dots = targets.map((el, i) => {
+    const b = document.createElement('button');
+    b.className = 'shopDot';
+    b.type = 'button';
+    b.setAttribute(
+      'aria-label',
+      el.getAttribute('data-shop-target') || `Section ${i + 1}`
+    );
+
+    b.addEventListener('click', () => {
+      const top = el.offsetTop;
+      scroller.scrollTo({ top, behavior: 'smooth' });
+    });
+
+    dotsWrap.appendChild(b);
+    return b;
+  });
+
+  const setActiveNow = () => {
+    activeRaf = 0;
+    const y = scroller.scrollTop + scroller.clientHeight * 0.25;
+    let best = 0;
+    for (let i = 0; i < targets.length; i++) {
+      if (targets[i].offsetTop <= y) best = i;
+    }
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === best));
+  };
+
+  const setActive = () => {
+    if (activeRaf) return;
+    activeRaf = requestAnimationFrame(setActiveNow);
+  };
+
+  scroller.addEventListener('scroll', setActive, { passive: true });
+  window.addEventListener('resize', setActive);
+  setActive();
+}
+
+function formatRemaining(ms) {
+  let s = Math.max(0, Math.floor(ms / 1000));
+
+  const days = Math.floor(s / 86400);
+  s %= 86400;
+
+  const hours = Math.floor(s / 3600);
+  s %= 3600;
+
+  const minutes = Math.floor(s / 60);
+  const seconds = s % 60;
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+const DAILY_COUNT = 3;
+const K_DAILY_IDS = 'dailySelectedIds';
+const K_DAILY_START = 'dailyCycleStart';
+
+function getDailyCycleStart() {
+  let t = Number(localStorage.getItem(K_DAILY_START) || 0);
+  if (!t) {
+    t = Date.now();
+    localStorage.setItem(K_DAILY_START, String(t));
+  }
+  return t;
+}
+
+function setDailyCycleStart(t) {
+  localStorage.setItem(K_DAILY_START, String(t));
+}
+
+function pickNRandomUnique(arr, n) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(n, copy.length));
+}
+
+function getSelectedDaily() {
+  const pool = shopData.dailyPool || [];
+  const saved = JSON.parse(localStorage.getItem(K_DAILY_IDS) || '[]');
+  const map = new Map(pool.map((x) => [x.id, x]));
+  const selected = saved.map((id) => map.get(id)).filter(Boolean);
+
+  if (selected.length === DAILY_COUNT) return selected;
+
+  const fresh = pickNRandomUnique(pool, DAILY_COUNT);
+  localStorage.setItem(K_DAILY_IDS, JSON.stringify(fresh.map((x) => x.id)));
+  setDailyCycleStart(Date.now());
+  return fresh;
+}
+
+const DAILY_ROTATE_MS = 86400000;
+
+function updateDailyTimer() {
+  if (!isShopScreenActive()) return;
+
+  const el = SHOP_DOM.dailyTimer ||= document.getElementById('dailyTimer');
+  if (!el) return;
+
+  const start = getDailyCycleStart();
+  const now = Date.now();
+
+  const elapsed = now - start;
+  const remaining = DAILY_ROTATE_MS - (elapsed % DAILY_ROTATE_MS);
+
+  el.innerHTML = `${formatRemaining(remaining)}`;
+}
+
+function selectNewDaily() {
+  const pool = shopData.dailyPool || [];
+  const fresh = pickNRandomUnique(pool, DAILY_COUNT);
+
+  localStorage.setItem(K_DAILY_IDS, JSON.stringify(fresh.map((x) => x.id)));
+  setDailyCycleStart(Date.now());
+
+  if (isShopScreenActive()) shopRenderDaily();
+  updateDailyTimer();
+}
+
+function startDailyRotation() {
+  updateDailyTimer();
+
+  const start = getDailyCycleStart();
+  const now = Date.now();
+
+  const elapsed = now - start;
+  const remaining = DAILY_ROTATE_MS - (elapsed % DAILY_ROTATE_MS);
+
+  clearTimeout(startDailyRotation._align);
+  startDailyRotation._align = setTimeout(() => {
+    selectNewDaily();
+
+    clearInterval(startDailyRotation._swap);
+    startDailyRotation._swap = setInterval(selectNewDaily, DAILY_ROTATE_MS);
+  }, remaining);
+}
+
+function shopHighlightPendingSkin() {
+  const scroller = document.getElementById('shopScroll');
+  if (!scroller) return;
+
+  const raw = localStorage.getItem(K_SHOP_HIGHLIGHT_SKIN) || '';
+  const id = normId(raw);
+  if (!id) return;
+
+  localStorage.removeItem(K_SHOP_HIGHLIGHT_SKIN);
+
+  const card = scroller.querySelector(`[data-skin-id="${id}"]`);
+  if (!card) return;
+
+  scroller
+    .querySelectorAll('.shopHighlight')
+    .forEach((x) => x.classList.remove('shopHighlight'));
+
+  const top =
+    card.getBoundingClientRect().top -
+    scroller.getBoundingClientRect().top +
+    scroller.scrollTop;
+
+  scroller.scrollTo({ top: Math.max(0, top - 80), behavior: 'smooth' });
+
+  card.classList.add('shopHighlight');
+  setTimeout(() => card.classList.remove('shopHighlight'), 1800);
+}
+
+function shopOnEnter() {
+  const scroller = document.getElementById('shopScroll');
+  if (!scroller) return;
+
+  syncShopVisibleUiTimer();
+  updateShopVisibleUi();
+
+  const jump = sessionStorage.getItem('shopJumpTo');
+
+  if (jump !== 'skinOffers') {
+    scroller.scrollTo({ top: 0, behavior: 'auto' });
+    return;
+  }
+
+  sessionStorage.removeItem('shopJumpTo');
+
+  const section = scroller.querySelector('[data-shop-target="Skin Offers"]');
+  if (!section) return;
+
+  scroller.scrollTo({
+    top: Math.max(0, section.offsetTop - 12),
+    behavior: 'smooth',
+  });
+
+  const targetId = (sessionStorage.getItem('shopHighlightSkin') || '')
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[_-]+/g, '');
+
+  sessionStorage.removeItem('shopHighlightSkin');
+
+  setTimeout(() => {
+    const card = scroller.querySelector(`[data-skin-id="${targetId}"]`);
+    if (!card) return;
+
+    scroller
+      .querySelectorAll('.shopHighlight')
+      .forEach((x) => x.classList.remove('shopHighlight'));
+    card.classList.add('shopHighlight');
+    setTimeout(() => card.classList.remove('shopHighlight'), 1800);
+  }, 250);
+}
+
+window.addEventListener('orbitvelocity:lobby-page-change', syncShopVisibleUiTimer);
+document.addEventListener('visibilitychange', syncShopVisibleUiTimer);
+
+

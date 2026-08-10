@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>The Game</title>
+  <link rel="stylesheet" href="./cssFiles/game.css" />
+  <link rel="stylesheet" href="./cssFiles/gameTutorial.css" />
+  <link rel="stylesheet" href="./cssFiles/performance.css" />
+  <link rel="icon" href="./images/logo.png" />
+
+  <script defer src="./javaScriptFiles/main/i18n.js"></script>
+  <script defer src="./javaScriptFiles/ads.js"></script>
+  <script defer src="./javaScriptFiles/playGamesConfig.js"></script>
+  <script defer src="./javaScriptFiles/playGames.js"></script>
+  <script defer src="./javaScriptFiles/game/upgradeCards.js"></script>
+  <script defer src="./javaScriptFiles/game/enemies.js"></script>
+  <script defer src="./javaScriptFiles/game/enemySpawnTable.js"></script>
+  <script defer src="./javaScriptFiles/game/pets.js"></script>
+  <script defer src="./javaScriptFiles/game/bosses.js"></script>
+  <script defer src="./javaScriptFiles/game/superAttacks.js"></script>
+  <script defer src="./javaScriptFiles/game/gameTutorial.js"></script>
+  <script defer src="./javaScriptFiles/game/game.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo+Black&family=Bungee&family=Orbitron:wght@600;700;800;900&family=Rubik:wght@500;700;800;900&display=swap"
+    rel="stylesheet">
+</head>
+
+<body data-title-i18n="game.title">
+  <div class="phone-frame">
+    <div class="screen">
+      <div class="notch"></div>
+      <canvas id="gameBoard"></canvas>
+      <div id="victoryScreen" class="overlay hidden">
+        <div class="victoryBox">
+          <h2 data-i18n="game.victory">Victory!</h2>
+          <p id="rewardText"></p>
+
+          <button id="btnReviveAd" class="hidden" data-i18n="game.reviveAd">Watch ad • Golden life</button>
+
+          <div class="victoryButtons">
+            <button id="btnLobby" data-i18n="game.lobby">Lobby</button>
+            <button id="btnNext" data-i18n="game.nextLevel">Next Level</button>
+          </div>
+        </div>
+      </div>
+      <div id="skinRewardPopup" class="overlay hidden">
+        <div class="skinRewardBox">
+          <div class="skinRewardTitle" data-i18n="game.newSkinUnlocked">NEW SKIN UNLOCKED</div>
+          <img id="skinRewardImg" src="" alt="New Skin">
+          <div id="skinRewardName" class="skinRewardName"></div>
+          <button id="skinRewardCollectBtn" class="skinRewardCollectBtn" data-i18n="game.collect">COLLECT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player skins-->
+  <img decoding="async" src="./images/game/sprites/playerSkins/playerSkin1.png" id="player" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/playerSkins/playerRedSkin.png" id="playerRedClassic" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/playerSkins/playerDarkReaper.png" id="playerDarkReaper" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/playerSkins/playerCelestialSakura.png" id="playerCelestialSakura"
+    style="display: none;">
+  <img decoding="async" src="./images/game/sprites/playerSkins/playerGoldenCore.png" id="playerGoldenCore" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/playerSkins/star_breaker.png" id="playerStarBreaker" style="display: none;">
+
+  <!--Player Weapons!-->
+  <img decoding="async" src="./images/game/sprites/missileSprite.png" id="missile" style="display: none;">
+
+  <!--Pet Sprites-->
+  <img decoding="async" src="./images/game/sprites/petSprites/chimboSprite.png" id="chimboSprite" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/petSprites/sirenSprite.png" id="sirenSprite" style="display: none;">
+
+  <!--Enemies Sprites-->
+  <img decoding="async" src="./images/game/sprites/enemiesSprites/Angler1Sprite.png" id="angler1Sprite" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/enemiesSprites/Angler2Sprite.png" id="angler2Sprite" style="display: none;">
+  <img decoding="async" src="./images/game/sprites/enemiesSprites/Angler3Sprite.png" id="angler3Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler4Sprite.png" id="angler4Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler5Sprite.png" id="angler5Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler5miniSprite.png" id="angler5MiniSprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler6Sprite.png" id="angler6Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler6MiniBombSprite.png" id="Angler6MiniBombSprite"
+    style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler7Sprite.png" id="angler7Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler8Sprite.png" id="angler8Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler9Sprite.png" id="angler9Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/angler10Sprite.png" id="angler10Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler11Sprite.png" id="angler11Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/enemiesSprites/Angler12Sprite.png" id="angler12Sprite" style="display: none;">
+
+  <!--Bosses sprites-->
+  <img decoding="async" src="./images/game/sprites/bossesSprites/boss1Sprite.png" id="boss1Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss2Sprite.png" id="boss2Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss3Sprite.png" id="boss3Sprite" style="display: none;">
+  <!--Boss4 Sprites-->
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss4Sprites/boss4PinkSprite.png" id="boss4PinkSprite"
+    style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss4Sprites/boss4GreenSprite.png" id="boss4GreenSprite"
+    style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss4Sprites/boss4PurpleSprite.png" id="boss4PurpleSprite"
+    style="display: none;">
+  <!--Boss4 Sprites end-->
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss5Sprite.png" id="boss5Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss6Sprite.png" id="boss6Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss7Sprite.png" id="boss7Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/Boss8Sprite.png" id="boss8Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/Boss9Sprite.png" id="boss9Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/boss10Sprite.png" id="boss10Sprite" style="display: none;">
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesSprites/BossPortalMasterSprite.png" id="bossPortalMasterSprite"
+    style="display: none;">
+
+  <!--Bosses Bullets Sprites-->
+  <img decoding="async" fetchpriority="low" src="./images/game/sprites/bossesBullets/boss2BulletSprite.png" id="boss2BulletSprite" style="display: none;">
+</body>
+
+</html>

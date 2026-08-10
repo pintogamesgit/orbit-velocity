@@ -1,0 +1,3198 @@
+let currentPageIndex = 2;
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swipeTracking = false;
+let suppressClickUntil = 0;
+let isPageTransitioning = false;
+let isPlanetSliding = false;
+let pageTransitionTimer = null;
+let pageTransitionCleanup = null;
+let pendingPerformanceMode = null;
+
+const MAIN_INPUT_WARMUP_MS = 2000;
+const MAIN_INPUT_WARMUP_PENDING_KEY = 'orbitvelocity.mainInputWarmupPending';
+const MAIN_INPUT_WARMUP_EVENTS = [
+  'pointerdown',
+  'pointermove',
+  'pointerup',
+  'pointercancel',
+  'click',
+  'dblclick',
+  'mousedown',
+  'mouseup',
+  'touchstart',
+  'touchmove',
+  'touchend',
+  'wheel',
+  'keydown',
+  'keyup',
+  'contextmenu',
+];
+let mainInputWarmupUntil = 0;
+
+function isMainInputWarmupActive() {
+  return performance.now() < mainInputWarmupUntil;
+}
+
+function blockMainInputWarmupEvent(e) {
+  if (!isMainInputWarmupActive()) return;
+
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}
+
+function endMainInputWarmup() {
+  mainInputWarmupUntil = 0;
+  MAIN_INPUT_WARMUP_EVENTS.forEach((eventName) => {
+    document.removeEventListener(eventName, blockMainInputWarmupEvent, {
+      capture: true,
+    });
+  });
+}
+
+function startMainInputWarmupIfNeeded() {
+  if (sessionStorage.getItem(MAIN_INPUT_WARMUP_PENDING_KEY) !== '1') return;
+
+  sessionStorage.removeItem(MAIN_INPUT_WARMUP_PENDING_KEY);
+  mainInputWarmupUntil = performance.now() + MAIN_INPUT_WARMUP_MS;
+
+  MAIN_INPUT_WARMUP_EVENTS.forEach((eventName) => {
+    document.addEventListener(eventName, blockMainInputWarmupEvent, {
+      capture: true,
+      passive: false,
+    });
+  });
+
+  window.setTimeout(endMainInputWarmup, MAIN_INPUT_WARMUP_MS + 80);
+}
+
+startMainInputWarmupIfNeeded();
+
+const SWIPE_MIN_DISTANCE = {
+  touch: 34,
+  pen: 34,
+  mouse: 36,
+};
+const SWIPE_AXIS_BIAS = 1.25;
+const SWIPE_SUPPRESS_CLICK_MS = 420;
+const WHEEL_PAGE_THRESHOLD = 42;
+let wheelPageDelta = 0;
+
+// coins x
+let coins = Number(localStorage.getItem('coins')) || 50;
+const maxCoins = 999999;
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) =>
+  Array.from(root.querySelectorAll(selector));
+
+function nextFrame(fn) {
+  requestAnimationFrame(fn);
+}
+
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    if (e.scale && e.scale !== 1) e.preventDefault();
+  },
+  { passive: false }
+);
+
+let lastTouchEnd = 0;
+document.addEventListener(
+  'touchend',
+  (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  },
+  { passive: false }
+);
+
+function rerenderLanguageDependentUI(lang = getLang?.() || 'en') {
+  applyDirection?.(lang);
+
+  nextFrame(() => {
+    window.updatePetUI?.();
+    window.updateSuperEquipUI?.();
+    window.updateLevelsMap?.();
+    window.updateEquipUI?.();
+    window.renderInventoryOverview?.();
+    window.shopRenderFeatured?.();
+    window.shopRenderDaily?.();
+    window.shopRenderSkinOffers?.();
+    window.shopRenderSkins?.();
+    window.shopRenderCoins?.();
+    window.renderDailyGiftCard?.();
+    window.updateDailyGiftUI?.();
+    window.updateFeaturedTimer?.();
+    window.updateDailyTimer?.();
+    window.updateSkinOffersTimer?.();
+    window.shopOnEnter?.();
+  });
+}
+
+const WEAPONS = {
+  laser: {
+    nameKey: 'weapon.laser.name',
+    descKey: 'weapon.laser.desc',
+    price: window.ORBIT_VELOCITY_PRICES.weapons.laser,
+    img: './images/logosImage/weaponImg/leserIcone.png',
+  },
+  missile: {
+    nameKey: 'weapon.missile.name',
+    descKey: 'weapon.missile.desc',
+    price: window.ORBIT_VELOCITY_PRICES.weapons.missile,
+    img: './images/logosImage/weaponImg/missileIcone.png',
+  },
+  triangleShooter: {
+    nameKey: 'weapon.triangleShooter.name',
+    descKey: 'weapon.triangleShooter.desc',
+    price: window.ORBIT_VELOCITY_PRICES.weapons.triangleShooter,
+    img: './images/logosImage/weaponImg/triangleShooter.png',
+  },
+};
+
+const PETS = {
+  dog: {
+    name: 'Chimpo',
+    price: window.ORBIT_VELOCITY_PRICES.pets.dog,
+    icon: '🐶',
+    img: './images/shopAInventoryicons/petsSIcone/ChimpoIcone.png',
+    stats: {
+      LIVES: 3,
+      DAMAGE: 8,
+      SHOOT_RATE: 'pets.rate.every8s',
+    },
+    roleKey: 'pets.role.attack',
+    abilityKey: 'pets.ability.heavyPulse',
+    descriptionKey: 'pets.dog.long',
+  },
+
+  siren: {
+    name: 'Siren',
+    price: window.ORBIT_VELOCITY_PRICES.pets.siren,
+    icon: '🧠',
+    img: './images/shopAInventoryicons/petsSIcone/sirenIcone.png',
+    stats: {
+      LIVES: 2,
+      ABILITY: 'pets.ability.mindControl',
+      EFFECT: 'pets.effect.siren',
+      RATE: 'pets.rate.every8s',
+    },
+    roleKey: 'pets.role.attack',
+    abilityKey: 'pets.ability.massCrash',
+    descriptionKey: 'pets.siren.long',
+  },
+};
+
+const SUPERS = {
+  waveShield: {
+    titleKey: 'super.waveShield.title',
+    descKey: 'super.waveShield.desc',
+    img: './images/logosImage/superLogosImage/waveShield.png',
+    price: window.ORBIT_VELOCITY_PRICES.supers.waveShield,
+    stats: {
+      Duration: '6s',
+      Cooldown: '20s',
+      Reflect: '35%',
+    },
+  },
+
+  superLaser: {
+    titleKey: 'super.superLaser.title',
+    descKey: 'super.superLaser.desc',
+    img: './images/logosImage/superLogosImage/superLaser.png',
+    price: window.ORBIT_VELOCITY_PRICES.supers.superLaser,
+    stats: {
+      Duration: '5s',
+      Damage: '0.5 Per second',
+      Pierce: 'Yes',
+    },
+  },
+};
+
+const STORAGE_KEY_OWNED_SUPERS = 'ownedSupers';
+
+function getOwnedSupers() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY_OWNED_SUPERS) || '[]');
+}
+
+function saveOwnedSupers(arr) {
+  localStorage.setItem(STORAGE_KEY_OWNED_SUPERS, JSON.stringify(arr));
+}
+
+function isSuperOwned(id) {
+  return SUPERS[id]?.price === 0 || getOwnedSupers().includes(id);
+}
+
+const STORAGE_KEY_MAX_LEVEL = 'maxUnlockedLevel';
+const STORAGE_KEY_SUPER = 'equippedSuper';
+const SESSION_KEY_OFFLINE_ENTRY_WARNING_SHOWN = 'offlineEntryWarningShown';
+const DEFAULT_WEAPON = 'laser';
+const DEFAULT_PET = null;
+let centerPlanetVisualKey = '';
+
+let equippedWeapon = localStorage.getItem('equippedWeapon') || DEFAULT_WEAPON;
+let equippedPet = localStorage.getItem('equippedPet') || DEFAULT_PET;
+let audioUnlocked = false;
+let selectedWeaponId = null;
+let pendingSuperBuy = null;
+let lastMusicVolume = Number(localStorage.getItem('musicVolume') ?? 70);
+let lastAudioVolume = Number(localStorage.getItem('audioVolume') ?? 80);
+let musicLoopInterval = null;
+let musicLoopVisibilityBound = false;
+
+function getEquippedWeapon() {
+  return equippedWeapon;
+}
+
+function setEquippedWeapon(id) {
+  equippedWeapon = id;
+  localStorage.setItem('equippedWeapon', id);
+}
+
+function setEquippedPet(id) {
+  equippedPet = id;
+  localStorage.setItem('equippedPet', id ?? '');
+}
+
+function getEquippedPet() {
+  return equippedPet;
+}
+
+if (screen.orientation?.lock) {
+  screen.orientation.lock('portrait').catch(() => {});
+}
+
+const uiClickSound = new Audio(
+  './sounds/backgroundSoundEffect/buttonClick.wav'
+);
+uiClickSound.preload = 'auto';
+
+const equipSound = new Audio(
+  './sounds/backgroundSoundEffect/selectWeaponClick.mp3'
+);
+equipSound.preload = 'auto';
+
+const mapClickSound = new Audio('./sounds/backgroundSoundEffect/mapClick.wav');
+mapClickSound.preload = 'auto';
+
+const music = new Audio('./sounds/backgroundMusics/homeScreen.mp3');
+music.preload = 'auto';
+music.loop = false;
+music.volume = 0.5;
+
+const LOOP_START = 1;
+const LOOP_END = 10;
+const PERFORMANCE_MODE_KEY = 'orbitvelocity.performance.mode';
+const PERFORMANCE_AUTO_TIER_KEY = 'orbitvelocity.performance.autoTier';
+const PERFORMANCE_AUTO_LABEL_KEY = 'orbitvelocity.performance.autoLabel';
+const PERFORMANCE_BENCHMARK_KEY = 'orbitvelocity.performance.benchmark';
+const PERFORMANCE_DEVICE_INFO_KEY = 'orbitvelocity.performance.deviceInfo';
+
+const DOM = {};
+let levelMapVisibilityRaf = 0;
+let levelMapScrollIdleTimer = 0;
+let levelMapThemeRaf = 0;
+let mapClosingTimer = 0;
+let activeMapThemeClass = '';
+let cachedLevelMapNodes = [];
+const MAP_THEME_CLASSES = [
+  'level-gold',
+  'level-black',
+  'level-infinity',
+  'level-yellow',
+  'level-lightBlue',
+  'level-orange',
+  'level-purple',
+  'level-red',
+  'level-pink',
+  'level-green',
+];
+const LEVEL_MAP_NODE_COLOR_CLASSES = [
+  'map-planet-blue',
+  'map-planet-green',
+  'map-planet-pink',
+  'map-planet-red',
+  'map-planet-purple',
+  'map-planet-orange',
+  'map-planet-lightBlue',
+  'map-planet-yellow',
+  'map-planet-black',
+  'map-planet-gold',
+  'map-planet-infinity',
+];
+
+function cacheDom() {
+  DOM.profileSettingsDiv = $('#profileSettingsDiv');
+  DOM.profileSettingsBtn = $('#profileSettingsBtn');
+  DOM.weaponDiv = $('#weaponDiv');
+  DOM.overlay = $('#overlay');
+  DOM.mapDiv = $('#mapDiv');
+  DOM.settingsDiv = $('#settingsDiv');
+  DOM.settingsBtn = $('#settingsBtn');
+  DOM.performanceDiv = $('#performanceDiv');
+  DOM.performanceBtn = $('#performanceBtn');
+  DOM.closePerformanceDiv = $('#closePerformanceDiv');
+  DOM.runBenchmarkBtn = $('#runBenchmarkBtn');
+  DOM.benchmarkResultToast = $('#benchmarkResultToast');
+  DOM.benchmarkResultText = $('#benchmarkResultText');
+  DOM.benchmarkResultOk = $('#benchmarkResultOk');
+  DOM.performanceConfirmDialog = $('#performanceConfirmDialog');
+  DOM.performanceConfirmTitle = $('#performanceConfirmTitle');
+  DOM.performanceConfirmText = $('#performanceConfirmText');
+  DOM.performanceConfirmCancel = $('#performanceConfirmCancel');
+  DOM.performanceConfirmOk = $('#performanceConfirmOk');
+  DOM.socialDiv = $('#socialDiv');
+  DOM.superShopDiv = $('#superShopDiv');
+  DOM.buySuperConfirm = $('#buySuperConfirm');
+  DOM.superInfoDiv = $('.superInfoDiv');
+  DOM.levelsContainer = $('#levelsContainer');
+  DOM.startGameBtn = $('#startGameBtn');
+  DOM.shopBtn = $('[data-target="shopScreen"]');
+  DOM.bottomButtons = $$('.bottomButton[data-target]');
+  DOM.pages = $$('.page');
+  DOM.musicToggle = $('#musicToggle');
+  DOM.audioToggle = $('#audioToggle');
+  DOM.musicVolume = $('#musicVolume');
+  DOM.audioVolume = $('#audioVolume');
+  DOM.performanceModeSelect = $('#performanceModeSelect');
+  DOM.performanceDeviceName = $('#performanceDeviceName');
+  DOM.performanceDeviceBrand = $('#performanceDeviceBrand');
+  DOM.performanceDeviceModel = $('#performanceDeviceModel');
+  DOM.performanceDeviceAndroid = $('#performanceDeviceAndroid');
+  DOM.performanceDeviceHardware = $('#performanceDeviceHardware');
+  DOM.performanceDeviceRenderer = $('#performanceDeviceRenderer');
+  DOM.performanceDeviceSource = $('#performanceDeviceSource');
+  DOM.performanceDeviceCode = $('#performanceDeviceCode');
+  DOM.performanceDeviceProduct = $('#performanceDeviceProduct');
+  DOM.performanceDevicePlatform = $('#performanceDevicePlatform');
+  DOM.performanceDeviceArchitecture = $('#performanceDeviceArchitecture');
+  DOM.performanceDeviceSdk = $('#performanceDeviceSdk');
+  DOM.performanceDeviceVendor = $('#performanceDeviceVendor');
+  DOM.performanceBenchmarkReasons = $('#performanceBenchmarkReasons');
+  DOM.performanceDeviceUa = $('#performanceDeviceUa');
+  DOM.performanceAutoTier = $('#performanceAutoTier');
+  DOM.performanceActiveTier = $('#performanceActiveTier');
+  DOM.performanceScore = $('#performanceScore');
+  DOM.performanceFps = $('#performanceFps');
+  DOM.performanceWorstFrame = $('#performanceWorstFrame');
+  DOM.performanceLastBenchmark = $('#performanceLastBenchmark');
+  DOM.performanceTotalRam = $('#performanceTotalRam');
+  DOM.performanceFreeRam = $('#performanceFreeRam');
+  DOM.performanceCpuCores = $('#performanceCpuCores');
+  DOM.performanceMemoryClass = $('#performanceMemoryClass');
+  DOM.performanceLowMemory = $('#performanceLowMemory');
+  DOM.performanceScreenInfo = $('#performanceScreenInfo');
+  DOM.performanceAbiInfo = $('#performanceAbiInfo');
+  DOM.coinsText = $('#coinsText');
+  DOM.buyWeaponPopup = $('#buyWeaponPopup');
+  DOM.buyConfirmBtn = $('#buyConfirmBtn');
+  DOM.buyCancelBtn = $('#buyCancelBtn');
+  DOM.buyWeaponName = $('#buyWeaponName');
+  DOM.buyWeaponImg = $('#buyWeaponImg');
+  DOM.buyWeaponPrice = $('#buyWeaponPrice');
+  DOM.petShopDiv = $('#petShoopDiv');
+  DOM.petInfoOverlay = $('#petInfoOverlay');
+  DOM.petInfoTitle = $('#petInfoTitle');
+  DOM.petInfoDesc = $('#petInfoDesc');
+  DOM.petInfoStats = $('#petInfoStats');
+  DOM.petInfoLongDesc = $('#petInfoLongDesc');
+  DOM.closePetInfo = $('#closePetInfo');
+  DOM.toast = $('#toast');
+  DOM.superInfoTitle = $('#superInfoTitle');
+  DOM.superInfoDesc = $('#superInfoDesc');
+  DOM.superStats = $('#superStats');
+  DOM.shopCoinsText = $('#shopCoinsText');
+  DOM.offlinePlayModal = $('#offlinePlayModal');
+  DOM.offlinePlayTitle = $('#offlinePlayTitle');
+  DOM.offlinePlayText = $('#offlinePlayText');
+  DOM.offlinePlayList = $('#offlinePlayList');
+  DOM.offlinePlaySafeNote = $('#offlinePlaySafeNote');
+  DOM.offlinePlayQuestion = $('#offlinePlayQuestion');
+  DOM.offlinePlayReload = $('#offlinePlayReload');
+  DOM.offlinePlayContinue = $('#offlinePlayContinue');
+}
+
+const UI = {
+  profile: () => DOM.profileSettingsDiv,
+  profileBtn: () => DOM.profileSettingsBtn,
+  weapon: () => DOM.weaponDiv,
+  overlay: () => DOM.overlay,
+  map: () => DOM.mapDiv,
+};
+
+function playEquipSound() {
+  if (localStorage.getItem('audio') === 'off') return;
+
+  const volume = Number(localStorage.getItem('audioVolume') ?? 80);
+  equipSound.volume = volume / 100;
+  equipSound.currentTime = 0.15;
+  equipSound.play().catch(console.warn);
+}
+
+function playUIClick() {
+  if (localStorage.getItem('audio') === 'off') return;
+
+  const volume = Number(localStorage.getItem('audioVolume') ?? 80);
+  uiClickSound.volume = volume / 100;
+  uiClickSound.currentTime = 0;
+  uiClickSound.play().catch(console.warn);
+}
+
+function playMapClick() {
+  if (localStorage.getItem('audio') === 'off') return;
+
+  const volume = Number(localStorage.getItem('audioVolume') ?? 80);
+  mapClickSound.volume = volume / 100;
+  mapClickSound.currentTime = 0;
+  mapClickSound.play().catch(console.warn);
+}
+
+function getOwnedWeapons() {
+  return JSON.parse(localStorage.getItem('ownedWeapons') || '[]');
+}
+
+function saveOwnedWeapons(arr) {
+  localStorage.setItem('ownedWeapons', JSON.stringify(arr));
+}
+
+function isWeaponOwned(id) {
+  if (id === DEFAULT_WEAPON) return true;
+  return getOwnedWeapons().includes(id);
+}
+
+function getOwnedPets() {
+  return JSON.parse(localStorage.getItem('ownedPets') || '[]');
+}
+
+function saveOwnedPets(pets) {
+  localStorage.setItem('ownedPets', JSON.stringify(pets));
+}
+
+function isPetOwned(id) {
+  return getOwnedPets().includes(id);
+}
+
+function getEquippedSuper() {
+  return localStorage.getItem(STORAGE_KEY_SUPER);
+}
+
+function setEquippedSuper(id) {
+  localStorage.setItem(STORAGE_KEY_SUPER, id);
+}
+
+function ensureEquippedSuper() {
+  const equipped = getEquippedSuper();
+  if (equipped && SUPERS[equipped]) return;
+  setEquippedSuper('superLaser');
+}
+
+function saveCoins() {
+  localStorage.setItem('coins', String(coins));
+}
+
+function loadCoins() {
+  const raw = localStorage.getItem('coins');
+  const n = raw === null ? 50 : Number(raw);
+  coins = Number.isFinite(n) ? n : 50;
+  localStorage.setItem('coins', String(coins));
+  updateCoinsUI();
+}
+
+function updateCoinsUI() {
+  if (DOM.coinsText) DOM.coinsText.textContent = coins;
+  if (DOM.shopCoinsText) DOM.shopCoinsText.textContent = coins;
+}
+
+function trValue(value, lang = getLang?.() || 'en') {
+  return typeof value === 'string' && value.includes('.')
+    ? t(lang, value)
+    : value;
+}
+
+function weaponName(id, lang = getLang?.() || 'en') {
+  const weapon = WEAPONS[id];
+  if (!weapon) return id;
+  return weapon.nameKey ? t(lang, weapon.nameKey) : weapon.name || id;
+}
+
+function petName(id) {
+  return PETS[id]?.name || id;
+}
+
+function grantCoins(amount) {
+  coins = Math.min(maxCoins, getCoins() + amount);
+  saveCoins();
+  window.OrbitVelocityCloud?.markDirty?.();
+  updateCoinsUI();
+  flashCoins();
+}
+
+function flashCoins() {
+  const el = DOM.coinsText;
+  if (!el) return;
+  el.classList.add('coin-flash');
+  clearTimeout(flashCoins.timer);
+  flashCoins.timer = setTimeout(() => el.classList.remove('coin-flash'), 600);
+}
+
+function loadSettings() {
+  if (DOM.musicToggle) {
+    DOM.musicToggle.checked = localStorage.getItem('music') !== 'off';
+  }
+  if (DOM.audioToggle) {
+    DOM.audioToggle.checked = localStorage.getItem('audio') !== 'off';
+  }
+  if (DOM.performanceModeSelect) {
+    DOM.performanceModeSelect.value = getSavedPerformanceMode();
+  }
+  applyPerformanceMode();
+}
+
+function normalizePerformanceTier(value) {
+  if (value === 'high') return 'strong';
+  if (value === 'mid') return 'medium';
+  if (value === 'low' || value === 'medium' || value === 'strong') return value;
+  return 'strong';
+}
+
+function getSavedPerformanceMode() {
+  const saved = localStorage.getItem(PERFORMANCE_MODE_KEY);
+  return saved === 'low' || saved === 'medium' || saved === 'strong' ? saved : 'auto';
+}
+
+function getActivePerformanceTier() {
+  const manual = getSavedPerformanceMode();
+  if (manual !== 'auto') return manual;
+  return normalizePerformanceTier(localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY));
+}
+
+function performanceTierLabel(tier) {
+  const normalized = normalizePerformanceTier(tier);
+  if (normalized === 'low') return 'LOW';
+  if (normalized === 'medium') return 'MID';
+  return 'HIGH';
+}
+
+function performanceTierRank(tier) {
+  const normalized = normalizePerformanceTier(tier);
+  if (normalized === 'low') return 1;
+  if (normalized === 'medium') return 2;
+  return 3;
+}
+
+function getPerformanceModeWarning(nextMode, previousMode = getSavedPerformanceMode()) {
+  if (nextMode === 'auto') return null;
+  const autoTier = normalizePerformanceTier(
+    localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY)
+  );
+  const nextTier = normalizePerformanceTier(nextMode);
+  const previousTier = previousMode === 'auto'
+    ? autoTier
+    : normalizePerformanceTier(previousMode);
+  const autoRank = performanceTierRank(autoTier);
+  const nextRank = performanceTierRank(nextTier);
+  const previousRank = performanceTierRank(previousTier);
+
+  if (nextRank > autoRank) {
+    return {
+      title: 'UNOPTIMIZED MODE',
+      text: `AUTO recommends ${performanceTierLabel(autoTier)}.\n\nAre you sure you want to use ${performanceTierLabel(nextTier)}?\nThis is not the optimized version for your device and may cause unwanted lag or an incorrect gameplay experience.`,
+    };
+  }
+
+  if (nextRank < previousRank) {
+    return {
+      title: 'PERFORMANCE CHANGE',
+      text: 'ARE YOU SURE',
+    };
+  }
+
+  return null;
+}
+
+function savePerformanceModeAndReload(value) {
+  if (value === 'low' || value === 'medium' || value === 'strong') {
+    localStorage.setItem(PERFORMANCE_MODE_KEY, value);
+  } else {
+    localStorage.setItem(PERFORMANCE_MODE_KEY, 'auto');
+  }
+  applyPerformanceMode();
+  if (DOM.performanceConfirmDialog) DOM.performanceConfirmDialog.hidden = true;
+  DOM.performanceDiv?.classList.remove('open');
+  document.body.classList.remove('benchmark-result-open', 'performance-panel-open');
+  window.location.href = 'loadingScreen.html?to=main.html&settingsReload=1';
+}
+
+function openPerformanceConfirmDialog(nextMode, previousMode) {
+  const warning = getPerformanceModeWarning(nextMode, previousMode);
+  if (!warning) {
+    savePerformanceModeAndReload(nextMode);
+    return;
+  }
+
+  pendingPerformanceMode = { nextMode, previousMode };
+  if (DOM.performanceConfirmDialog?.parentElement !== document.body) {
+    document.body.appendChild(DOM.performanceConfirmDialog);
+  }
+  if (DOM.performanceConfirmTitle) DOM.performanceConfirmTitle.textContent = warning.title;
+  if (DOM.performanceConfirmText) DOM.performanceConfirmText.textContent = warning.text;
+  if (DOM.performanceConfirmDialog) {
+    DOM.performanceConfirmDialog.hidden = false;
+    document.body.classList.add('benchmark-result-open');
+  }
+}
+
+function closePerformanceConfirmDialog(confirmed = false) {
+  const pending = pendingPerformanceMode;
+  pendingPerformanceMode = null;
+
+  if (DOM.performanceConfirmDialog) DOM.performanceConfirmDialog.hidden = true;
+  document.body.classList.remove('benchmark-result-open');
+
+  if (!pending) return;
+  if (confirmed) {
+    savePerformanceModeAndReload(pending.nextMode);
+    return;
+  }
+  if (DOM.performanceModeSelect) DOM.performanceModeSelect.value = pending.previousMode;
+}
+
+function readStoredJson(key, fallback = null) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function formatBenchmarkDate(value) {
+  const time = Number(value);
+  if (!Number.isFinite(time) || time <= 0) return 'Never';
+
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(time));
+  } catch {
+    return new Date(time).toLocaleString();
+  }
+}
+
+function getPerformanceDeviceName(info) {
+  if (!info) return 'Unknown';
+  return (
+    [info.manufacturer, info.model].filter(Boolean).join(' ') ||
+    info.model ||
+    info.brand ||
+    info.platform ||
+    'Unknown'
+  );
+}
+
+function formatRamMb(value) {
+  const mb = Number(value);
+  if (!Number.isFinite(mb) || mb <= 0) return 'Unknown';
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+  return `${Math.round(mb)} MB`;
+}
+
+function formatMemoryClass(deviceInfo) {
+  const totalMb = Number(deviceInfo.totalRamMb);
+  const browserGb = Number(deviceInfo.browserDeviceMemoryGb);
+  const gb = Number.isFinite(totalMb) && totalMb > 0
+    ? totalMb / 1024
+    : Number.isFinite(browserGb) && browserGb > 0
+      ? browserGb
+      : 0;
+
+  if (!gb) return 'Unknown';
+  if (gb < 4) return 'LOW RAM';
+  if (gb < 7) return 'MID RAM';
+  return 'HIGH RAM';
+}
+
+function refreshPerformancePanel() {
+  const manualMode = getSavedPerformanceMode();
+  const activeTier = getActivePerformanceTier();
+  const autoTier = normalizePerformanceTier(
+    localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY)
+  );
+  const benchmark = readStoredJson(PERFORMANCE_BENCHMARK_KEY, {});
+  const deviceInfo = readStoredJson(PERFORMANCE_DEVICE_INFO_KEY, {});
+
+  if (DOM.performanceModeSelect) {
+    DOM.performanceModeSelect.value = manualMode;
+  }
+  if (DOM.performanceDeviceName) {
+    DOM.performanceDeviceName.textContent = getPerformanceDeviceName(deviceInfo);
+  }
+  if (DOM.performanceDeviceBrand) {
+    DOM.performanceDeviceBrand.textContent = deviceInfo.brand || deviceInfo.manufacturer || 'Unknown';
+  }
+  if (DOM.performanceDeviceModel) {
+    DOM.performanceDeviceModel.textContent = deviceInfo.model || 'Unknown';
+  }
+  if (DOM.performanceDeviceAndroid) {
+    DOM.performanceDeviceAndroid.textContent =
+      deviceInfo.androidRelease || deviceInfo.release || deviceInfo.sdkInt || deviceInfo.sdk || 'Unknown';
+  }
+  if (DOM.performanceDeviceHardware) {
+    DOM.performanceDeviceHardware.textContent = deviceInfo.hardware || deviceInfo.device || 'Unknown';
+  }
+  if (DOM.performanceDeviceRenderer) {
+    DOM.performanceDeviceRenderer.textContent = deviceInfo.renderer || 'Unknown';
+  }
+  if (DOM.performanceDeviceSource) {
+    DOM.performanceDeviceSource.textContent = deviceInfo.source || 'Unknown';
+  }
+  if (DOM.performanceDeviceCode) {
+    DOM.performanceDeviceCode.textContent = deviceInfo.device || 'Unknown';
+  }
+  if (DOM.performanceDeviceProduct) {
+    DOM.performanceDeviceProduct.textContent = deviceInfo.product || 'Unknown';
+  }
+  if (DOM.performanceDevicePlatform) {
+    DOM.performanceDevicePlatform.textContent = deviceInfo.platform || 'Unknown';
+  }
+  if (DOM.performanceDeviceArchitecture) {
+    DOM.performanceDeviceArchitecture.textContent =
+      [deviceInfo.architecture, deviceInfo.bitness].filter(Boolean).join(' / ') || 'Unknown';
+  }
+  if (DOM.performanceDeviceSdk) {
+    DOM.performanceDeviceSdk.textContent = deviceInfo.sdkInt || deviceInfo.sdk || 'Unknown';
+  }
+  if (DOM.performanceDeviceVendor) {
+    DOM.performanceDeviceVendor.textContent = deviceInfo.vendor || 'Unknown';
+  }
+  if (DOM.performanceBenchmarkReasons) {
+    DOM.performanceBenchmarkReasons.textContent =
+      Array.isArray(benchmark.reasons) && benchmark.reasons.length
+        ? benchmark.reasons.join(' | ')
+        : 'Unknown';
+  }
+  if (DOM.performanceDeviceUa) {
+    const ua = deviceInfo.userAgent || 'Unknown';
+    DOM.performanceDeviceUa.textContent = ua.length > 180 ? `${ua.slice(0, 180)}...` : ua;
+  }
+  if (DOM.performanceAutoTier) {
+    DOM.performanceAutoTier.textContent =
+      localStorage.getItem(PERFORMANCE_AUTO_LABEL_KEY) ||
+      performanceTierLabel(autoTier);
+  }
+  if (DOM.performanceActiveTier) {
+    DOM.performanceActiveTier.textContent =
+      manualMode === 'auto'
+        ? `${performanceTierLabel(activeTier)} (AUTO)`
+        : performanceTierLabel(activeTier);
+  }
+  if (DOM.performanceScore) {
+    DOM.performanceScore.textContent = Number.isFinite(Number(benchmark.score))
+      ? String(benchmark.score)
+      : 'Unknown';
+  }
+  if (DOM.performanceFps) {
+    DOM.performanceFps.textContent = Number.isFinite(Number(benchmark.fps))
+      ? `${Math.round(Number(benchmark.fps))} FPS`
+      : 'Unknown';
+  }
+  if (DOM.performanceWorstFrame) {
+    DOM.performanceWorstFrame.textContent = Number.isFinite(Number(benchmark.worstFrameMs))
+      ? `${Math.round(Number(benchmark.worstFrameMs))}ms`
+      : 'Unknown';
+  }
+  if (DOM.performanceLastBenchmark) {
+    DOM.performanceLastBenchmark.textContent = formatBenchmarkDate(benchmark.savedAt);
+  }
+  if (DOM.performanceTotalRam) {
+    const nativeRam = formatRamMb(deviceInfo.totalRamMb);
+    DOM.performanceTotalRam.textContent =
+      nativeRam !== 'Unknown'
+        ? nativeRam
+        : deviceInfo.browserDeviceMemoryGb
+          ? `${deviceInfo.browserDeviceMemoryGb} GB`
+          : 'Unknown';
+  }
+  if (DOM.performanceFreeRam) {
+    DOM.performanceFreeRam.textContent = formatRamMb(deviceInfo.availableRamMb);
+  }
+  if (DOM.performanceCpuCores) {
+    DOM.performanceCpuCores.textContent =
+      deviceInfo.cpuCores || deviceInfo.hardwareConcurrency || 'Unknown';
+  }
+  if (DOM.performanceMemoryClass) {
+    DOM.performanceMemoryClass.textContent = formatMemoryClass(deviceInfo);
+  }
+  if (DOM.performanceLowMemory) {
+    DOM.performanceLowMemory.textContent =
+      deviceInfo.lowMemory === true ? 'YES' : deviceInfo.lowMemory === false ? 'NO' : 'Unknown';
+  }
+  if (DOM.performanceScreenInfo) {
+    const screenText =
+      deviceInfo.screenWidth && deviceInfo.screenHeight
+        ? `${deviceInfo.screenWidth}x${deviceInfo.screenHeight} @${deviceInfo.devicePixelRatio || 1} DPR`
+        : 'Unknown';
+    DOM.performanceScreenInfo.textContent = screenText;
+  }
+  if (DOM.performanceAbiInfo) {
+    DOM.performanceAbiInfo.textContent = deviceInfo.supportedAbis || 'Unknown';
+  }
+}
+
+function showBenchmarkResultDialog() {
+  const benchmark = readStoredJson(PERFORMANCE_BENCHMARK_KEY, {});
+  const tier = localStorage.getItem(PERFORMANCE_AUTO_LABEL_KEY) ||
+    performanceTierLabel(localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY));
+
+  if (!DOM.benchmarkResultToast || !DOM.benchmarkResultText) return;
+  if (DOM.benchmarkResultToast.parentElement !== document.body) {
+    document.body.appendChild(DOM.benchmarkResultToast);
+  }
+
+  const fps = Number.isFinite(Number(benchmark.fps))
+    ? `${Math.round(Number(benchmark.fps))} FPS`
+    : 'Unknown FPS';
+  const worst = Number.isFinite(Number(benchmark.worstFrameMs))
+    ? `${Math.round(Number(benchmark.worstFrameMs))}ms`
+    : 'Unknown worst frame';
+  const gpu = benchmark.gpuAvailable && Number.isFinite(Number(benchmark.gpuFps))
+    ? `${Math.round(Number(benchmark.gpuFps))} FPS`
+    : 'Unavailable';
+  const score = Number.isFinite(Number(benchmark.score))
+    ? benchmark.score
+    : 'Unknown';
+
+  DOM.benchmarkResultText.textContent = `${tier}\nScore: ${score}\nCanvas: ${fps}\nGPU: ${gpu}\nWorst frame: ${worst}`;
+  DOM.benchmarkResultToast.hidden = false;
+  document.body.classList.add('benchmark-result-open');
+}
+
+function closeBenchmarkResultDialog() {
+  if (DOM.benchmarkResultToast) DOM.benchmarkResultToast.hidden = true;
+  document.body.classList.remove('benchmark-result-open');
+}
+
+function applyPerformanceMode() {
+  const tier = getActivePerformanceTier();
+  document.documentElement.classList.remove('perf-low', 'perf-mid', 'perf-high');
+  document.documentElement.classList.add(
+    tier === 'low' ? 'perf-low' : tier === 'medium' ? 'perf-mid' : 'perf-high'
+  );
+  refreshPerformancePanel();
+}
+
+function loadVolumes() {
+  const musicVal = Number(localStorage.getItem('musicVolume') ?? 70);
+  const audioVal = Number(localStorage.getItem('audioVolume') ?? 80);
+
+  if (DOM.musicVolume) DOM.musicVolume.value = musicVal;
+  if (DOM.audioVolume) DOM.audioVolume.value = audioVal;
+
+  music.volume = musicVal / 100;
+
+  if (DOM.musicToggle && !DOM.musicToggle.checked) {
+    music.pause();
+  }
+}
+
+function startMusicLoopWatcher() {
+  if (document.hidden || music.paused || localStorage.getItem('music') === 'off') {
+    stopMusicLoopWatcher();
+    return;
+  }
+
+  if (musicLoopInterval) return;
+  musicLoopInterval = setInterval(() => {
+    if (document.hidden || music.paused || localStorage.getItem('music') === 'off') {
+      stopMusicLoopWatcher();
+      return;
+    }
+
+    if (music.currentTime >= LOOP_END - 0.05) {
+      music.currentTime = LOOP_START;
+    }
+  }, 120);
+}
+
+function stopMusicLoopWatcher() {
+  if (!musicLoopInterval) return;
+  clearInterval(musicLoopInterval);
+  musicLoopInterval = null;
+}
+
+function bindMusicLoopVisibility() {
+  if (musicLoopVisibilityBound) return;
+  musicLoopVisibilityBound = true;
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopMusicLoopWatcher();
+      return;
+    }
+
+    if (!music.paused && localStorage.getItem('music') !== 'off') {
+      startMusicLoopWatcher();
+    }
+  });
+}
+
+function closeAll() {
+  UI.profile()?.classList.remove('show', 'open');
+  UI.weapon()?.classList.remove('open');
+  UI.overlay()?.classList.remove('show');
+  DOM.settingsDiv?.classList.remove('open');
+  DOM.performanceDiv?.classList.remove('open');
+  document.body.classList.remove('performance-panel-open');
+  DOM.socialDiv?.classList.remove('open');
+  DOM.superShopDiv?.classList.remove('open');
+  DOM.buySuperConfirm?.classList.remove('open');
+  DOM.superInfoDiv?.classList.remove('open');
+
+  const map = UI.map();
+  if (map?.classList.contains('open')) {
+    stopLevelMapVisibilityTracking(false);
+    map.classList.remove('open');
+    map.classList.add('closing');
+    clearTimeout(mapClosingTimer);
+    mapClosingTimer = setTimeout(() => {
+      map.classList.remove('closing');
+      activeMapThemeClass = '';
+      clearVisibleLevelNodes();
+      mapClosingTimer = 0;
+    }, 400);
+  }
+}
+
+function openProfileDiv(e) {
+  e?.stopPropagation();
+
+  const profile = UI.profile();
+  if (!profile) return;
+
+  const isOpen = profile.classList.contains('open');
+  closeAll();
+
+  if (!isOpen) {
+    profile.classList.add('show', 'open');
+  }
+}
+
+function closeBuyWeapon() {
+  DOM.buyWeaponPopup?.classList.remove('open');
+}
+
+function goToLoadoutHighlightWeapon(weaponId) {
+  sessionStorage.setItem('weaponLoadoutHighlight', weaponId);
+  openWeaponDiv();
+}
+
+function openWeaponDiv(e) {
+  e?.stopPropagation();
+  closeAll();
+  UI.weapon()?.classList.add('open');
+  UI.overlay()?.classList.add('show');
+  nextFrame(() => {
+    highlightWeaponInLoadout();
+  });
+}
+
+function closeWeaponDiv(e) {
+  e?.stopPropagation();
+  closeBuyWeapon();
+  UI.weapon()?.classList.remove('open');
+  UI.overlay()?.classList.remove('show');
+}
+
+function updateCenterPlanetByLevel(level) {
+  const planet = document.getElementById('centerPlanet');
+  if (!planet) return;
+
+  let image = './images/centerPlanets/bluePlanet.png';
+  let glow1 = 'rgba(0,180,255,0.28)';
+  let glow2 = 'rgba(70,120,255,0.2)';
+  let glow3 = 'rgba(255,255,255,0.12)';
+
+  if (level >= 91) {
+    image = './images/centerPlanets/goldPlanet.png';
+    glow1 = 'rgba(255,214,44,0.3)';
+    glow2 = 'rgba(255,132,30,0.2)';
+    glow3 = 'rgba(90,180,255,0.13)';
+  } else if (level >= 81) {
+    image = './images/centerPlanets/blackPlanet.png';
+    glow1 = 'rgba(160,170,190,0.22)';
+    glow2 = 'rgba(80,90,120,0.18)';
+    glow3 = 'rgba(120,80,255,0.12)';
+  } else if (level >= 71) {
+    image = './images/centerPlanets/yellowPlanet.png';
+    glow1 = 'rgba(255,244,60,0.28)';
+    glow2 = 'rgba(255,176,38,0.19)';
+    glow3 = 'rgba(90,220,255,0.12)';
+  } else if (level >= 61) {
+    image = './images/centerPlanets/lightBluePlanet.png';
+    glow1 = 'rgba(0,240,255,0.28)';
+    glow2 = 'rgba(70,150,255,0.2)';
+    glow3 = 'rgba(255,255,255,0.12)';
+  } else if (level >= 51) {
+    image = './images/centerPlanets/orangePlanet.png';
+    glow1 = 'rgba(255,140,20,0.28)';
+    glow2 = 'rgba(255,68,52,0.2)';
+    glow3 = 'rgba(80,210,255,0.12)';
+  } else if (level >= 41) {
+    image = './images/centerPlanets/purplePlanet.png';
+    glow1 = 'rgba(180,70,255,0.28)';
+    glow2 = 'rgba(80,100,255,0.2)';
+    glow3 = 'rgba(255,110,220,0.12)';
+  } else if (level >= 31) {
+    image = './images/centerPlanets/redPlanet.png';
+    glow1 = 'rgba(255,44,44,0.28)';
+    glow2 = 'rgba(255,116,40,0.19)';
+    glow3 = 'rgba(150,60,255,0.12)';
+  } else if (level >= 21) {
+    image = './images/centerPlanets/pinkPlanet.png';
+    glow1 = 'rgba(255,64,210,0.28)';
+    glow2 = 'rgba(155,90,255,0.2)';
+    glow3 = 'rgba(90,220,255,0.12)';
+  } else if (level >= 11) {
+    image = './images/centerPlanets/greenPlanet.png';
+    glow1 = 'rgba(0,240,130,0.28)';
+    glow2 = 'rgba(80,210,255,0.18)';
+    glow3 = 'rgba(255,235,120,0.12)';
+  }
+
+  const visualKey = `${image}|${glow1}|${glow2}|${glow3}`;
+  if (visualKey === centerPlanetVisualKey) return;
+  centerPlanetVisualKey = visualKey;
+
+  planet.style.backgroundImage = `url('${image}')`;
+  planet.style.setProperty('--glow1', glow1);
+  planet.style.setProperty('--glow2', glow2);
+  planet.style.setProperty('--glow3', glow3);
+}
+
+const planets = [
+  {
+    name: 'Blue',
+    img: './images/centerPlanets/bluePlanet.png',
+    unlock: 1,
+    color: '0,198,255',
+  },
+  {
+    name: 'Green',
+    img: './images/centerPlanets/greenPlanet.png',
+    unlock: 11,
+    color: '0,255,120',
+  },
+  {
+    name: 'Pink',
+    img: './images/centerPlanets/pinkPlanet.png',
+    unlock: 21,
+    color: '255,0,200',
+  },
+  {
+    name: 'Red',
+    img: './images/centerPlanets/redPlanet.png',
+    unlock: 31,
+    color: '255,55,55',
+  },
+  {
+    name: 'Purple',
+    img: './images/centerPlanets/purplePlanet.png',
+    unlock: 41,
+    color: '180,0,255',
+  },
+  {
+    name: 'Orange',
+    img: './images/centerPlanets/orangePlanet.png',
+    unlock: 51,
+    color: '255,120,20',
+  },
+  {
+    name: 'Light Blue',
+    img: './images/centerPlanets/lightBluePlanet.png',
+    unlock: 61,
+    color: '0,255,255',
+  },
+  {
+    name: 'Yellow',
+    img: './images/centerPlanets/yellowPlanet.png',
+    unlock: 71,
+    color: '255,230,0',
+  },
+  {
+    name: 'Black',
+    img: './images/centerPlanets/blackPlanet.png',
+    unlock: 81,
+    color: '120,120,120',
+  },
+  {
+    name: 'Gold',
+    img: './images/centerPlanets/goldPlanet.png',
+    unlock: 91,
+    color: '255,200,40',
+  },
+];
+
+function applyPlanetTheme(planet) {
+  const box = document.getElementById('planetSelectBox');
+  if (!box || !planet?.color) return;
+
+  box.style.setProperty('--planet-color', planet.color);
+}
+let currentPlanetIndex = 0;
+
+function openPlanetSelect() {
+  document.getElementById('planetSelectModal').classList.add('open');
+
+  const preview = document.getElementById('planetPreview');
+  preview.innerHTML =
+    '<div class="planetSlide active"></div><div class="planetSlide standby"></div>';
+
+  const firstSlide = preview.querySelector('.planetSlide');
+  firstSlide.style.backgroundImage = `url('${planets[currentPlanetIndex].img}')`;
+
+  const planet = planets[currentPlanetIndex];
+  applyPlanetTheme(planet);
+  const start = planet.unlock;
+  const end = Math.min(start + 9, 100);
+
+  document.getElementById('planetName').textContent = t(getLang(), 'planet.levelRange', {
+    start,
+    end,
+  });
+
+  document
+    .getElementById('planetSelectBox')
+    ?.style.setProperty('--planet-color', planet.color);
+}
+
+function closePlanetSelect() {
+  document.getElementById('planetSelectModal').classList.remove('open');
+}
+
+function renderPlanet(direction = 'right') {
+  if (isPlanetSliding) return;
+  isPlanetSliding = true;
+
+  const planet = planets[currentPlanetIndex];
+  applyPlanetTheme(planet);
+  const box = document.getElementById('planetSelectBox');
+  box?.style.setProperty('--planet-color', planet.color);
+  const preview = document.getElementById('planetPreview');
+  const name = document.getElementById('planetName');
+  if (!preview || !name) {
+    isPlanetSliding = false;
+    return;
+  }
+
+  const start = planet.unlock;
+  const end = Math.min(planet.unlock + 9, 100);
+
+  name.textContent = t(getLang(), 'planet.levelRange', { start, end });
+
+  if (preview.querySelectorAll('.planetSlide').length < 2) {
+    preview.innerHTML =
+      '<div class="planetSlide active"></div><div class="planetSlide standby"></div>';
+  }
+
+  const activeSlide =
+    preview.querySelector('.planetSlide.active') || preview.querySelector('.planetSlide');
+  const nextSlide =
+    preview.querySelector('.planetSlide.standby') ||
+    preview.querySelector('.planetSlide:not(.active)');
+  if (!activeSlide || !nextSlide) {
+    isPlanetSliding = false;
+    return;
+  }
+
+  const incomingClass = direction === 'right' ? 'incoming-right' : 'incoming-left';
+  const outgoingClass = direction === 'right' ? 'outgoing-left' : 'outgoing-right';
+
+  activeSlide.className = 'planetSlide active';
+  nextSlide.className = `planetSlide standby ${incomingClass}`;
+  nextSlide.style.backgroundImage = `url('${planet.img}')`;
+
+  void nextSlide.offsetWidth;
+
+  requestAnimationFrame(() => {
+    activeSlide.classList.add(outgoingClass);
+    nextSlide.classList.add('active');
+    nextSlide.classList.remove('standby', incomingClass);
+
+    setTimeout(() => {
+      activeSlide.className = 'planetSlide standby';
+      nextSlide.className = 'planetSlide active';
+      isPlanetSliding = false;
+    }, 260);
+  });
+}
+
+function nextPlanet() {
+  if (isPlanetSliding) return;
+
+  currentPlanetIndex++;
+  if (currentPlanetIndex >= planets.length) currentPlanetIndex = 0;
+
+  renderPlanet('right');
+}
+
+function prevPlanet() {
+  if (isPlanetSliding) return;
+
+  currentPlanetIndex--;
+  if (currentPlanetIndex < 0) currentPlanetIndex = planets.length - 1;
+
+  renderPlanet('left');
+}
+
+window.openWeaponDiv = openWeaponDiv;
+window.closeWeaponDiv = closeWeaponDiv;
+
+function setMapThemeByLevel(maxLevel) {
+  const map = UI.map();
+  if (!map) return;
+
+  const themeClass = getMapThemeClassByLevel(maxLevel);
+  if (themeClass === activeMapThemeClass) return;
+
+  map.classList.remove(...MAP_THEME_CLASSES);
+  activeMapThemeClass = themeClass;
+  if (themeClass) map.classList.add(themeClass);
+}
+
+function getMapThemeClassByLevel(level) {
+  if (level >= 101) return 'level-infinity';
+  if (level >= 91) return 'level-gold';
+  if (level >= 81) return 'level-black';
+  if (level >= 71) return 'level-yellow';
+  if (level >= 61) return 'level-lightBlue';
+  if (level >= 51) return 'level-orange';
+  if (level >= 41) return 'level-purple';
+  if (level >= 31) return 'level-red';
+  if (level >= 21) return 'level-pink';
+  if (level >= 11) return 'level-green';
+  return '';
+}
+
+function getLevelFromMapNode(node) {
+  if (!node || node.classList.contains('is-hidden')) return 0;
+  if (node.classList.contains('infinity-level-node')) return 101;
+
+  const btn = $('.levelsBtn', node);
+  return Number(btn?.textContent.trim()) || 0;
+}
+
+function cacheLevelMapNodes() {
+  const levels = DOM.levelsContainer;
+  cachedLevelMapNodes = levels
+    ? $$('.levelNode', levels)
+        .map((node) => {
+          const top = node.offsetTop;
+          const height = node.offsetHeight;
+          return {
+            node,
+            level: getLevelFromMapNode(node),
+            top,
+            bottom: top + height,
+            center: top + height * 0.5,
+            visible: node.classList.contains('map-node-visible'),
+          };
+        })
+        .filter((item) => item.level)
+    : [];
+}
+
+function isTouchLevelMapMode() {
+  return window.matchMedia?.('(pointer: coarse), (max-width: 700px)')?.matches;
+}
+
+function updateMapThemeForScroll() {
+  const map = UI.map();
+  const levels = DOM.levelsContainer;
+  if (!map || !levels || !map.classList.contains('open')) return;
+
+  if (!cachedLevelMapNodes.length) cacheLevelMapNodes();
+
+  const viewportCenter = levels.scrollTop + levels.clientHeight * 0.5;
+  let closestLevel = 0;
+  let closestDistance = Infinity;
+
+  cachedLevelMapNodes.forEach(({ level, center }) => {
+    const distance = Math.abs(center - viewportCenter);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestLevel = level;
+    }
+  });
+
+  if (!closestLevel) return;
+  setMapThemeByLevel(closestLevel);
+}
+
+function getLevelMapNodeColorClass(level) {
+  if (level > 100) return 'map-planet-infinity';
+  if (level >= 91) return 'map-planet-gold';
+  if (level >= 81) return 'map-planet-black';
+  if (level >= 71) return 'map-planet-yellow';
+  if (level >= 61) return 'map-planet-lightBlue';
+  if (level >= 51) return 'map-planet-orange';
+  if (level >= 41) return 'map-planet-purple';
+  if (level >= 31) return 'map-planet-red';
+  if (level >= 21) return 'map-planet-pink';
+  if (level >= 11) return 'map-planet-green';
+  return 'map-planet-blue';
+}
+
+function clearVisibleLevelNodes() {
+  cachedLevelMapNodes.forEach((item) => {
+    item.visible = false;
+    item.node.classList.remove('map-node-visible');
+  });
+}
+
+function updateVisibleLevelNodes() {
+  const map = UI.map();
+  const levels = DOM.levelsContainer;
+  if (!map || !levels || !map.classList.contains('open')) {
+    clearVisibleLevelNodes();
+    return;
+  }
+
+  if (isTouchLevelMapMode()) {
+    updateMapThemeForScroll();
+    return;
+  }
+
+  const viewportTop = levels.scrollTop;
+  const viewportBottom = viewportTop + levels.clientHeight;
+  const buffer = Math.max(180, levels.clientHeight * 0.35);
+
+  cachedLevelMapNodes.forEach((item) => {
+    const { node } = item;
+    if (node.classList.contains('is-hidden')) {
+      if (item.visible) {
+        item.visible = false;
+        node.classList.remove('map-node-visible');
+      }
+      return;
+    }
+
+    const isVisible =
+      item.bottom >= viewportTop - buffer &&
+      item.top <= viewportBottom + buffer;
+
+    if (item.visible !== isVisible) {
+      item.visible = isVisible;
+      node.classList.toggle('map-node-visible', isVisible);
+    }
+  });
+
+  updateMapThemeForScroll();
+}
+
+function hydrateVisibleLevelNodes() {
+  const levels = DOM.levelsContainer;
+  if (!levels) return;
+
+  const viewportTop = levels.scrollTop;
+  const viewportBottom = viewportTop + levels.clientHeight;
+  const buffer = Math.max(180, levels.clientHeight * 0.35);
+
+  cachedLevelMapNodes.forEach((item) => {
+    const { node } = item;
+    if (node.classList.contains('is-hidden')) {
+      if (item.visible) {
+        item.visible = false;
+        node.classList.remove('map-node-visible');
+      }
+      return;
+    }
+
+    const isVisible =
+      item.bottom >= viewportTop - buffer &&
+      item.top <= viewportBottom + buffer;
+
+    if (item.visible !== isVisible) {
+      item.visible = isVisible;
+      node.classList.toggle('map-node-visible', isVisible);
+    }
+  });
+}
+
+function scheduleVisibleLevelNodesUpdate() {
+  if (!levelMapThemeRaf) {
+    levelMapThemeRaf = requestAnimationFrame(() => {
+      levelMapThemeRaf = 0;
+      updateMapThemeForScroll();
+    });
+  }
+
+  clearTimeout(levelMapScrollIdleTimer);
+  levelMapScrollIdleTimer = setTimeout(() => {
+    cancelAnimationFrame(levelMapVisibilityRaf);
+    levelMapVisibilityRaf = requestAnimationFrame(updateVisibleLevelNodes);
+  }, 120);
+}
+
+function startLevelMapVisibilityTracking() {
+  const levels = DOM.levelsContainer;
+  if (!levels) return;
+
+  stopLevelMapVisibilityTracking(false);
+  cacheLevelMapNodes();
+  hydrateVisibleLevelNodes();
+  levels.addEventListener('scroll', scheduleVisibleLevelNodesUpdate, { passive: true });
+  window.addEventListener('resize', scheduleVisibleLevelNodesUpdate);
+
+  scheduleVisibleLevelNodesUpdate();
+}
+
+function stopLevelMapVisibilityTracking(clearNodes = true) {
+  const levels = DOM.levelsContainer;
+
+  cancelAnimationFrame(levelMapVisibilityRaf);
+  levelMapVisibilityRaf = 0;
+  cancelAnimationFrame(levelMapThemeRaf);
+  levelMapThemeRaf = 0;
+  clearTimeout(levelMapScrollIdleTimer);
+  levelMapScrollIdleTimer = 0;
+
+  levels?.removeEventListener('scroll', scheduleVisibleLevelNodesUpdate);
+  window.removeEventListener('resize', scheduleVisibleLevelNodesUpdate);
+  if (clearNodes) {
+    activeMapThemeClass = '';
+    clearVisibleLevelNodes();
+  }
+}
+
+function openMap(e) {
+  e?.stopPropagation();
+  playMapClick();
+  closeAll();
+
+  const map = UI.map();
+  const levels = DOM.levelsContainer;
+  if (!map || !levels) return;
+
+  clearTimeout(mapClosingTimer);
+  mapClosingTimer = 0;
+  map.classList.remove('closing');
+
+  updateLevelsMap();
+
+  const maxLevel = getMaxUnlockedLevel();
+  activeMapThemeClass = '';
+  setMapThemeByLevel(maxLevel);
+  cacheLevelMapNodes();
+
+  const currentNode = $('.levelNode.current-node', levels);
+  if (currentNode) {
+    const target = currentNode.offsetTop - levels.clientHeight * 0.35;
+    const maxScroll = levels.scrollHeight - levels.clientHeight;
+    const safeTop = Math.max(0, Math.min(target, maxScroll));
+
+    levels.scrollTop = safeTop;
+  }
+
+  hydrateVisibleLevelNodes();
+
+  requestAnimationFrame(() => {
+    map.classList.add('open');
+    startLevelMapVisibilityTracking();
+  });
+}
+
+function closeMap(e) {
+  e?.stopPropagation();
+  const map = UI.map();
+  if (!map) return;
+
+  stopLevelMapVisibilityTracking(false);
+  map.classList.remove('open');
+  map.classList.add('closing');
+  clearTimeout(mapClosingTimer);
+  mapClosingTimer = setTimeout(() => {
+    map.classList.remove('closing');
+    activeMapThemeClass = '';
+    clearVisibleLevelNodes();
+    mapClosingTimer = 0;
+  }, 1000);
+}
+
+function playStartGameAnimation() {
+  const btn = DOM.startGameBtn;
+  if (!btn) return;
+  if (btn.classList.contains('pressed')) return;
+
+  btn.classList.add('pressed');
+  clearTimeout(playStartGameAnimation.timer);
+  playStartGameAnimation.timer = setTimeout(() => {
+    btn.classList.remove('pressed');
+  }, 600);
+}
+
+function getOfflinePlayCopy() {
+  const lang = getLang?.() || 'en';
+
+  if (lang === 'he') {
+    return {
+      title: 'מצב ללא אינטרנט',
+      text: 'אין כרגע חיבור לאינטרנט. אפשר להמשיך לשחק, אבל חלק מהאפשרויות האונליין יהיו מוגבלות.',
+      items: [
+        'שמירה בענן וסנכרון עם Google Play Games עלולים לחכות עד שהחיבור יחזור.',
+        'הישגים, לוחות תוצאות ועדכוני פרופיל לא תמיד יתרעננו מיד.',
+        'פרסומות תגמול והצעות אונליין בחנות עלולות לא להיות זמינות.',
+      ],
+      question: 'אתה בטוח שאתה רוצה לשחק במצב הזה?',
+      reload: 'RELOAD',
+      continue: 'CONTINUE',
+    };
+  }
+
+  if (lang === 'es') {
+    return {
+      title: 'Modo sin internet',
+      text: 'No hay conexion a internet. Puedes jugar, pero algunas funciones online estaran limitadas.',
+      items: [
+        'El guardado en la nube y Google Play Games pueden esperar hasta que vuelvas a conectarte.',
+        'Logros, marcadores y cambios de perfil pueden no actualizarse de inmediato.',
+        'Los anuncios con recompensa y ofertas online de la tienda pueden no estar disponibles.',
+      ],
+      question: 'Seguro que quieres jugar en este modo?',
+      reload: 'RELOAD',
+      continue: 'CONTINUE',
+    };
+  }
+
+  return {
+    title: 'Offline mode',
+    text: 'You are not connected to the internet. You can still play, but online features may be limited.',
+    items: [
+      'Cloud save and Google Play Games sync may wait until you reconnect.',
+      'Achievements, leaderboards, and profile updates may not refresh right away.',
+      'Rewarded ads and online shop offers may be unavailable.',
+    ],
+    question: 'Are you sure you want to keep playing offline?',
+    reload: 'RELOAD',
+    continue: 'CONTINUE',
+  };
+}
+
+function getConnectionIssueCopy() {
+  const lang = getLang?.() || 'en';
+
+  if (lang === 'he') {
+    return {
+      title: 'בעיית חיבור',
+      text: 'אנחנו מתקשים להתחבר לאינטרנט. אפשר להמשיך לשחק, אבל חלק מהאפשרויות המקוונות עלולות לא לעבוד כמו שצריך.',
+      items: [
+        'שירותי Google Play Games, שמירות בענן וסנכרון חשבון עלולים להתעכב עד שהחיבור יחזור.',
+        'חלק מהגופנים ותוכן משחק מקוון עלולים לא להיטען כמו שצריך.',
+        'רכישות בתוך האפליקציה ועסקאות אחרות עלולות להיכשל או להישאר לא מושלמות בזמן שהחיבור לא יציב.',
+      ],
+      safeNote:
+        'ההתקדמות נשמרת כאן ותסתנכרן לענן של Google כשהחיבור יחזור. המשך לשחק במכשיר הזה כדי לא לאבד אותה.',
+      question: 'להמשיך לשחק עם חיבור מוגבל?',
+      reload: 'RETRY',
+      continue: 'CONTINUE',
+    };
+  }
+
+  if (lang === 'es') {
+    return {
+      title: 'Problema de conexion',
+      text: 'Tenemos problemas para conectarnos a internet. Puedes seguir jugando, pero algunas funciones online podrian no funcionar correctamente.',
+      items: [
+        'Los servicios de Google Play Games, guardados en la nube y sincronizacion de cuenta podrian retrasarse hasta que se restaure la conexion.',
+        'Algunas fuentes y contenido online del juego podrian no cargarse correctamente.',
+        'Las compras dentro de la app y otras transacciones podrian fallar o quedar incompletas mientras la conexion sea inestable.',
+      ],
+      safeNote:
+        'Tu progreso se guarda aqui y se sincronizara con Google Cloud cuando vuelvas online. Sigue en este dispositivo para no perderlo.',
+      question: 'Continuar jugando con conectividad limitada?',
+      reload: 'RETRY',
+      continue: 'CONTINUE',
+    };
+  }
+
+  return {
+    title: 'CONNECTION ISSUE',
+    text: 'We’re having trouble connecting to the internet. You can continue playing, but some online features may not work correctly.',
+    items: [
+      'Google Play Games services, cloud saves, and account syncing may be delayed until your connection is restored.',
+      'Some fonts and online game content may not load correctly.',
+      'In-app purchases and other transactions may fail or remain incomplete while the connection is unstable.',
+    ],
+    safeNote:
+      "Your progress is saved here and will sync to Google Cloud when you're back online. Keep playing this device to avoid losing it.",
+    question: 'Continue playing with limited connectivity?',
+    reload: 'RETRY',
+    continue: 'CONTINUE',
+  };
+}
+
+function renderOfflinePlayModal() {
+  const copy = getConnectionIssueCopy();
+
+  if (DOM.offlinePlayTitle) DOM.offlinePlayTitle.textContent = copy.title;
+  if (DOM.offlinePlayText) DOM.offlinePlayText.textContent = copy.text;
+  if (DOM.offlinePlaySafeNote) DOM.offlinePlaySafeNote.textContent = copy.safeNote;
+  if (DOM.offlinePlayQuestion) DOM.offlinePlayQuestion.textContent = copy.question;
+  if (DOM.offlinePlayReload) DOM.offlinePlayReload.textContent = copy.reload;
+  if (DOM.offlinePlayContinue) DOM.offlinePlayContinue.textContent = copy.continue;
+  if (DOM.offlinePlayList) {
+    DOM.offlinePlayList.innerHTML = copy.items.map((item) => `<li>${item}</li>`).join('');
+  }
+}
+
+function closeOfflinePlayModal() {
+  DOM.offlinePlayModal?.classList.add('hidden');
+}
+
+function continueToGameTarget(target) {
+  location.href = `loadingScreen.html?to=${encodeURIComponent(target)}`;
+}
+
+function showOfflinePlayModalOnMainEntry() {
+  if (navigator.onLine !== false) return;
+  if (sessionStorage.getItem(SESSION_KEY_OFFLINE_ENTRY_WARNING_SHOWN) === '1') {
+    return;
+  }
+
+  sessionStorage.setItem(SESSION_KEY_OFFLINE_ENTRY_WARNING_SHOWN, '1');
+  renderOfflinePlayModal();
+  DOM.offlinePlayModal?.classList.remove('hidden');
+}
+
+function goToLevel(level) {
+  const maxUnlocked = getMaxUnlockedLevel();
+
+  if (level > maxUnlocked) {
+    showLockedLevel(level);
+    return;
+  }
+
+  const target = `game.html?level=${level}`;
+  continueToGameTarget(target);
+}
+
+function goToInfinityWorld() {
+  if (getMaxUnlockedLevel() < 101) {
+    playUIClick();
+    alert('Infinity World is locked!\nComplete level 100 first.');
+    return;
+  }
+
+  const target = 'game.html?mode=infinity';
+  continueToGameTarget(target);
+}
+
+function openBuyWeapon(id) {
+  const weapon = WEAPONS[id];
+  if (!weapon) return;
+
+  selectedWeaponId = id;
+
+  const lang = getLang();
+  const buyBtn = DOM.buyConfirmBtn;
+
+  if (DOM.buyWeaponName) DOM.buyWeaponName.textContent = weaponName(id, lang);
+  if (DOM.buyWeaponImg) DOM.buyWeaponImg.src = weapon.img;
+
+  const owned = id === DEFAULT_WEAPON || isWeaponOwned(id);
+
+  if (DOM.buyWeaponPrice) {
+    DOM.buyWeaponPrice.textContent = owned
+      ? id === DEFAULT_WEAPON
+        ? t(lang, 'ui.free')
+        : t(lang, 'ui.owned')
+      : String(weapon.price);
+  }
+
+  if (buyBtn) {
+    if (owned) {
+      const equipped = getEquippedWeapon() === id;
+      buyBtn.textContent = equipped
+        ? t(lang, 'ui.equipped')
+        : t(lang, 'ui.equip');
+      buyBtn.disabled = equipped;
+      buyBtn.className = equipped ? 'owned' : '';
+    } else {
+      buyBtn.textContent = t(lang, 'ui.buy');
+      buyBtn.disabled = false;
+      buyBtn.className = '';
+    }
+  }
+
+  DOM.buyWeaponPopup?.classList.add('open');
+}
+
+function updateEquipUI() {
+  const lang = getLang();
+
+  $$('.weaponItem').forEach((item) => {
+    const id = item.dataset.weapon;
+    const btn = $('.equipBtn', item);
+    if (!btn) return;
+
+    if (id !== DEFAULT_WEAPON && !isWeaponOwned(id)) {
+      btn.textContent = t(lang, 'ui.locked');
+      btn.disabled = true;
+      btn.classList.add('locked');
+      btn.classList.remove('equipped');
+      return;
+    }
+
+    if (id === getEquippedWeapon()) {
+      btn.textContent = t(lang, 'ui.equipped');
+      btn.disabled = true;
+      btn.classList.add('equipped');
+      btn.classList.remove('locked');
+      return;
+    }
+
+    btn.textContent = t(lang, 'ui.equip');
+    btn.disabled = false;
+    btn.classList.remove('equipped', 'locked');
+  });
+}
+
+function equipWeapon(id) {
+  if (id !== DEFAULT_WEAPON && !isWeaponOwned(id)) return;
+  if (getEquippedWeapon() === id) return;
+
+  playEquipSound();
+  setEquippedWeapon(id);
+  updateEquipUI();
+}
+
+function equipWeaponFromInventory(id) {
+  if (!isWeaponOwned(id)) return;
+  if (getEquippedWeapon() === id) return;
+
+  playEquipSound();
+  setEquippedWeapon(id);
+  updateEquipUI();
+  openInv('weapons');
+}
+
+function openPetShop() {
+  DOM.petShopDiv?.classList.remove('hidden');
+}
+
+function closePetShop() {
+  DOM.petShopDiv?.classList.add('hidden');
+}
+
+function buyPet(id) {
+  const pet = PETS[id];
+  if (!pet) return;
+
+  const lang = getLang();
+
+  if (isPetOwned(id)) {
+    if (getEquippedPet() !== id) {
+      setEquippedPet(id);
+      playEquipSound();
+    }
+    updatePetUI();
+    renderInventoryOverview?.();
+    return;
+  }
+
+  if (coins < pet.price) {
+    showToast(t(lang, 'toast.noCoins'), 'error');
+    return;
+  }
+
+  coins -= pet.price;
+  saveCoins();
+  updateCoinsUI();
+
+  const owned = getOwnedPets();
+  owned.push(id);
+  saveOwnedPets(owned);
+
+  setEquippedPet(id);
+  playEquipSound();
+  updatePetUI();
+  renderInventoryOverview?.();
+
+  showToast(t(lang, 'toast.boughtEquipped', { name: petName(id) }), 'success');
+
+  const card = $(`.petCard[data-pet="${id}"]`);
+  if (card) {
+    card.classList.add('purchasedFx');
+    setTimeout(() => card.classList.remove('purchasedFx'), 600);
+  }
+}
+
+function equipPet(id) {
+  if (!isPetOwned(id)) return;
+  setEquippedPet(id);
+  updatePetUI();
+}
+
+function toggleEquipPet(id) {
+  if (!isPetOwned(id)) return;
+
+  if (getEquippedPet() === id) {
+    setEquippedPet(null);
+  } else {
+    setEquippedPet(id);
+  }
+
+  updatePetUI();
+}
+
+function updatePetUI() {
+  const lang = getLang();
+
+  $$('.petCard').forEach((card) => {
+    const id = card.dataset.pet;
+    const btn = $('.petBuyBtn', card);
+    const price = $('.petPrice', card);
+    if (!btn || !price) return;
+
+    if (!isPetOwned(id)) {
+      btn.textContent = t(lang, 'ui.buy');
+      btn.className = 'petBuyBtn';
+      price.textContent = `${PETS[id].price} 🪙`;
+      return;
+    }
+
+    price.textContent = '';
+
+    if (getEquippedPet() === id) {
+      btn.textContent = t(lang, 'pets.unequip');
+      btn.className = 'petBuyBtn equipped';
+    } else {
+      btn.textContent = t(lang, 'pets.equip');
+      btn.className = 'petBuyBtn';
+    }
+  });
+}
+
+function closePetInfo() {
+  DOM.petInfoOverlay?.classList.add('hidden');
+}
+
+function addPetStat(label, value) {
+  const lang = getLang();
+  const li = document.createElement('li');
+
+  const spanLabel = document.createElement('span');
+  spanLabel.className = 'statLabel';
+  spanLabel.textContent = t(lang, `pets.stat.${label}`);
+
+  const spanValue = document.createElement('span');
+  spanValue.className = 'statValue';
+  spanValue.textContent = trValue(value, lang);
+
+  li.appendChild(spanLabel);
+  li.appendChild(spanValue);
+
+  DOM.petInfoStats?.appendChild(li);
+}
+
+function openPetInfo(petKey) {
+  const pet = PETS[petKey];
+  if (!pet) return;
+
+  const lang = getLang();
+
+  if (DOM.petInfoTitle) {
+    DOM.petInfoTitle.textContent = t(lang, 'pets.info', { name: pet.name });
+  }
+
+  if (DOM.petInfoDesc) {
+    DOM.petInfoDesc.textContent = t(lang, `pets.${petKey}.short`, {});
+  }
+
+  if (DOM.petInfoStats) {
+    DOM.petInfoStats.textContent = '';
+    const fragment = document.createDocumentFragment();
+
+    Object.entries(pet.stats).forEach(([label, value]) => {
+      const li = document.createElement('li');
+
+      const spanLabel = document.createElement('span');
+      spanLabel.className = 'statLabel';
+      spanLabel.textContent = t(lang, `pets.stat.${label}`);
+
+      const spanValue = document.createElement('span');
+      spanValue.className = 'statValue';
+      spanValue.textContent = trValue(value, lang);
+
+      li.appendChild(spanLabel);
+      li.appendChild(spanValue);
+      fragment.appendChild(li);
+    });
+
+    DOM.petInfoStats.appendChild(fragment);
+  }
+
+  if (DOM.petInfoLongDesc) {
+    DOM.petInfoLongDesc.textContent = t(lang, `pets.${petKey}.long`, {});
+  }
+
+  DOM.petInfoOverlay?.classList.remove('hidden');
+}
+
+function toggleSuperShop(e) {
+  e?.stopPropagation();
+  closeAll();
+  DOM.superShopDiv?.classList.add('open');
+  updateSuperEquipUI();
+}
+
+function closeSuperShop() {
+  DOM.superShopDiv?.classList.remove('open');
+}
+
+function renderSuperInfo(key) {
+  const data = SUPERS[key];
+  if (
+    !data ||
+    !DOM.superInfoDiv ||
+    !DOM.superInfoTitle ||
+    !DOM.superInfoDesc ||
+    !DOM.superStats
+  )
+    return;
+
+  const lang = getLang();
+  DOM.superInfoTitle.textContent = t(lang, data.titleKey);
+  DOM.superInfoDesc.textContent = t(lang, data.descKey);
+  DOM.superStats.textContent = '';
+
+  const fragment = document.createDocumentFragment();
+  Object.entries(data.stats).forEach(([label, value]) => {
+    const row = document.createElement('div');
+    row.className = 'statRow';
+
+    const statLabel = document.createElement('span');
+    statLabel.className = 'statLabel';
+    statLabel.textContent = t(lang, `super.stat.${label}`);
+
+    const statValue = document.createElement('span');
+    statValue.className = 'statValue';
+    statValue.textContent = value;
+
+    row.appendChild(statLabel);
+    row.appendChild(statValue);
+    fragment.appendChild(row);
+  });
+
+  DOM.superStats.appendChild(fragment);
+  DOM.superInfoDiv.classList.add('open');
+}
+
+function closeSuperInfo() {
+  DOM.superInfoDiv?.classList.remove('open');
+}
+
+function updateSuperEquipUI() {
+  ensureEquippedSuper();
+
+  const lang = getLang();
+  const equipped = getEquippedSuper();
+
+  $$('.superCard').forEach((card) => {
+    const id = card.dataset.super;
+    const btn = $('.superEquipBtn', card);
+    if (!btn || !SUPERS[id]) return;
+
+    const label = $('.label', btn);
+    if (!label) return;
+
+    if (!isSuperOwned(id)) {
+      label.textContent = `${t(lang, 'ui.buy')} (${SUPERS[id].price} 🪙)`;
+      btn.className = 'superEquipBtn buy';
+      btn.disabled = false;
+      return;
+    }
+
+    if (equipped === id) {
+      label.textContent = t(lang, 'ui.equipped');
+      btn.className = 'superEquipBtn equipped';
+      btn.disabled = true;
+      return;
+    }
+
+    label.textContent = t(lang, 'ui.equip');
+    btn.className = 'superEquipBtn';
+    btn.disabled = false;
+  });
+}
+
+function buySuper(id) {
+  const superData = SUPERS[id];
+  if (!superData) return;
+
+  if (coins < superData.price) {
+  showToast(t(getLang(), 'toast.noCoins'), 'error');
+    return;
+  }
+
+  coins -= superData.price;
+  saveCoins();
+  updateCoinsUI();
+
+  const owned = getOwnedSupers();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    saveOwnedSupers(owned);
+  }
+
+  setEquippedSuper(id);
+  playEquipSound();
+  showToast(t(getLang(), 'toast.superPurchased'), 'success');
+  updateSuperEquipUI();
+}
+
+function equipSuper(id) {
+  if (getEquippedSuper() === id) return;
+  setEquippedSuper(id);
+  updateSuperEquipUI();
+}
+
+function openBuySuperConfirm(id) {
+  pendingSuperBuy = id;
+  DOM.buySuperConfirm?.classList.add('open');
+}
+
+function confirmBuySuper() {
+  coins = Number(localStorage.getItem('coins')) || 0;
+  if (!pendingSuperBuy) return;
+
+  const data = SUPERS[pendingSuperBuy];
+  if (!data) return;
+
+  if (coins < data.price) {
+    showToast(t(getLang(), 'toast.noCoins'), 'error');
+    return;
+  }
+
+  coins -= data.price;
+  saveCoins();
+  updateCoinsUI();
+
+  const owned = getOwnedSupers();
+  if (!owned.includes(pendingSuperBuy)) {
+    owned.push(pendingSuperBuy);
+    saveOwnedSupers(owned);
+  }
+
+  setEquippedSuper(pendingSuperBuy);
+  playEquipSound();
+  showToast(t(getLang(), 'toast.superUnlocked'), 'success');
+
+  pendingSuperBuy = null;
+  closeBuySuperConfirm();
+  updateSuperEquipUI();
+}
+
+function closeBuySuperConfirm() {
+  pendingSuperBuy = null;
+  DOM.buySuperConfirm?.classList.remove('open');
+}
+
+function showToast(message, type = '') {
+  const toast = DOM.toast;
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 1600);
+}
+
+function getMaxUnlockedLevel() {
+  return Number(localStorage.getItem(STORAGE_KEY_MAX_LEVEL)) || 1;
+}
+
+function unlockNextLevel(currentLevel) {
+  const maxLevel = getMaxUnlockedLevel();
+  if (currentLevel >= maxLevel) {
+    localStorage.setItem(STORAGE_KEY_MAX_LEVEL, currentLevel + 1);
+    window.OrbitVelocityCloud?.markDirty?.();
+  }
+}
+
+function showLockedLevel(level) {
+  playUIClick();
+  alert(t(getLang(), 'game.lockedLevel', { level }));
+}
+
+function updateLevelsMap() {
+  const maxLevel = getMaxUnlockedLevel();
+
+  $$('.infinity-level-node').forEach((node) => {
+    const isLocked = maxLevel < 101;
+    node.classList.remove(...LEVEL_MAP_NODE_COLOR_CLASSES);
+    node.classList.add('map-planet-infinity');
+    node.classList.toggle('is-hidden', isLocked);
+    node.classList.toggle('locked', isLocked);
+    node.classList.toggle('current-node', !isLocked);
+    $('.infinity-level-btn', node)?.classList.toggle('locked-btn', isLocked);
+  });
+
+  $$('.levelNode').forEach((node) => {
+    const btn = $('.levelsBtn', node);
+    if (!btn) return;
+    if (node.classList.contains('infinity-level-node')) return;
+
+    const level = Number(btn.textContent.trim());
+    const isBossLevel = level % 10 === 0;
+    const isLocked = level > maxLevel;
+    const isCurrent = level === maxLevel;
+
+    node.classList.remove(...LEVEL_MAP_NODE_COLOR_CLASSES);
+    node.classList.add(getLevelMapNodeColorClass(level));
+
+    node.classList.remove(
+      'locked',
+      'current-node',
+      'animated-node',
+      'boss-node',
+      'boss-current'
+    );
+    btn.classList.remove(
+      'locked-btn',
+      'current',
+      'boss-btn',
+      'boss-current-btn',
+      'boss-locked-btn'
+    );
+
+    if (isLocked) {
+      node.classList.add('locked');
+      btn.classList.add('locked-btn');
+    }
+
+    if (isCurrent) {
+      node.classList.add('current-node');
+      btn.classList.add('current');
+    }
+
+    if (!isLocked && level >= maxLevel - 2 && level <= maxLevel) {
+      node.classList.add('animated-node');
+    }
+
+    if (isBossLevel) {
+      node.classList.add('boss-node');
+      btn.classList.add('boss-btn');
+
+      if (isLocked) btn.classList.add('boss-locked-btn');
+      if (isCurrent) {
+        node.classList.add('boss-current');
+        btn.classList.add('boss-current-btn');
+      }
+    }
+  });
+}
+
+function toggleSocial(e) {
+  e?.stopPropagation();
+
+  const socialDiv = DOM.socialDiv;
+  if (!socialDiv) return;
+
+  const isOpen = socialDiv.classList.contains('open');
+  closeAll();
+
+  if (!isOpen) {
+    socialDiv.classList.add('open');
+  }
+}
+
+function enterFullscreen() {
+  const isMobile =
+    window.matchMedia?.('(pointer: coarse)').matches ||
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (!isMobile) return;
+
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+}
+
+function highlightPetInShop() {
+  const raw = sessionStorage.getItem('petShopHighlight');
+  if (!raw) return;
+
+  const key = String(raw);
+  const card = $(`.petCard[data-pet="${key}"]`);
+  if (!card) return;
+
+  $$('.petCard.petHighlight').forEach((x) =>
+    x.classList.remove('petHighlight')
+  );
+
+  card.classList.add('petHighlight');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => card.classList.remove('petHighlight'), 1800);
+  sessionStorage.removeItem('petShopHighlight');
+}
+
+function highlightWeaponInLoadout() {
+  const id = sessionStorage.getItem('weaponLoadoutHighlight');
+  if (!id) return;
+
+  const list = DOM.weaponDiv;
+  const item = $(`.weaponItem[data-weapon="${id}"]`);
+
+  if (!list || !item) {
+    sessionStorage.removeItem('weaponLoadoutHighlight');
+    return;
+  }
+
+  $$('.weaponItem.weaponHighlight').forEach((x) =>
+    x.classList.remove('weaponHighlight')
+  );
+
+  const iconBtn = $('.upgradeWeapon', item);
+  if (!iconBtn) return;
+
+  $$('.upgradeWeapon.weaponHighlight').forEach((x) =>
+    x.classList.remove('weaponHighlight')
+  );
+
+  iconBtn.classList.add('weaponHighlight');
+
+  const itemTop = item.offsetTop;
+  const targetTop = itemTop - list.clientHeight / 2 + item.clientHeight / 2;
+
+  list.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+
+  setTimeout(() => iconBtn.classList.remove('weaponHighlight'), 1100);
+  sessionStorage.removeItem('weaponLoadoutHighlight');
+}
+
+function handleGlobalPointerDown(e) {
+  const unlockAttempt = !audioUnlocked;
+
+  if (unlockAttempt) {
+    e.stopImmediatePropagation();
+    uiClickSound.volume = 0;
+    uiClickSound
+      .play()
+      .then(() => {
+        uiClickSound.pause();
+        uiClickSound.currentTime = 0;
+        audioUnlocked = true;
+      })
+      .catch(() => {
+        audioUnlocked = false;
+      });
+  }
+
+  const btn = e.target.closest('button');
+  if (!btn || !audioUnlocked) return;
+
+  const s = btn.dataset.sound;
+
+  if (s === 'equip') {
+    playEquipSound();
+    return;
+  }
+
+  if (s === 'map') {
+    playMapClick();
+    return;
+  }
+
+  playUIClick();
+}
+
+function handleGlobalClick(e) {
+  if (shouldSuppressClick()) {
+    e.preventDefault();
+    e.stopPropagation();
+    return;
+  }
+  if (
+    UI.profile()?.contains(e.target) ||
+    UI.profileBtn()?.contains(e.target) ||
+    UI.weapon()?.contains(e.target) ||
+    UI.overlay()?.contains(e.target) ||
+    e.target.closest('.InventoryBtn') ||
+    e.target.closest('#startGameBtn') ||
+    e.target.closest('#settingsDiv') ||
+    e.target.closest('#settingsBtn') ||
+    e.target.closest('#superShopDiv') ||
+    e.target.closest('.superInfoDiv') ||
+    e.target.closest('#buySuperConfirm') ||
+    e.target.closest('#offlinePlayModal')
+  ) {
+    return;
+  }
+
+  if (e.target.closest('.closePetShopBtn')) {
+    e.stopPropagation();
+    closePetShop();
+    return;
+  }
+
+  const superShop = DOM.superShopDiv;
+  if (superShop?.classList.contains('open') && !superShop.contains(e.target)) {
+    superShop.classList.remove('open');
+  }
+
+  closeAll();
+}
+
+function getPageOrder() {
+  return DOM.bottomButtons || [];
+}
+
+function getCurrentPageIndex() {
+  return currentPageIndex;
+}
+
+function setActiveBottomButton(index) {
+  const buttons = getPageOrder();
+  buttons.forEach((btn, i) => {
+    btn.classList.toggle('active', i === index);
+    if (i === index) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
+  });
+}
+
+function setActivePageImmediate(index) {
+  const buttons = getPageOrder();
+  const targetId = buttons[index]?.dataset.target;
+  if (!targetId) return;
+
+  DOM.pages.forEach((page) => {
+    page.classList.remove(
+      'active',
+      'enter-left',
+      'enter-right',
+      'exit-left',
+      'exit-right'
+    );
+    page.style.transition = 'none';
+  });
+
+  const targetPage = document.getElementById(targetId);
+  targetPage?.classList.add('active');
+  notifyLobbyPageChanged(targetId);
+
+  requestAnimationFrame(() => {
+    DOM.pages.forEach((page) => {
+      page.style.transition = '';
+    });
+  });
+}
+
+function resetInactivePagesWithoutAnimation(activePage) {
+  DOM.pages.forEach((page) => {
+    if (page === activePage) return;
+    page.style.transition = 'none';
+    page.classList.remove(
+      'active',
+      'enter-left',
+      'enter-right',
+      'exit-left',
+      'exit-right'
+    );
+  });
+
+  void document.body.offsetWidth;
+
+  requestAnimationFrame(() => {
+    DOM.pages.forEach((page) => {
+      page.style.transition = '';
+    });
+  });
+}
+
+function finishPageTransition(nextPage) {
+  if (pageTransitionTimer) {
+    clearTimeout(pageTransitionTimer);
+    pageTransitionTimer = null;
+  }
+
+  if (pageTransitionCleanup) {
+    pageTransitionCleanup();
+    pageTransitionCleanup = null;
+  }
+
+  resetInactivePagesWithoutAnimation(nextPage);
+  nextPage.classList.remove('enter-left', 'enter-right', 'exit-left', 'exit-right');
+  nextPage.classList.add('active');
+  notifyLobbyPageChanged(nextPage.id);
+  document.body.classList.remove('page-transitioning');
+  isPageTransitioning = false;
+}
+
+function notifyLobbyPageChanged(targetId) {
+  if (!targetId) return;
+  window.dispatchEvent(
+    new CustomEvent('orbitvelocity:lobby-page-change', {
+      detail: { targetId },
+    })
+  );
+}
+
+function finishCurrentPageTransitionNow() {
+  const buttons = getPageOrder();
+  const activeId = buttons[currentPageIndex]?.dataset.target;
+  const activePage = activeId ? document.getElementById(activeId) : null;
+  if (!activePage) return;
+
+  if (pageTransitionTimer) {
+    clearTimeout(pageTransitionTimer);
+    pageTransitionTimer = null;
+  }
+  if (pageTransitionCleanup) {
+    pageTransitionCleanup();
+    pageTransitionCleanup = null;
+  }
+
+  finishPageTransition(activePage);
+}
+
+function goToPageByIndex(index) {
+  const buttons = getPageOrder();
+  if (!buttons.length) return;
+
+  if (isPageTransitioning) {
+    finishCurrentPageTransitionNow();
+  }
+
+  const safeIndex = Math.max(0, Math.min(index, buttons.length - 1));
+  const current = currentPageIndex;
+
+  if (safeIndex === current) return;
+
+  const currentId = buttons[current]?.dataset.target;
+  const targetId = buttons[safeIndex]?.dataset.target;
+  if (!currentId || !targetId) return;
+
+  const currentPage = document.getElementById(currentId);
+  const nextPage = document.getElementById(targetId);
+
+  if (!currentPage || !nextPage || currentPage === nextPage) return;
+
+  isPageTransitioning = true;
+  document.body.classList.add('page-transitioning');
+  if (pageTransitionTimer) {
+    clearTimeout(pageTransitionTimer);
+    pageTransitionTimer = null;
+  }
+  if (pageTransitionCleanup) {
+    pageTransitionCleanup();
+    pageTransitionCleanup = null;
+  }
+
+  const movingRight = safeIndex > current;
+
+  DOM.pages.forEach((p) => {
+    p.classList.remove(
+      'enter-left',
+      'enter-right',
+      'exit-left',
+      'exit-right'
+    );
+    if (p !== currentPage && p !== nextPage) {
+      p.classList.remove('active');
+    }
+  });
+
+  currentPageIndex = safeIndex;
+  setActiveBottomButton(safeIndex);
+
+  nextPage.classList.add(movingRight ? 'enter-right' : 'enter-left');
+  nextPage.classList.add('active');
+
+  void nextPage.offsetWidth;
+
+  currentPage.classList.add(movingRight ? 'exit-left' : 'exit-right');
+  nextPage.classList.remove(movingRight ? 'enter-right' : 'enter-left');
+
+  const finishTransition = () => finishPageTransition(nextPage);
+  const onTransitionEnd = (event) => {
+    if (event.target !== nextPage || event.propertyName !== 'transform') return;
+    finishTransition();
+  };
+
+  nextPage.addEventListener('transitionend', onTransitionEnd);
+  pageTransitionCleanup = () => {
+    nextPage.removeEventListener('transitionend', onTransitionEnd);
+  };
+
+  pageTransitionTimer = setTimeout(() => {
+    finishTransition();
+  }, 720);
+
+  if (targetId === 'shopScreen') {
+    nextFrame(() => {
+      window.shopOnEnter?.();
+    });
+  }
+
+  if (targetId === 'inventoryScreen') {
+    nextFrame(() => {
+      window.renderInventoryOverview?.();
+    });
+  }
+}
+function goToAdjacentPage(direction) {
+  const current = getCurrentPageIndex();
+  goToPageByIndex(current + direction);
+}
+
+function getPageSwipeDirection(dx) {
+  const isRTL = document.documentElement.dir === 'rtl' || document.body.dir === 'rtl';
+  const direction = dx < 0 ? 1 : -1;
+  return isRTL ? -direction : direction;
+}
+
+function getPageWheelDirection(e, dominantDelta) {
+  const isRTL = document.documentElement.dir === 'rtl' || document.body.dir === 'rtl';
+  const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+  const direction = dominantDelta > 0 ? 1 : -1;
+  return isRTL && isHorizontal ? -direction : direction;
+}
+
+function shouldIgnoreSwipeStart(target) {
+  if (target.closest('.bottomButton[data-target]')) return true;
+
+  const scrollable = target.closest(
+    '#shopScroll, #levelsContainer, .invWrap, .invModalGrid, .cardsRow, [data-no-page-wheel], [data-no-page-swipe]'
+  );
+
+  if (
+    scrollable &&
+    (scrollable.scrollHeight > scrollable.clientHeight ||
+      scrollable.scrollWidth > scrollable.clientWidth)
+  ) {
+    return true;
+  }
+
+  return !!target.closest(
+    '#mapDiv, #weaponDiv, #buyWeaponPopup, #settingsDiv, #performanceDiv, #profileSettingsDiv, #socialDiv, #superShopDiv, #buySuperConfirm, #invModal, #shopModal, #petInfoOverlay, #petShoopDiv, input, textarea, select'
+  );
+}
+
+function getSwipeMinDistance(pointerType) {
+  return SWIPE_MIN_DISTANCE[pointerType] || SWIPE_MIN_DISTANCE.touch;
+}
+
+function isSwipeReady(absX, absY, pointerType) {
+  return (
+    absX >= getSwipeMinDistance(pointerType) &&
+    absX >= Math.max(10, absY * SWIPE_AXIS_BIAS)
+  );
+}
+
+function shouldIgnoreWheelNavigation(target) {
+  if (shouldIgnoreSwipeStart(target)) return true;
+
+  const scrollable = target.closest(
+    '#shopScroll, #levelsContainer, .invWrap, .invModalGrid, .cardsRow, [data-no-page-wheel]'
+  );
+
+  if (!scrollable) return false;
+
+  return scrollable.scrollHeight > scrollable.clientHeight ||
+    scrollable.scrollWidth > scrollable.clientWidth;
+}
+
+function bindSwipeNavigation() {
+  const screenEl = document.querySelector('.screen');
+  if (!screenEl) return;
+
+  let isPointerDown = false;
+  let pointerType = '';
+  let pointerId = null;
+  let swipeConsumed = false;
+  let swipeAxis = null;
+
+  screenEl.addEventListener('pointerdown', (e) => {
+    if (isPageTransitioning) return;
+    if (shouldIgnoreSwipeStart(e.target)) return;
+    if (!e.isPrimary) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    isPointerDown = true;
+    swipeTracking = true;
+    pointerType = e.pointerType;
+    pointerId = e.pointerId;
+    swipeStartX = e.clientX;
+    swipeStartY = e.clientY;
+    swipeConsumed = false;
+    swipeAxis = null;
+
+    if (e.pointerType !== 'mouse' && screenEl.setPointerCapture) {
+      try {
+        screenEl.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    }
+  });
+
+  screenEl.addEventListener('pointermove', (e) => {
+    if (!isPointerDown || !swipeTracking) return;
+    if (!e.isPrimary) return;
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+
+    const dx = e.clientX - swipeStartX;
+    const dy = e.clientY - swipeStartY;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (!swipeAxis && Math.max(absX, absY) >= 12) {
+      if (absX >= absY * SWIPE_AXIS_BIAS) {
+        swipeAxis = 'x';
+      } else if (absY >= absX * SWIPE_AXIS_BIAS) {
+        swipeAxis = 'y';
+      }
+    }
+
+    if (swipeAxis === 'y') return;
+
+    if (isSwipeReady(absX, absY, pointerType)) {
+      swipeConsumed = true;
+      suppressClickUntil = Date.now() + SWIPE_SUPPRESS_CLICK_MS;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+    }
+  });
+
+  screenEl.addEventListener('pointerup', (e) => {
+    if (!isPointerDown || !swipeTracking) return;
+    if (!e.isPrimary) return;
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+
+    isPointerDown = false;
+    swipeTracking = false;
+
+    const dx = e.clientX - swipeStartX;
+    const dy = e.clientY - swipeStartY;
+
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (!isSwipeReady(absX, absY, pointerType)) {
+      if (screenEl.releasePointerCapture && pointerId !== null) {
+        try {
+          screenEl.releasePointerCapture(pointerId);
+        } catch (_) {}
+      }
+
+      pointerType = '';
+      pointerId = null;
+      swipeConsumed = false;
+      swipeAxis = null;
+      return;
+    }
+    swipeConsumed = true;
+    suppressClickUntil = Date.now() + SWIPE_SUPPRESS_CLICK_MS;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+
+    goToAdjacentPage(getPageSwipeDirection(dx));
+
+    if (screenEl.releasePointerCapture && pointerId !== null) {
+      try {
+        screenEl.releasePointerCapture(pointerId);
+      } catch (_) {}
+    }
+
+    pointerType = '';
+    pointerId = null;
+    swipeConsumed = false;
+    swipeAxis = null;
+  });
+
+  screenEl.addEventListener('pointercancel', () => {
+    if (screenEl.releasePointerCapture && pointerId !== null) {
+      try {
+        screenEl.releasePointerCapture(pointerId);
+      } catch (_) {}
+    }
+
+    isPointerDown = false;
+    swipeTracking = false;
+    pointerType = '';
+    pointerId = null;
+    swipeConsumed = false;
+    swipeAxis = null;
+  });
+
+  screenEl.addEventListener('pointerleave', () => {
+    if (pointerType === 'mouse') {
+      if (screenEl.releasePointerCapture && pointerId !== null) {
+        try {
+          screenEl.releasePointerCapture(pointerId);
+        } catch (_) {}
+      }
+
+      isPointerDown = false;
+      swipeTracking = false;
+      pointerType = '';
+      pointerId = null;
+      swipeConsumed = false;
+      swipeAxis = null;
+    }
+  });
+
+  screenEl.addEventListener(
+    'wheel',
+    (e) => {
+      if (isPageTransitioning) return;
+      if (shouldIgnoreWheelNavigation(e.target)) return;
+
+      const dominantDelta =
+        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.abs(dominantDelta) < 2) return;
+
+      wheelPageDelta += dominantDelta;
+      if (Math.abs(wheelPageDelta) < WHEEL_PAGE_THRESHOLD) {
+        return;
+      }
+
+      e.preventDefault();
+      goToAdjacentPage(getPageWheelDirection(e, wheelPageDelta));
+      wheelPageDelta = 0;
+    },
+    { passive: false }
+  );
+}
+
+function shouldSuppressClick() {
+  return Date.now() < suppressClickUntil;
+}
+
+function suppressSwipeClick(e) {
+  if (!shouldSuppressClick()) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation?.();
+}
+
+function handleDelegatedClicks(e) {
+  if (shouldSuppressClick()) {
+    e.preventDefault();
+    e.stopPropagation();
+    return;
+  }
+  const bottomBtn = e.target.closest('.bottomButton[data-target]');
+  if (bottomBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const index = DOM.bottomButtons.indexOf(bottomBtn);
+    if (index >= 0) goToPageByIndex(index);
+    return;
+  }
+  const petCard = e.target.closest('.petCard');
+  const petBtn = e.target.closest('.petBuyBtn');
+  if (petCard) {
+    const petId = petCard.dataset.pet;
+    if (petBtn) {
+      e.stopPropagation();
+      if (!isPetOwned(petId)) buyPet(petId);
+      else toggleEquipPet(petId);
+      return;
+    }
+
+    openPetInfo(petId);
+    return;
+  }
+
+  const selectSuperBtn = e.target.closest('.selectSuperBtn');
+  if (selectSuperBtn) {
+    e.stopPropagation();
+    const card = selectSuperBtn.closest('.superCard');
+    const key = card?.dataset.super;
+    if (key) renderSuperInfo(key);
+    return;
+  }
+
+  const superEquipBtn = e.target.closest('.superEquipBtn');
+  if (superEquipBtn) {
+    e.stopPropagation();
+    const card = superEquipBtn.closest('.superCard');
+    const id = card?.dataset.super;
+    if (!id) return;
+
+    if (!isSuperOwned(id)) {
+      openBuySuperConfirm(id);
+      return;
+    }
+
+    if (getEquippedSuper() !== id) {
+      equipSuper(id);
+    }
+  }
+}
+
+function bindEvents() {
+  document.addEventListener('pointerdown', handleGlobalPointerDown, {
+    capture: true,
+  });
+  document.addEventListener('click', suppressSwipeClick, true);
+  document.addEventListener('click', handleGlobalClick);
+  document.addEventListener('click', handleDelegatedClicks);
+
+  DOM.settingsDiv?.addEventListener('click', (e) => e.stopPropagation());
+  DOM.superInfoDiv?.addEventListener('click', (e) => e.stopPropagation());
+
+  DOM.startGameBtn?.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    playStartGameAnimation();
+  });
+
+  DOM.startGameBtn?.addEventListener('pointerup', (e) => {
+    e.stopPropagation();
+    openMap(e);
+  });
+
+  DOM.shopBtn?.addEventListener('click', () => {
+    nextFrame(() => {
+      if (typeof shopOnEnter === 'function') {
+        shopOnEnter();
+      }
+    });
+  });
+
+  DOM.musicToggle?.addEventListener('change', () => {
+    if (!DOM.musicToggle.checked) {
+      lastMusicVolume = Number(DOM.musicVolume?.value) || 70;
+      music.pause();
+      music.volume = 0;
+
+      if (DOM.musicVolume) DOM.musicVolume.value = 0;
+      localStorage.setItem('musicVolume', 0);
+      localStorage.setItem('music', 'off');
+      stopMusicLoopWatcher();
+    } else {
+      const restore = lastMusicVolume || 70;
+      music.volume = restore / 100;
+      music.play().then(startMusicLoopWatcher).catch(() => {});
+
+      if (DOM.musicVolume) DOM.musicVolume.value = restore;
+      localStorage.setItem('musicVolume', restore);
+      localStorage.setItem('music', 'on');
+    }
+  });
+
+  DOM.audioToggle?.addEventListener('change', () => {
+    if (!DOM.audioToggle.checked) {
+      lastAudioVolume = Number(DOM.audioVolume?.value) || lastAudioVolume || 80;
+      if (DOM.audioVolume) DOM.audioVolume.value = 0;
+      localStorage.setItem('audioVolume', 0);
+      localStorage.setItem('audio', 'off');
+    } else {
+      const restore = lastAudioVolume || 80;
+      if (DOM.audioVolume) DOM.audioVolume.value = restore;
+      localStorage.setItem('audioVolume', restore);
+      localStorage.setItem('audio', 'on');
+    }
+  });
+
+  DOM.performanceBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    refreshPerformancePanel();
+    DOM.settingsDiv?.classList.remove('open');
+    DOM.performanceDiv?.classList.add('open');
+    document.body.classList.add('performance-panel-open');
+  });
+
+  DOM.closePerformanceDiv?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    DOM.performanceDiv?.classList.remove('open');
+    document.body.classList.remove('performance-panel-open');
+  });
+
+  DOM.performanceDiv?.addEventListener('click', (e) => e.stopPropagation());
+
+  DOM.runBenchmarkBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.location.href = 'loadingScreen.html?to=main.html&benchmark=1';
+  });
+
+  DOM.benchmarkResultOk?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeBenchmarkResultDialog();
+  });
+
+  DOM.performanceConfirmCancel?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePerformanceConfirmDialog(false);
+  });
+
+  DOM.performanceConfirmOk?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePerformanceConfirmDialog(true);
+  });
+
+  DOM.performanceConfirmDialog?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (e.target === DOM.performanceConfirmDialog) {
+      closePerformanceConfirmDialog(false);
+    }
+  });
+
+  DOM.performanceModeSelect?.addEventListener('change', () => {
+    const value = DOM.performanceModeSelect.value;
+    const previousMode = getSavedPerformanceMode();
+    openPerformanceConfirmDialog(value, previousMode);
+  });
+
+  DOM.settingsBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+
+    DOM.settingsBtn.classList.remove('spin');
+    nextFrame(() => DOM.settingsBtn.classList.add('spin'));
+
+    const opened = DOM.settingsDiv?.classList.contains('open');
+    closeAll();
+
+    if (!opened) {
+      DOM.settingsDiv?.classList.add('open');
+    }
+  });
+
+  document.addEventListener(
+    'pointerdown',
+    () => {
+      if (localStorage.getItem('music') === 'off') return;
+      music.currentTime = LOOP_START;
+      music.play().then(startMusicLoopWatcher).catch(() => {});
+    },
+    { once: true }
+  );
+
+  DOM.musicVolume?.addEventListener('input', () => {
+    const value = Number(DOM.musicVolume.value);
+
+    localStorage.setItem('musicVolume', value);
+    music.volume = value / 100;
+
+    if (value === 0) {
+      if (DOM.musicToggle) DOM.musicToggle.checked = false;
+      localStorage.setItem('music', 'off');
+      music.pause();
+      stopMusicLoopWatcher();
+    } else {
+      if (DOM.musicToggle) DOM.musicToggle.checked = true;
+      localStorage.setItem('music', 'on');
+      if (music.paused) {
+        music.play().then(startMusicLoopWatcher).catch(() => {});
+      }
+    }
+  });
+
+  DOM.audioVolume?.addEventListener('input', () => {
+    const value = Number(DOM.audioVolume.value);
+    localStorage.setItem('audioVolume', value);
+
+    if (value === 0) {
+      if (DOM.audioToggle) DOM.audioToggle.checked = false;
+      localStorage.setItem('audio', 'off');
+    } else {
+      if (DOM.audioToggle) DOM.audioToggle.checked = true;
+      localStorage.setItem('audio', 'on');
+    }
+  });
+
+  DOM.buyCancelBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeBuyWeapon();
+  });
+
+  DOM.buyConfirmBtn?.addEventListener('click', () => {
+    const weapon = WEAPONS[selectedWeaponId];
+    if (!weapon) return;
+
+    const owned = getOwnedWeapons();
+    if (owned.includes(selectedWeaponId)) return;
+
+    if (coins < weapon.price) {
+      showToast(t(getLang(), 'toast.noCoins'), 'error');
+      return;
+    }
+
+    coins -= weapon.price;
+    saveCoins();
+    updateCoinsUI();
+
+    owned.push(selectedWeaponId);
+    saveOwnedWeapons(owned);
+
+    setEquippedWeapon(selectedWeaponId);
+    playEquipSound();
+    closeBuyWeapon();
+
+    showToast(
+      t(getLang(), 'toast.boughtEquipped', {
+        name: weaponName(selectedWeaponId, getLang()),
+      }),
+      'success'
+    );
+
+    renderInventoryOverview?.();
+    updateEquipUI();
+  });
+
+  DOM.closePetInfo?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePetInfo();
+  });
+
+  DOM.petInfoOverlay?.addEventListener('click', (e) => {
+    if (e.target === DOM.petInfoOverlay) {
+      closePetInfo();
+    }
+  });
+
+  DOM.buySuperConfirm
+    ?.querySelector('.buyCancelBtn')
+    ?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeBuySuperConfirm();
+    });
+
+  DOM.buySuperConfirm
+    ?.querySelector('.buyConfirmBtn')
+    ?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      confirmBuySuper();
+    });
+
+  DOM.buySuperConfirm?.addEventListener('click', (e) => {
+    if (e.target === DOM.buySuperConfirm) closeBuySuperConfirm();
+  });
+
+  DOM.offlinePlayReload?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sessionStorage.removeItem(SESSION_KEY_OFFLINE_ENTRY_WARNING_SHOWN);
+    window.location.href = `loadingScreen.html?to=${encodeURIComponent('main.html')}&always=1`;
+  });
+
+  DOM.offlinePlayContinue?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeOfflinePlayModal();
+  });
+
+}
+
+function init() {
+  cacheDom();
+  bindMusicLoopVisibility();
+  document.body.classList.remove('benchmark-result-open', 'performance-panel-open');
+  loadSettings();
+  loadVolumes();
+  loadCoins();
+  bindEvents();
+
+  const savedLang = getLang?.() || localStorage.getItem('language') || 'en';
+  applyLanguage?.(savedLang);
+  initLanguageUI?.();
+
+  ensureEquippedSuper();
+  updateEquipUI();
+  updatePetUI();
+  updateSuperEquipUI();
+
+  const maxLevel = getMaxUnlockedLevel();
+  updateCenterPlanetByLevel(maxLevel);
+
+  currentPageIndex = getCurrentPageIndex();
+  setActivePageImmediate(currentPageIndex);
+  setActiveBottomButton(currentPageIndex);
+  bindSwipeNavigation();
+  showOfflinePlayModalOnMainEntry();
+
+  const mainParams = new URLSearchParams(location.search);
+  if (mainParams.get('benchmarkResult') === '1') {
+    showBenchmarkResultDialog();
+    mainParams.delete('benchmarkResult');
+    const cleanUrl = `${location.pathname}${mainParams.toString() ? `?${mainParams}` : ''}`;
+    history.replaceState(null, '', cleanUrl);
+  }
+
+  const centerPlanet = document.getElementById('centerPlanet');
+  const planetSelectModal = document.getElementById('planetSelectModal');
+  const closePlanetSelectBtn = document.getElementById('closePlanetSelect');
+
+  centerPlanet?.addEventListener('click', openPlanetSelect);
+  planetSelectModal?.addEventListener('click', closePlanetSelect);
+  closePlanetSelectBtn?.addEventListener('click', closePlanetSelect);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+window.openMap = openMap;
+window.closeMap = closeMap;
+window.openProfileDiv = openProfileDiv;
+window.toggleSocial = toggleSocial;
+window.openBuyWeapon = openBuyWeapon;
+window.equipWeapon = equipWeapon;
+window.equipWeaponFromInventory = equipWeaponFromInventory;
+window.goToLoadoutHighlightWeapon = goToLoadoutHighlightWeapon;
+window.openPetShop = openPetShop;
+window.closePetShop = closePetShop;
+window.buyPet = buyPet;
+window.equipPet = equipPet;
+window.toggleEquipPet = toggleEquipPet;
+window.openPetInfo = openPetInfo;
+window.closePetInfo = closePetInfo;
+window.toggleSuperShop = toggleSuperShop;
+window.closeSuperShop = closeSuperShop;
+window.closeSuperInfo = closeSuperInfo;
+window.openBuySuperConfirm = openBuySuperConfirm;
+window.confirmBuySuper = confirmBuySuper;
+window.closeBuySuperConfirm = closeBuySuperConfirm;
+window.buySuper = buySuper;
+window.equipSuper = equipSuper;
+window.showToast = showToast;
+window.getMaxUnlockedLevel = getMaxUnlockedLevel;
+window.unlockNextLevel = unlockNextLevel;
+window.showLockedLevel = showLockedLevel;
+window.updateLevelsMap = updateLevelsMap;
+window.highlightPetInShop = highlightPetInShop;
+window.highlightWeaponInLoadout = highlightWeaponInLoadout;
+window.enterFullscreen = enterFullscreen;
+window.rerenderLanguageDependentUI = rerenderLanguageDependentUI;
+window.saveCoins = saveCoins;
+window.loadCoins = loadCoins;
+window.updateCoinsUI = updateCoinsUI;
+window.grantCoins = grantCoins;
+window.getOwnedWeapons = getOwnedWeapons;
+window.saveOwnedWeapons = saveOwnedWeapons;
+window.isWeaponOwned = isWeaponOwned;
+window.getOwnedPets = getOwnedPets;
+window.saveOwnedPets = saveOwnedPets;
+window.isPetOwned = isPetOwned;
+window.getOwnedSupers = getOwnedSupers;
+window.saveOwnedSupers = saveOwnedSupers;
+window.isSuperOwned = isSuperOwned;
+window.getEquippedWeapon = getEquippedWeapon;
+window.setEquippedWeapon = setEquippedWeapon;
+window.getEquippedPet = getEquippedPet;
+window.setEquippedPet = setEquippedPet;
+window.getEquippedSuper = getEquippedSuper;
+window.setEquippedSuper = setEquippedSuper;
+window.updateEquipUI = updateEquipUI;
+window.updatePetUI = updatePetUI;
+window.updateSuperEquipUI = updateSuperEquipUI;
+window.goToLevel = goToLevel;
+window.goToInfinityWorld = goToInfinityWorld;
+window.closeBuyWeapon = closeBuyWeapon;
+window.openPlanetSelect = openPlanetSelect;
+window.closePlanetSelect = closePlanetSelect;
+window.nextPlanet = nextPlanet;
+window.prevPlanet = prevPlanet;
