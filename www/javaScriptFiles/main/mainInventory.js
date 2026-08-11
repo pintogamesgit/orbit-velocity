@@ -162,7 +162,7 @@ function openInv(type) {
 
       const renderSkinCard = (s, owned) => {
         const equipped = getEquippedSkin() === s.id;
-        const img = s.image || './images/shopAInventoryicons/skin1Icon.png';
+        const img = s.image || './images/shopAInventoryicons/playerIcones/skin1Icon.png';
         const name = s.name || s.id;
 
         const el = document.createElement('div');
@@ -241,7 +241,7 @@ function openInv(type) {
     const renderWeaponCard = (wid, owned) => {
       const w = WEAPONS[wid] || {};
       const name = invWeaponName(wid);
-      const img = w.img || './images/skins/placeholder.png';
+      const img = w.img || './images/logosImage/weaponlogo.png';
       const equipped = getEquippedWeapon() === wid;
 
       const el = document.createElement('div');
@@ -310,7 +310,7 @@ function openInv(type) {
     const renderPetCard = (pid, owned) => {
       const p = PETS[pid] || {};
       const name = p.name || pid;
-      const img = p.img || './images/skins/placeholder.png';
+      const img = p.img || './images/logosImage/petIcone.png';
       const equipped = getEquippedPet() === normalizeSkinId(pid);
 
       const el = document.createElement('div');
@@ -493,7 +493,7 @@ function openWeaponPreview(id) {
 
   wrap.classList.remove('hidden');
 
-  img.src = w.img || './images/skins/placeholder.png';
+  img.src = w.img || './images/logosImage/weaponlogo.png';
   nameEl.textContent = invWeaponName(id);
 
   const desc = invWeaponDesc(id) || w.info || w.text || w.lore || '';
@@ -627,7 +627,7 @@ function openSkinPreview(s) {
 
   wrap.classList.remove('hidden');
 
-  img.src = s.image || './images/shopAInventoryicons/skin1Icon.png';
+  img.src = s.image || './images/shopAInventoryicons/playerIcones/skin1Icon.png';
   nameEl.textContent = s.name || id;
 
   const rarity = String(s.rarity || 'COMMON').toUpperCase();
@@ -865,7 +865,7 @@ function renderInventoryOverview() {
   renderInvPreviewSlots(
     'invSkinsGrid',
     allSkinsArr,
-    (s) => s.image || './images/shopAInventoryicons/skin1Icon.png',
+    (s) => s.image || './images/shopAInventoryicons/playerIcones/skin1Icon.png',
     (s) => isSkinOwnedInv(s.id)
   );
 
@@ -979,7 +979,7 @@ function openPetPreview(p) {
 
   wrap.classList.remove('hidden');
 
-  img.src = p.img || './images/skins/placeholder.png';
+  img.src = p.img || './images/logosImage/petIcone.png';
   nameEl.textContent = p.name || id;
 
   if (roleEl) {

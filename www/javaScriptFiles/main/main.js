@@ -1031,7 +1031,7 @@ function updateCenterPlanetByLevel(level) {
     glow2 = 'rgba(255,176,38,0.19)';
     glow3 = 'rgba(90,220,255,0.12)';
   } else if (level >= 61) {
-    image = './images/centerPlanets/lightBluePlanet.png';
+    image = './images/centerPlanets/lightbluePlanet.png';
     glow1 = 'rgba(0,240,255,0.28)';
     glow2 = 'rgba(70,150,255,0.2)';
     glow3 = 'rgba(255,255,255,0.12)';
@@ -1111,7 +1111,7 @@ const planets = [
   },
   {
     name: 'Light Blue',
-    img: './images/centerPlanets/lightBluePlanet.png',
+    img: './images/centerPlanets/lightbluePlanet.png',
     unlock: 61,
     color: '0,255,255',
   },

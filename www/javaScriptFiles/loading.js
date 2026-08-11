@@ -751,7 +751,6 @@ function savePerformanceDetection(info) {
 const MAIN_KNOWN_ASSETS = [
   './images/logo.png',
   './images/backgroundImages/homePage.png',
-  './images/backgroundImages/centerIconeImage.png',
   './images/logosImage/weaponlogo.png',
   './images/logosImage/petIcone.png',
   './images/logosImage/superIcone.png',
