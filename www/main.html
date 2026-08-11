@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Main Lobby</title>
   <link rel="icon" href="./images/logo.png" />
@@ -24,7 +25,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bungee&family=Orbitron:wght@600;700;800;900&family=Rubik:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bungee&family=Orbitron:wght@600;700;800;900&family=Rubik:wght@500;700;800;900&display=swap"
+    rel="stylesheet">
 </head>
 
 <body data-title-i18n="main.title">
@@ -43,17 +46,23 @@
 
         <div id="profileSettingsDiv" class="uiModal uiModalAnchorTopLeft">
           <div class="profileInfo">
-            <span class="profileLine"><strong data-i18n="profile.name">Profile Name:</strong> <span id="playGamesPlayerName">Guest</span></span>
-            <span class="profileLine"><strong data-i18n="profile.daysPlayed">Days Played:</strong> 1</span>
+            <span class="profileLine"><strong data-i18n="profile.name">Profile Name:</strong> <span
+                id="playGamesPlayerName">Guest</span></span>
+            <span class="profileLine"><strong data-i18n="profile.daysPlayed">Days Played:</strong> <span
+                id="accountDaysPlayed">1</span></span>
           </div>
 
-          <button id="playGamesAchievementsBtn" class="profileSettingsInsideDivBtn"><span data-i18n="profile.achievements">ACHIEVEMENTS</span></button>
+          <button id="playGamesAchievementsBtn" class="profileSettingsInsideDivBtn"><span
+              data-i18n="profile.achievements">ACHIEVEMENTS</span></button>
           <button id="playGamesAccountBtn" class="profileSettingsInsideDivBtn playGamesLoginBtn">
             <span class="playGamesLogo" aria-hidden="true">
-              <img class="playGamesOfficialLogo" src="./images/googlePlayGamesLogo.png" alt="" onerror="this.closest('.playGamesLogo').classList.add('useFallbackLogo'); this.remove();">
+              <img class="playGamesOfficialLogo" src="./images/googlePlayGamesLogo.png" alt=""
+                onerror="this.closest('.playGamesLogo').classList.add('useFallbackLogo'); this.remove();">
               <svg class="playGamesFallbackLogo" viewBox="0 0 32 32" focusable="false">
-                <path d="M10.3 8.1 5.7 11a4.4 4.4 0 0 0-2 3.7v8.6a2.7 2.7 0 0 0 4.3 2.2l8-5.9 8 5.9a2.7 2.7 0 0 0 4.3-2.2v-8.6a4.4 4.4 0 0 0-2-3.7l-4.6-2.9L16 12.3 10.3 8.1Z"/>
-                <path class="playGamesLogoCutout" d="M10.2 13.2v2.1H8.1v2h2.1v2.1h2v-2.1h2.1v-2h-2.1v-2.1h-2Zm10.7 1.4a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm3.1 3.1a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Z"/>
+                <path
+                  d="M10.3 8.1 5.7 11a4.4 4.4 0 0 0-2 3.7v8.6a2.7 2.7 0 0 0 4.3 2.2l8-5.9 8 5.9a2.7 2.7 0 0 0 4.3-2.2v-8.6a4.4 4.4 0 0 0-2-3.7l-4.6-2.9L16 12.3 10.3 8.1Z" />
+                <path class="playGamesLogoCutout"
+                  d="M10.2 13.2v2.1H8.1v2h2.1v2.1h2v-2.1h2.1v-2h-2.1v-2.1h-2Zm10.7 1.4a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm3.1 3.1a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Z" />
               </svg>
             </span>
             <span class="playGamesLoginLabel" data-i18n="profile.connectPlayGames">LOGIN</span>
@@ -87,9 +96,145 @@
             <input type="range" id="audioVolume" min="0" max="100" value="80" />
           </label>
 
-          <button id="languageBtn" class="settingsActionBtn" data-i18n="settings.language">Language</button>
+          <button id="performanceBtn" class="settingsActionBtn performanceSettingsBtn">PERFORMANCE</button>
+          <button id="languageBtn" class="settingsActionBtn languageSettingsBtn"
+            data-i18n="settings.language">Language</button>
           <button id="privacyOptionsBtn" class="settingsActionBtn" data-i18n="settings.privacy"
-            onclick="CosmoRushAds.showPrivacyOptions()" hidden>Privacy options</button>
+            onclick="OrbitVelocityAds.showPrivacyOptions()" hidden>Privacy options</button>
+        </div>
+
+        <div id="performanceDiv" class="uiModal">
+          <div class="performanceHeader">
+            <div>
+              <span class="performanceEyebrow">DEVICE PROFILE</span>
+              <span class="performanceTitle">PERFORMANCE</span>
+            </div>
+            <button id="closePerformanceDiv" class="performanceCloseBtn">X</button>
+          </div>
+
+          <div class="performanceBody">
+            <section class="performanceHeroPanel">
+              <div class="performanceHeroLabel">ACTIVE MODE</div>
+              <div id="performanceActiveTier" class="performanceHeroValue">Unknown</div>
+              <div class="performanceHeroMeta">
+                Detected <span id="performanceAutoTier">Unknown</span>
+              </div>
+            </section>
+
+            <section class="performancePanel">
+              <h3>DEVICE</h3>
+              <div class="performanceDetailsGrid">
+                <div><small>Name</small><span id="performanceDeviceName">Unknown</span></div>
+                <div><small>Brand</small><span id="performanceDeviceBrand">Unknown</span></div>
+                <div><small>Model</small><span id="performanceDeviceModel">Unknown</span></div>
+                <div><small>Android</small><span id="performanceDeviceAndroid">Unknown</span></div>
+                <div><small>Hardware</small><span id="performanceDeviceHardware">Unknown</span></div>
+                <div><small>Renderer</small><span id="performanceDeviceRenderer">Unknown</span></div>
+              </div>
+            </section>
+
+            <section class="performancePanel">
+              <h3>BENCHMARK</h3>
+              <div class="performanceMetricRow">
+                <div><small>Score</small><span id="performanceScore">Unknown</span></div>
+                <div><small>FPS</small><span id="performanceFps">Unknown</span></div>
+                <div><small>Worst</small><span id="performanceWorstFrame">Unknown</span></div>
+              </div>
+              <div class="performanceLastRun">Last benchmark: <span id="performanceLastBenchmark">Never</span></div>
+            </section>
+
+            <section class="performancePanel performanceHardwarePanel">
+              <h3>HARDWARE SPECS</h3>
+              <div class="performanceMetricRow hardware">
+                <div><small>Total RAM</small><span id="performanceTotalRam">Unknown</span></div>
+                <div><small>Free RAM</small><span id="performanceFreeRam">Unknown</span></div>
+                <div><small>CPU Cores</small><span id="performanceCpuCores">Unknown</span></div>
+              </div>
+              <div class="performanceDetailsGrid">
+                <div><small>Memory Class</small><span id="performanceMemoryClass">Unknown</span></div>
+                <div><small>Low Memory</small><span id="performanceLowMemory">Unknown</span></div>
+                <div><small>Screen</small><span id="performanceScreenInfo">Unknown</span></div>
+                <div><small>ABI</small><span id="performanceAbiInfo">Unknown</span></div>
+              </div>
+            </section>
+
+            <section class="performancePanel">
+              <h3>WHAT CHANGES</h3>
+              <div class="performanceModeCards">
+                <div class="performanceModeCard low">
+                  <b>LOW</b>
+                  <span>No gameplay stars, lower canvas quality, fewer particles, slower sprite animation, lighter lobby
+                    and map effects.</span>
+                </div>
+                <div class="performanceModeCard mid">
+                  <b>MID</b>
+                  <span>Few gameplay stars, medium canvas quality, reduced particles, slightly slower sprite animation,
+                    lighter effects.</span>
+                </div>
+                <div class="performanceModeCard high">
+                  <b>HIGH</b>
+                  <span>Full visuals, full gameplay stars, full sprite animation, full lobby, map and gameplay
+                    effects.</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="performancePanel performanceAdvancedPanel">
+              <h3>ADVANCED TELEMETRY</h3>
+              <div class="performanceDetailsGrid">
+                <div><small>Source</small><span id="performanceDeviceSource">Unknown</span></div>
+                <div><small>Device Code</small><span id="performanceDeviceCode">Unknown</span></div>
+                <div><small>Product</small><span id="performanceDeviceProduct">Unknown</span></div>
+                <div><small>Platform</small><span id="performanceDevicePlatform">Unknown</span></div>
+                <div><small>Architecture</small><span id="performanceDeviceArchitecture">Unknown</span></div>
+                <div><small>SDK</small><span id="performanceDeviceSdk">Unknown</span></div>
+              </div>
+              <div class="performanceRawBlock">
+                <small>GPU Vendor</small>
+                <span id="performanceDeviceVendor">Unknown</span>
+              </div>
+              <div class="performanceRawBlock">
+                <small>Benchmark Trace</small>
+                <span id="performanceBenchmarkReasons">Unknown</span>
+              </div>
+              <div class="performanceRawBlock">
+                <small>User Agent</small>
+                <span id="performanceDeviceUa">Unknown</span>
+              </div>
+            </section>
+          </div>
+
+          <div class="performanceFooter">
+            <label class="performanceModeRow">
+              <span>Mode</span>
+              <select id="performanceModeSelect">
+                <option value="auto">AUTO</option>
+                <option value="low">LOW</option>
+                <option value="medium">MID</option>
+                <option value="strong">HIGH</option>
+              </select>
+            </label>
+            <button id="runBenchmarkBtn" class="performanceBenchmarkBtn">RUN BENCHMARK</button>
+          </div>
+        </div>
+
+        <div id="benchmarkResultToast" class="benchmarkResultToast" hidden>
+          <div class="benchmarkResultBox">
+            <div class="benchmarkResultTitle">BENCHMARK RESULT</div>
+            <div id="benchmarkResultText" class="benchmarkResultText">Unknown</div>
+            <button id="benchmarkResultOk" type="button">OK</button>
+          </div>
+        </div>
+
+        <div id="performanceConfirmDialog" class="performanceConfirmDialog" hidden>
+          <div class="performanceConfirmBox">
+            <div id="performanceConfirmTitle" class="performanceConfirmTitle">PERFORMANCE CHANGE</div>
+            <div id="performanceConfirmText" class="performanceConfirmText">ARE YOU SURE</div>
+            <div class="performanceConfirmActions">
+              <button id="performanceConfirmCancel" type="button" class="performanceConfirmCancel">CANCEL</button>
+              <button id="performanceConfirmOk" type="button" class="performanceConfirmOk">OK</button>
+            </div>
+          </div>
         </div>
 
         <div id="languageMenu">
@@ -106,7 +251,7 @@
 
           <div class="socialGrid">
 
-            <div class="socialItem discord" onclick="window.open('https://discord.gg/3R3Jd78X')">
+            <div class="socialItem discord" onclick="window.open('https://discord.gg/UXAemkRYx')">
               <img src="./images/logosImage/socialLogos/discordLogo.png" alt="Discord" loading="lazy" decoding="async">
               <span>Discord</span>
             </div>
@@ -116,8 +261,9 @@
               <span>YouTube</span>
             </div>
 
-            <div class="socialItem twitter">
-              <img src="./images/logosImage/socialLogos/instagramLogo.png" alt="Instagram" loading="lazy" decoding="async">
+            <div class="socialItem Instagram" onclick="window.open('https://www.instagram.com/orbitvelocity/')">
+              <img src="./images/logosImage/socialLogos/instagramLogo.png" alt="Instagram" loading="lazy"
+                decoding="async">
               <span>Instagram</span>
             </div>
 
@@ -771,7 +917,9 @@
           <!-- WEAPONS -->
           <div class="invSection" data-inv="weapons">
             <div class="invHead">
-              <div class="invIcon">🔫</div>
+              <div class="invIcon">
+                <img src="./images/logosImage/weaponlogo.png" alt="" draggable="false" />
+              </div>
               <div class="invText">
                 <div class="invName" data-i18n="inv.section.weapons.title">Weapons</div>
                 <div class="invSub" data-i18n="inv.section.weapons.sub">Your unlocked weapons</div>
@@ -787,7 +935,9 @@
           <!-- SUPERS -->
           <div class="invSection" data-inv="supers">
             <div class="invHead">
-              <div class="invIcon">⚡</div>
+              <div class="invIcon">
+                <img src="./images/logosImage/superIcone.png" alt="" draggable="false" />
+              </div>
               <div class="invText">
                 <div class="invName" data-i18n="inv.section.supers.title">Supers</div>
                 <div class="invSub" data-i18n="inv.section.supers.sub">Special abilities</div>
@@ -803,7 +953,9 @@
           <!-- PETS -->
           <div class="invSection invSectionPets" data-inv="pets">
             <div class="invHead">
-              <div class="invIcon">🐾</div>
+              <div class="invIcon">
+                <img src="./images/logosImage/petIcone.png" alt="" draggable="false" />
+              </div>
               <div class="invText">
                 <div class="invName" data-i18n="inv.section.pets.title">Pets</div>
                 <div class="invSub" data-i18n="inv.section.pets.sub">Companions & helpers</div>
@@ -819,7 +971,9 @@
           <!-- SKINS -->
           <div class="invSection" data-inv="skins">
             <div class="invHead">
-              <div class="invIcon">🟦</div>
+              <div class="invIcon">
+                <img src="./images/logosImage/skinsLogo.png" alt="" draggable="false" />
+              </div>
               <div class="invText">
                 <div class="invName" data-i18n="inv.section.skins.title">Skins</div>
                 <div class="invSub" data-i18n="inv.section.skins.sub">Cosmetics you own</div>
@@ -849,7 +1003,7 @@
 
               <div class="skinPreviewMeta">
                 <div class="skinMetaRow">
-            <span class="k" data-i18n="ui.rarity">RARITY</span>
+                  <span class="k" data-i18n="ui.rarity">RARITY</span>
                   <span id="skinPreviewRarity" class="v rarityPill"></span>
                 </div>
 
@@ -862,7 +1016,8 @@
                   <span class="k" data-i18n="ui.shop">SHOP</span>
                   <div class="v shopLine">
                     <span id="skinPreviewShopText"></span>
-                    <button id="skinPreviewGoShop" class="skinGoShopBtn" type="button" data-i18n="ui.goToShop">GO TO SHOP</button>
+                    <button id="skinPreviewGoShop" class="skinGoShopBtn" type="button" data-i18n="ui.goToShop">GO TO
+                      SHOP</button>
                   </div>
                 </div>
               </div>
@@ -894,13 +1049,15 @@
                   <span id="petPreviewPrice" class="v"></span>
                 </div>
 
-                <button id="petPreviewGoBuy" class="petGoBuyBtn" type="button" data-i18n="inv.goToPetShop">GO TO PET SHOP</button>
+                <button id="petPreviewGoBuy" class="petGoBuyBtn" type="button" data-i18n="inv.goToPetShop">GO TO PET
+                  SHOP</button>
 
                 <div id="petPreviewShopRow" class="skinMetaRow hidden">
                   <span class="k" data-i18n="ui.shop">SHOP</span>
                   <div class="v shopLine">
                     <span id="petPreviewShopText"></span>
-                    <button id="petPreviewGoShop" class="skinGoShopBtn" type="button" data-i18n="ui.goToShop">GO TO SHOP</button>
+                    <button id="petPreviewGoShop" class="skinGoShopBtn" type="button" data-i18n="ui.goToShop">GO TO
+                      SHOP</button>
                   </div>
                 </div>
               </div>
@@ -932,7 +1089,8 @@
                   <span id="weaponPreviewPrice" class="v"></span>
                 </div>
 
-                <button id="weaponPreviewGoLoadout" class="petGoBuyBtn hidden" type="button" data-i18n="ui.goToLoadout">GO TO LOADOUT</button>
+                <button id="weaponPreviewGoLoadout" class="petGoBuyBtn hidden" type="button"
+                  data-i18n="ui.goToLoadout">GO TO LOADOUT</button>
               </div>
 
               <button id="weaponPreviewEquip" class="skinPreviewEquip" data-i18n="ui.equip">EQUIP</button>
@@ -1002,15 +1160,19 @@
           </div>
           <h2 id="offlinePlayTitle">CONNECTION ISSUE</h2>
           <p id="offlinePlayText">
-            We’re having trouble connecting to the internet. You can continue playing, but some online features may not work correctly.
+            We’re having trouble connecting to the internet. You can continue playing, but some online features may not
+            work correctly.
           </p>
           <ul id="offlinePlayList">
-            <li>Google Play Games services, cloud saves, and account syncing may be delayed until your connection is restored.</li>
+            <li>Google Play Games services, cloud saves, and account syncing may be delayed until your connection is
+              restored.</li>
             <li>Some fonts and online game content may not load correctly.</li>
-            <li>In-app purchases and other transactions may fail or remain incomplete while the connection is unstable.</li>
+            <li>In-app purchases and other transactions may fail or remain incomplete while the connection is unstable.
+            </li>
           </ul>
           <div class="offlinePlaySafeNote" id="offlinePlaySafeNote">
-            Your progress is saved here and will sync to Google Cloud when you're back online. Keep playing this device to avoid losing it.
+            Your progress is saved here and will sync to Google Cloud when you're back online. Keep playing this device
+            to avoid losing it.
           </div>
           <div class="offlinePlayQuestion" id="offlinePlayQuestion">
             Continue playing with limited connectivity?

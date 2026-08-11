@@ -312,7 +312,11 @@ button {
   align-items: stretch;
   justify-items: stretch;
   background:
-    radial-gradient(circle at 50% 10%, rgba(0, 198, 255, 0.18), transparent 40%),
+    radial-gradient(
+      circle at 50% 10%,
+      rgba(0, 198, 255, 0.18),
+      transparent 40%
+    ),
     rgba(0, 0, 0, 0.82);
 }
 
@@ -372,14 +376,8 @@ button {
 .localAchievementsPanel::-webkit-scrollbar-thumb {
   border-radius: 999px;
   border: 2px solid rgba(3, 11, 32, 0.86);
-  background:
-    linear-gradient(180deg, #00c6ff, #ffe05a);
+  background: linear-gradient(180deg, #00c6ff, #ffe05a);
   box-shadow: 0 0 10px rgba(0, 198, 255, 0.55);
-}
-
-.localAchievementsPanel::-webkit-scrollbar-thumb:hover {
-  background:
-    linear-gradient(180deg, #72eeff, #ffe981);
 }
 
 .localAchievementsHeader {
@@ -814,7 +812,6 @@ button {
   transition: none;
 }
 
-#playGamesAccountBtn.playGamesLoginBtn:hover,
 #playGamesAccountBtn.playGamesLoginBtn:active {
   background: #159644;
   box-shadow: none;
@@ -909,12 +906,14 @@ button {
   top: 43%;
   left: 50%;
   width: 300px;
-  height: 430px;
+  height: auto;
+  max-height: calc(100dvh - 38px);
+  overflow-y: auto;
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 10px;
   padding: 22px 18px 18px;
 
   border-radius: 16px;
@@ -954,6 +953,15 @@ button {
     opacity 0.22s ease;
 }
 
+#settingsDiv::-webkit-scrollbar {
+  width: 5px;
+}
+
+#settingsDiv::-webkit-scrollbar-thumb {
+  background: rgba(120, 220, 255, 0.45);
+  border-radius: 999px;
+}
+
 #settingsDiv.open {
   opacity: 1;
   pointer-events: auto;
@@ -963,6 +971,506 @@ button {
 #settingsDiv.closing {
   opacity: 0;
   transform: translate(-50%, -50%) translateY(10px) scale(0.9);
+}
+
+#performanceDiv {
+  position: absolute;
+  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(
+      circle at 14% 8%,
+      rgba(42, 255, 184, 0.16),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 92% 28%,
+      rgba(255, 209, 64, 0.14),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(255, 66, 132, 0.12),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgba(8, 14, 36, 0.98), rgba(2, 5, 18, 0.99));
+  border: 1px solid rgba(82, 255, 197, 0.48);
+  color: rgba(235, 252, 255, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 22px rgba(82, 255, 197, 0.18),
+    0 0 34px rgba(255, 196, 64, 0.16),
+    0 24px 52px rgba(0, 0, 0, 0.78);
+  display: flex;
+  flex-direction: column;
+  z-index: 200000;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.985);
+  transition:
+    transform 0.24s ease,
+    opacity 0.18s ease;
+}
+
+#performanceDiv.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.performanceCloseBtn {
+  position: static;
+  flex: 0 0 38px;
+  width: 32px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 130, 130, 0.72);
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 72, 88, 0.92),
+    rgba(88, 10, 18, 0.96)
+  );
+  font-weight: 900;
+}
+
+.performanceHeader {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 16px 14px;
+  border-bottom: 1px solid rgba(82, 255, 197, 0.24);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(82, 255, 197, 0.2), transparent 40%),
+    radial-gradient(
+      circle at 88% 0%,
+      rgba(255, 218, 92, 0.16),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgba(18, 22, 48, 0.96), rgba(5, 10, 28, 0.94));
+}
+
+.performanceEyebrow {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 900;
+  color: rgba(112, 255, 210, 0.88);
+  letter-spacing: 0.12rem;
+}
+
+.performanceTitle {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.08rem;
+  padding: 4px 0 0;
+}
+
+.performanceBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.performanceBody::-webkit-scrollbar {
+  width: 5px;
+}
+
+.performanceBody::-webkit-scrollbar-thumb {
+  background: rgba(255, 214, 92, 0.44);
+  border-radius: 999px;
+}
+
+.performanceHeroPanel,
+.performancePanel {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 214, 92, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(255, 255, 255, 0.025)
+  );
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.performanceHeroPanel {
+  border-color: rgba(82, 255, 197, 0.38);
+  background:
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(82, 255, 197, 0.2),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 90% 78%,
+      rgba(255, 218, 92, 0.16),
+      transparent 46%
+    ),
+    linear-gradient(145deg, rgba(8, 52, 48, 0.82), rgba(5, 14, 38, 0.94));
+}
+
+.performanceHeroLabel,
+.performanceLastRun,
+.performancePanel h3,
+.performanceDetailsGrid small,
+.performanceMetricRow small {
+  color: rgba(198, 230, 255, 0.76);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+
+.performanceHeroValue {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1;
+  color: #9dffe1;
+  text-shadow:
+    0 0 14px rgba(82, 255, 197, 0.42),
+    0 0 22px rgba(255, 210, 80, 0.16);
+}
+
+.performanceHeroMeta {
+  margin-top: 8px;
+  color: rgba(235, 252, 255, 0.88);
+  font-size: 12px;
+}
+
+.performancePanel h3 {
+  margin: 0 0 10px;
+  color: rgba(112, 255, 210, 0.9);
+}
+
+.performanceDetailsGrid,
+.performanceMetricRow {
+  display: grid;
+  gap: 8px;
+}
+
+.performanceDetailsGrid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.performanceMetricRow {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.performanceDetailsGrid div,
+.performanceMetricRow div {
+  min-width: 0;
+  padding: 9px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.performanceDetailsGrid span,
+.performanceMetricRow span,
+.performanceHeroMeta span,
+.performanceLastRun span {
+  display: block;
+  margin-top: 3px;
+  color: #ffffff;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.performanceModeCards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.performanceModeCard {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.performanceModeCard b {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.performanceModeCard span {
+  display: block;
+  color: rgba(228, 244, 255, 0.84);
+}
+
+.performanceModeCard.low b {
+  color: #9ee6ff;
+}
+
+.performanceModeCard.mid b {
+  color: #ffe26d;
+}
+
+.performanceModeCard.high b {
+  color: #ffb3f1;
+}
+
+.performanceHardwarePanel {
+  border-color: rgba(82, 255, 197, 0.3);
+  background:
+    radial-gradient(
+      circle at 12% 18%,
+      rgba(82, 255, 197, 0.11),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 86% 76%,
+      rgba(255, 218, 92, 0.08),
+      transparent 44%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.025)
+    );
+}
+
+.performanceMetricRow.hardware div:first-child {
+  border-color: rgba(82, 255, 197, 0.22);
+}
+
+.performanceMetricRow.hardware div:nth-child(2) {
+  border-color: rgba(255, 218, 92, 0.2);
+}
+
+.performanceMetricRow.hardware div:nth-child(3) {
+  border-color: rgba(112, 180, 255, 0.22);
+}
+
+.performanceAdvancedPanel {
+  border-color: rgba(144, 112, 255, 0.28);
+}
+
+.performanceRawBlock {
+  margin-top: 8px;
+  padding: 9px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(144, 112, 255, 0.16);
+  font-family: var(--font-ui);
+}
+
+.performanceRawBlock small {
+  display: block;
+  color: rgba(190, 210, 255, 0.72);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+
+.performanceRawBlock span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(238, 246, 255, 0.9);
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.performanceFooter {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 214, 92, 0.24);
+  background: rgba(2, 6, 18, 0.96);
+}
+
+.performanceModeRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 220, 255, 0.24);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.performanceModeRow select {
+  min-width: 118px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(120, 220, 255, 0.42);
+  color: #eafdff;
+  background: rgba(2, 12, 34, 0.96);
+  font-family: var(--font-ui);
+  font-weight: 900;
+}
+
+.performanceBenchmarkBtn {
+  width: 100%;
+  height: 48px;
+  border: 1px solid rgba(255, 224, 118, 0.78);
+  border-radius: 12px;
+  color: #fff9d8;
+  background:
+    radial-gradient(
+      circle at 22% 28%,
+      rgba(255, 255, 255, 0.2),
+      transparent 54%
+    ),
+    linear-gradient(180deg, rgba(255, 195, 64, 0.9), rgba(142, 58, 8, 0.92));
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.12rem;
+  box-shadow:
+    0 0 16px rgba(255, 202, 72, 0.34),
+    0 10px 18px rgba(0, 0, 0, 0.46);
+}
+
+.benchmarkResultToast,
+.performanceConfirmDialog {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
+}
+
+.performanceConfirmDialog {
+  isolation: isolate;
+  box-sizing: border-box;
+  padding: 18px;
+  transform: none !important;
+}
+
+.benchmarkResultToast[hidden],
+.performanceConfirmDialog[hidden] {
+  display: none;
+}
+
+.benchmarkResultBox,
+.performanceConfirmBox {
+  position: relative;
+  z-index: 1;
+  width: min(280px, calc(100% - 42px));
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(82, 255, 197, 0.5);
+  background:
+    radial-gradient(
+      circle at 18% 10%,
+      rgba(82, 255, 197, 0.16),
+      transparent 44%
+    ),
+    linear-gradient(180deg, rgba(7, 18, 38, 0.98), rgba(2, 6, 18, 0.99));
+  box-shadow:
+    0 0 24px rgba(82, 255, 197, 0.22),
+    0 18px 34px rgba(0, 0, 0, 0.72);
+  color: #eefcff;
+  text-align: center;
+  font-family: var(--font-ui);
+}
+
+.performanceConfirmBox {
+  width: min(330px, calc(100% - 34px));
+  border-color: rgba(255, 211, 88, 0.72);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 211, 88, 0.18), transparent 42%),
+    radial-gradient(circle at 12% 90%, rgba(82, 255, 197, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(8, 17, 38, 0.99), rgba(2, 5, 16, 0.99));
+  box-shadow:
+    0 0 28px rgba(255, 211, 88, 0.2),
+    0 18px 38px rgba(0, 0, 0, 0.76);
+}
+
+.benchmarkResultTitle,
+.performanceConfirmTitle {
+  color: #9dffe1;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1rem;
+}
+
+.performanceConfirmTitle {
+  color: #ffe178;
+}
+
+.benchmarkResultText,
+.performanceConfirmText {
+  margin: 12px 0;
+  white-space: pre-line;
+  line-height: 1.6;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.performanceConfirmText {
+  color: rgba(235, 248, 255, 0.94);
+}
+
+.performanceConfirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.benchmarkResultBox button,
+.performanceConfirmBox button {
+  width: 100%;
+  height: 40px;
+  border: 1px solid rgba(255, 224, 118, 0.74);
+  border-radius: 10px;
+  color: #fff9d8;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 195, 64, 0.9),
+    rgba(142, 58, 8, 0.92)
+  );
+  font-family: var(--font-ui);
+  font-weight: 900;
+}
+
+.performanceConfirmCancel {
+  border-color: rgba(126, 208, 255, 0.56) !important;
+  color: #d9f6ff !important;
+  background: linear-gradient(180deg, rgba(22, 65, 110, 0.9), rgba(8, 21, 48, 0.94)) !important;
+}
+
+.performanceConfirmOk {
+  color: #fff9d8 !important;
 }
 
 /* Title */
@@ -1225,7 +1733,7 @@ button {
 .settingsActionBtn {
   width: 240px;
   height: 46px;
-  margin-top: 10px;
+  margin-top: 0;
 
   border-radius: 14px;
   border: 1px solid rgba(140, 240, 255, 0.65);
@@ -1266,6 +1774,40 @@ button {
     0 0 26px rgba(0, 220, 255, 0.45),
     0 14px 26px rgba(0, 0, 0, 0.65),
     inset 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+
+.performanceSettingsBtn {
+  border-color: rgba(255, 224, 118, 0.78);
+  background:
+    radial-gradient(
+      circle at 22% 28%,
+      rgba(255, 255, 255, 0.2),
+      transparent 54%
+    ),
+    radial-gradient(
+      circle at 80% 72%,
+      rgba(255, 136, 56, 0.22),
+      transparent 48%
+    ),
+    linear-gradient(180deg, rgba(255, 195, 64, 0.9), rgba(142, 58, 8, 0.92));
+  color: #fff9d8;
+  box-shadow:
+    0 0 16px rgba(255, 202, 72, 0.4),
+    0 14px 26px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -12px 18px rgba(70, 20, 0, 0.38);
+}
+
+.languageSettingsBtn {
+  border-color: rgba(120, 220, 255, 0.65);
+  background:
+    radial-gradient(
+      circle at 25% 30%,
+      rgba(255, 255, 255, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(180deg, rgba(0, 190, 255, 0.85), rgba(0, 70, 255, 0.85));
+  color: rgba(245, 255, 255, 0.96);
 }
 
 /* Language Menu */
@@ -1357,7 +1899,11 @@ button {
   border-radius: 16px;
   border: 1px solid rgba(120, 220, 255, 0.55);
   background:
-    radial-gradient(circle at 28% 12%, rgba(120, 220, 255, 0.18), transparent 55%),
+    radial-gradient(
+      circle at 28% 12%,
+      rgba(120, 220, 255, 0.18),
+      transparent 55%
+    ),
     linear-gradient(180deg, rgba(6, 14, 35, 0.96), rgba(2, 6, 18, 0.98));
   box-shadow:
     0 0 22px rgba(0, 180, 255, 0.28),
@@ -1408,7 +1954,11 @@ button {
 }
 
 .languageConfirmApply {
-  background: linear-gradient(180deg, rgba(40, 220, 255, 0.44), rgba(40, 120, 255, 0.28));
+  background: linear-gradient(
+    180deg,
+    rgba(40, 220, 255, 0.44),
+    rgba(40, 120, 255, 0.28)
+  );
   box-shadow: 0 0 16px rgba(0, 190, 255, 0.25);
 }
 
@@ -1419,7 +1969,7 @@ button {
 
 #socialBtn {
   position: absolute;
-  bottom: 3%;
+  bottom: 20%;
   right: 12px;
 
   width: 48px;
@@ -1456,7 +2006,7 @@ button {
 
 #socialDiv {
   position: absolute;
-  bottom: 85px;
+  bottom: 20%;
   right: 8px;
 
   width: 330px;
@@ -2734,7 +3284,7 @@ button {
   transition:
     transform 0.55s cubic-bezier(0.22, 0.9, 0.3, 1),
     opacity 0.55s ease;
-  will-change: transform, opacity;
+  will-change: auto;
   contain: layout paint style;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -2749,6 +3299,10 @@ button {
 
 .page:not(.active) {
   content-visibility: hidden;
+}
+
+body.page-transitioning .page {
+  will-change: transform, opacity;
 }
 
 .page:not(.active),
@@ -2968,8 +3522,16 @@ button {
   border-radius: 18px;
   border: 1px solid rgba(255, 218, 96, 0.95);
   background:
-    radial-gradient(circle at 22% 12%, rgba(255, 218, 96, 0.2), transparent 42%),
-    radial-gradient(circle at 86% 18%, rgba(82, 225, 255, 0.16), transparent 46%),
+    radial-gradient(
+      circle at 22% 12%,
+      rgba(255, 218, 96, 0.2),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 86% 18%,
+      rgba(82, 225, 255, 0.16),
+      transparent 46%
+    ),
     linear-gradient(180deg, rgba(7, 18, 45, 0.98), rgba(2, 6, 22, 0.98));
   box-shadow:
     0 0 24px rgba(255, 218, 96, 0.36),
@@ -2990,7 +3552,11 @@ button {
   border-radius: 50%;
   border: 2px solid rgba(255, 205, 205, 0.95);
   background:
-    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.18), transparent 32%),
+    radial-gradient(
+      circle at 50% 36%,
+      rgba(255, 255, 255, 0.18),
+      transparent 32%
+    ),
     linear-gradient(180deg, #ff4b4b, #8b0712);
   box-shadow:
     0 0 18px rgba(255, 75, 75, 0.52),
@@ -3041,6 +3607,28 @@ button {
     0 2px 6px rgba(0, 0, 0, 0.62);
 }
 
+.performanceSelectRow {
+  width: 240px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.performanceSelectRow select {
+  width: 92px;
+  height: 34px;
+  color: #fff;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  font: inherit;
+}
+
 #offlinePlayText,
 .offlinePlayQuestion {
   margin: 0;
@@ -3078,6 +3666,16 @@ button {
     inset 0 0 10px rgba(255, 255, 255, 0.04);
 }
 
+body.performance-panel-open #bottomBtns {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+body.benchmark-result-open #bottomBtns {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 #offlinePlayList li::before {
   content: '×';
   position: absolute;
@@ -3099,7 +3697,11 @@ button {
   border-radius: 10px;
   border: 1px solid rgba(84, 255, 157, 0.78);
   background:
-    radial-gradient(circle at 0% 50%, rgba(84, 255, 157, 0.16), transparent 42%),
+    radial-gradient(
+      circle at 0% 50%,
+      rgba(84, 255, 157, 0.16),
+      transparent 42%
+    ),
     rgba(8, 32, 22, 0.68);
   color: rgba(224, 255, 235, 0.94);
   font-family: var(--font-copy);
@@ -3217,27 +3819,6 @@ body {
     0 0 80px rgba(0, 255, 120, 0.3);
 }
 
-#mapDiv.level-green #levelsContainer {
-  position: relative;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  background:
-    radial-gradient(
-      circle at 30% 20%,
-      rgba(0, 255, 170, 0.25),
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(120, 255, 80, 0.18),
-      transparent 65%
-    ),
-    linear-gradient(180deg, #021a12, #000000);
-
-  animation: greenPulse 6s ease-in-out infinite;
-}
-
 #mapDiv.level-pink {
   border: 2px solid rgb(255, 0, 204);
   box-shadow:
@@ -3246,43 +3827,12 @@ body {
     0 0 160px rgba(255, 80, 220, 0.4);
 }
 
-#mapDiv.level-pink #levelsContainer {
-  background:
-    radial-gradient(
-      circle at 30% 20%,
-      rgba(255, 0, 200, 0.45),
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(255, 80, 220, 0.35),
-      transparent 65%
-    ),
-    radial-gradient(circle at 50% 50%, rgba(255, 0, 150, 0.2), transparent 70%),
-    linear-gradient(180deg, #2a0030, #000000);
-
-  animation: pinkPulse 4s ease-in-out infinite;
-}
-
 #mapDiv.level-red {
   border: 2px solid rgba(255, 80, 80, 0.95);
   box-shadow:
     0 0 40px rgba(255, 0, 0, 0.9),
     0 0 100px rgba(255, 50, 50, 0.6),
     0 0 160px rgba(255, 0, 0, 0.4);
-}
-
-#mapDiv.level-red #levelsContainer {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 0, 0, 0.35), transparent 60%),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(255, 80, 80, 0.25),
-      transparent 65%
-    ),
-    linear-gradient(180deg, #2a0000, #000000);
-
-  animation: redPulse 4s ease-in-out infinite;
 }
 
 @keyframes redPulse {
@@ -3312,25 +3862,11 @@ body {
     0 0 100px rgba(85, 0, 182, 0.6);
 }
 
-#mapDiv.level-purple #levelsContainer {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(195, 0, 255, 0.4), transparent 60%),
-    radial-gradient(circle at 80% 80%, rgba(81, 0, 83, 0.3), transparent 65%),
-    linear-gradient(180deg, #6b005da4, #6f00799c);
-}
-
 #mapDiv.level-ogange {
   border: 2px solid rgba(252, 172, 0, 0.9);
   box-shadow:
     0 0 40px rgba(173, 141, 0, 0.671),
     0 0 100px rgba(182, 124, 0, 0.6);
-}
-
-#mapDiv.level-orange #levelsContainer {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 166, 0, 0.4), transparent 60%),
-    radial-gradient(circle at 80% 80%, rgba(83, 68, 0, 0.3), transparent 65%),
-    linear-gradient(180deg, #967f00a4, #eec2009c);
 }
 
 #mapDiv.level-lightBlue {
@@ -3340,25 +3876,11 @@ body {
     0 0 100px rgba(0, 182, 173, 0.6);
 }
 
-#mapDiv.level-lightBlue #levelsContainer {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(0, 255, 213, 0.4), transparent 60%),
-    radial-gradient(circle at 80% 80%, rgba(0, 70, 83, 0.3), transparent 65%),
-    linear-gradient(180deg, #008496a4, #00eee29c);
-}
-
 #mapDiv.level-yellow {
   border: 2px solid rgba(252, 248, 0, 0.9);
   box-shadow:
     0 0 40px rgba(173, 170, 0, 0.671),
     0 0 100px rgba(182, 170, 0, 0.6);
-}
-
-#mapDiv.level-yellow #levelsContainer {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(251, 255, 0, 0.4), transparent 60%),
-    radial-gradient(circle at 80% 80%, rgba(83, 81, 0, 0.3), transparent 65%),
-    linear-gradient(180deg, #939600a4, #eeea009c);
 }
 
 #mapDiv.level-black {
@@ -3368,33 +3890,11 @@ body {
     0 0 100px rgba(0, 0, 0, 0.6);
 }
 
-#mapDiv.level-black #levelsContainer {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(80, 80, 80, 0.25), transparent 60%),
-    radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.4), transparent 65%),
-    linear-gradient(180deg, #1a1a1a, #000000);
-}
-
 #mapDiv.level-gold {
   border: 2px solid rgba(207, 159, 0, 0.9);
   box-shadow:
     0 0 40px rgba(255, 215, 0, 0.5),
     0 0 100px rgba(255, 200, 0, 0.35);
-}
-
-#mapDiv.level-gold #levelsContainer {
-  background:
-    radial-gradient(
-      circle at 30% 20%,
-      rgba(255, 217, 0, 0.733),
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(120, 90, 0, 0.651),
-      transparent 65%
-    ),
-    linear-gradient(180deg, #3b2f00, rgb(80, 61, 0), #000000);
 }
 
 #mapDiv.level-infinity {
@@ -3403,26 +3903,6 @@ body {
     0 0 34px rgba(80, 220, 255, 0.72),
     0 0 90px rgba(70, 90, 255, 0.42),
     0 0 140px rgba(140, 70, 255, 0.25);
-}
-
-#mapDiv.level-infinity #levelsContainer {
-  background:
-    radial-gradient(
-      circle at 34% 16%,
-      rgba(120, 240, 255, 0.34),
-      transparent 54%
-    ),
-    radial-gradient(
-      circle at 72% 28%,
-      rgba(40, 135, 255, 0.38),
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 50% 82%,
-      rgba(110, 75, 255, 0.34),
-      transparent 62%
-    ),
-    linear-gradient(180deg, #03132f, #06255f 46%, #020614 100%);
 }
 
 .levelNode.final-level-node .levelsBtn,
@@ -3663,6 +4143,1858 @@ body {
   }
 }
 
+#mapDiv {
+  --map-r: 0;
+  --map-g: 198;
+  --map-b: 255;
+  --map-core: rgb(var(--map-r), var(--map-g), var(--map-b));
+  --map-hot: #f4fbff;
+  --map-deep: #020614;
+
+  width: min(360px, calc(100vw - 28px));
+  height: min(742px, calc(100dvh - 34px));
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.76);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12),
+      transparent 18% 82%,
+      rgba(255, 255, 255, 0.08)
+    ),
+    radial-gradient(
+      circle at 50% -8%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.28),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgba(5, 17, 45, 0.98), rgba(1, 5, 18, 0.98));
+  box-shadow:
+    0 0 30px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42),
+    0 26px 54px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -26px 48px rgba(0, 0, 0, 0.5);
+}
+
+#mapDiv::before,
+#mapDiv::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+#mapDiv::before {
+  inset: 9px;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.12) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 1px,
+      transparent 1px
+    );
+  background-size: 34px 34px;
+  mask-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55),
+    transparent 42%,
+    rgba(0, 0, 0, 0.42)
+  );
+}
+
+#mapDiv::after {
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 16% 18%,
+      rgba(255, 255, 255, 0.88) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 82% 24%,
+      rgba(255, 255, 255, 0.68) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 28% 72%,
+      rgba(255, 255, 255, 0.58) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 74% 82%,
+      rgba(255, 255, 255, 0.7) 0 1px,
+      transparent 2px
+    );
+  opacity: 0.55;
+}
+
+#mapTitle {
+  height: 76px;
+  padding-top: 4px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.28),
+      transparent 62%
+    ),
+    linear-gradient(180deg, rgba(6, 18, 46, 0.96), rgba(2, 7, 20, 0.78));
+  border-bottom: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.42);
+  color: #f4fbff;
+  font-size: 25px;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    0 3px 0 rgba(0, 0, 0, 0.78);
+}
+
+#mapTitle::before {
+  inset: auto 54px 14px;
+  height: 5px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.9),
+    transparent
+  );
+  box-shadow: 0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72);
+}
+
+#mapTitle::after {
+  bottom: 10px;
+  width: 112px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+#closeMapDiv {
+  top: 17px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 135, 135, 0.72);
+  background:
+    radial-gradient(
+      circle at 35% 28%,
+      rgba(255, 255, 255, 0.28),
+      transparent 36%
+    ),
+    linear-gradient(180deg, #ff4f61, #64101a);
+  box-shadow:
+    0 0 16px rgba(255, 60, 75, 0.42),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.42);
+}
+
+#levelsContainer {
+  top: 76px;
+  height: calc(100% - 76px);
+  gap: 26px;
+  padding: 34px 0 58px;
+  background:
+    radial-gradient(
+      circle at 20% 16%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.2),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 80% 72%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.16),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 50% 48%,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(180deg, rgba(2, 8, 24, 0.98), var(--map-deep));
+  background-size:
+    auto,
+    auto,
+    42px 42px,
+    auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--map-r), var(--map-g), var(--map-b), 0.86)
+    rgba(0, 0, 0, 0.3);
+}
+
+#levelMapStars {
+  position: fixed;
+  inset: 82px 14px 16px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background:
+    radial-gradient(circle at 18% 12%, #fff 0 1px, transparent 2px),
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.9) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 34% 48%,
+      rgba(255, 255, 255, 0.7) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 68% 76%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.76) 0 1px,
+      transparent 2px
+    );
+  background-size:
+    140px 180px,
+    120px 150px,
+    170px 130px,
+    150px 210px;
+}
+
+.levelNode {
+  width: 100%;
+  min-height: 98px;
+  align-items: center;
+}
+
+.levelNode:nth-child(odd) {
+  justify-content: flex-start;
+  padding-left: 48px;
+}
+
+.levelNode:nth-child(even) {
+  justify-content: flex-end;
+  padding-right: 48px;
+}
+
+.levelNode::after {
+  top: 66px;
+  left: 50%;
+  width: 4px;
+  height: 58px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0),
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.94),
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0)
+  );
+  box-shadow:
+    0 0 14px rgba(var(--map-r), var(--map-g), var(--map-b), 0.76),
+    0 0 30px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34);
+}
+
+.levelNode:nth-child(odd)::after {
+  transform: translateX(-50%) rotate(-20deg);
+}
+
+.levelNode:nth-child(even)::after {
+  transform: translateX(-50%) rotate(20deg);
+}
+
+.levelsBtn {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.82);
+  color: #f4fbff;
+  font-family: var(--font-ui);
+  font-size: 24px;
+  letter-spacing: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 28%),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.5),
+      transparent 54%
+    ),
+    linear-gradient(180deg, rgba(12, 35, 82, 0.96), rgba(2, 8, 24, 0.98));
+  box-shadow:
+    0 0 20px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+    0 12px 24px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -16px 24px rgba(0, 0, 0, 0.42);
+  text-shadow:
+    0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.8),
+    0 2px 0 rgba(0, 0, 0, 0.72);
+}
+
+.levelsBtn::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.levelsBtn::after {
+  inset: -9px;
+  border-radius: 24px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.36),
+    transparent 70%
+  );
+  opacity: 0.55;
+  filter: blur(10px);
+}
+
+.levelsBtn.current {
+  transform: scale(1.07);
+  border-color: rgba(255, 255, 255, 0.92);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent 30%),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.72),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(26, 69, 136, 0.98), rgba(3, 12, 34, 0.98));
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.48),
+    0 0 38px rgba(var(--map-r), var(--map-g), var(--map-b), 0.88),
+    0 0 80px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+    inset 0 0 18px rgba(255, 255, 255, 0.16);
+}
+
+.levelsBtn.current::before {
+  inset: -7px;
+  border-radius: 26px;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    transparent 34%,
+    rgba(255, 255, 255, 0.86),
+    transparent 68%
+  );
+  opacity: 0.95;
+  animation: ringSpin 2.4s linear infinite;
+}
+
+.levelsBtn.current::after {
+  inset: -18px;
+  border-radius: 30px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.6),
+    transparent 72%
+  );
+}
+
+.levelNode.locked {
+  filter: none;
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+.levelNode.locked::before {
+  content: '';
+  top: 26px;
+  right: auto;
+  left: calc(50% + 34px);
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent),
+    rgba(7, 12, 24, 0.96);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.55);
+}
+
+.levelNode.locked .levelsBtn {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(39, 47, 66, 0.95), rgba(7, 10, 18, 0.98));
+  border-color: rgba(185, 210, 232, 0.18);
+  color: rgba(222, 236, 246, 0.42);
+  box-shadow:
+    inset 0 0 14px rgba(255, 255, 255, 0.04),
+    0 10px 20px rgba(0, 0, 0, 0.42);
+  filter: none;
+}
+
+.levelNode.locked::after {
+  opacity: 0.26;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(150, 170, 190, 0.46),
+    transparent
+  );
+  box-shadow: none;
+}
+
+.levelNode.current-node::after {
+  width: 6px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    #ffffff,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 1),
+    transparent
+  );
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.96),
+    0 0 44px rgba(var(--map-r), var(--map-g), var(--map-b), 0.62);
+}
+
+.levelNode.boss-node .levelsBtn {
+  width: 100px;
+  height: 100px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 96, 96, 0.9);
+  color: #fff6f3;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 28%),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(255, 56, 56, 0.54),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #64121f, #18050a);
+  box-shadow:
+    0 0 22px rgba(255, 50, 62, 0.54),
+    0 14px 30px rgba(0, 0, 0, 0.62),
+    inset 0 -16px 26px rgba(0, 0, 0, 0.48);
+}
+
+.levelNode.boss-node .levelsBtn::before {
+  inset: -7px;
+  border-radius: 32px;
+  border-color: rgba(255, 130, 130, 0.36);
+  box-shadow: 0 0 18px rgba(255, 46, 60, 0.52);
+}
+
+.levelNode.boss-current .levelsBtn,
+.levelNode .levelsBtn.boss-current-btn {
+  transform: scale(1.09);
+  box-shadow:
+    0 0 24px rgba(255, 255, 255, 0.34),
+    0 0 44px rgba(255, 55, 65, 0.85),
+    0 0 90px rgba(255, 10, 30, 0.3),
+    inset 0 0 18px rgba(255, 255, 255, 0.16);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 124px;
+  height: 124px;
+  border-radius: 34px;
+  font-size: 34px;
+  letter-spacing: 0;
+  border: 1px solid rgba(255, 226, 122, 0.96);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34), transparent 28%),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(255, 213, 80, 0.64),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #8b4d05, #28050c 72%, #08020f);
+}
+
+.levelNode.final-level-node .levelsBtn::before,
+.levelNode .levelsBtn.final-level-btn::before {
+  inset: -8px;
+  border-radius: 38px;
+}
+
+.levelNode.final-level-node .levelsBtn::after,
+.levelNode .levelsBtn.final-level-btn::after {
+  content: '';
+  inset: -18px;
+  width: auto;
+  height: auto;
+  border-radius: 42px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 218, 92, 0.46),
+    transparent 72%
+  );
+  filter: blur(12px);
+}
+
+.levelNode.infinity-level-node {
+  min-height: 128px;
+  margin-bottom: 12px;
+  padding: 0;
+  justify-content: center;
+}
+
+.levelNode.infinity-level-node .levelsBtn,
+.levelNode .levelsBtn.infinity-level-btn {
+  width: 168px;
+  height: 78px;
+  border-radius: 22px;
+  font-size: 54px;
+}
+
+.infinityLevelLabel {
+  border-radius: 8px;
+  color: #f4fbff;
+  background: rgba(4, 12, 30, 0.72);
+}
+
+#levelsContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+#levelsContainer::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+#levelsContainer::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0.36);
+  background: rgba(var(--map-r), var(--map-g), var(--map-b), 0.84);
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72);
+}
+
+#mapDiv.level-green {
+  --map-r: 60;
+  --map-g: 255;
+  --map-b: 165;
+  --map-deep: #02140e;
+}
+
+#mapDiv.level-pink {
+  --map-r: 255;
+  --map-g: 80;
+  --map-b: 202;
+  --map-deep: #18031a;
+}
+
+#mapDiv.level-red {
+  --map-r: 255;
+  --map-g: 72;
+  --map-b: 82;
+  --map-deep: #170407;
+}
+
+#mapDiv.level-purple {
+  --map-r: 186;
+  --map-g: 96;
+  --map-b: 255;
+  --map-deep: #130522;
+}
+
+#mapDiv.level-orange,
+#mapDiv.level-ogange {
+  --map-r: 255;
+  --map-g: 132;
+  --map-b: 24;
+  --map-deep: #4a1704;
+}
+
+#mapDiv.level-lightBlue {
+  --map-r: 72;
+  --map-g: 236;
+  --map-b: 255;
+  --map-deep: #02131a;
+}
+
+#mapDiv.level-yellow {
+  --map-r: 255;
+  --map-g: 236;
+  --map-b: 82;
+  --map-deep: #171403;
+}
+
+#mapDiv.level-black {
+  --map-r: 165;
+  --map-g: 176;
+  --map-b: 196;
+  --map-deep: #050609;
+}
+
+#mapDiv.level-gold {
+  --map-r: 255;
+  --map-g: 202;
+  --map-b: 72;
+  --map-deep: #150d02;
+}
+
+#mapDiv.level-infinity {
+  --map-r: 132;
+  --map-g: 232;
+  --map-b: 255;
+  --map-deep: #020716;
+}
+
+/* ================= ACTIVE STRAIGHT PLANET MAP PATH ================= */
+#mapDiv {
+  --planet-size: 82px;
+  --orbit-ring: 112px;
+  background:
+    radial-gradient(circle at 50% -6%, rgba(255, 255, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 18% 20%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.22), transparent 34%),
+    radial-gradient(circle at 82% 78%, rgba(255, 218, 112, 0.14), transparent 40%),
+    linear-gradient(180deg, rgba(2, 9, 29, 0.99), var(--map-deep) 58%, #02030c);
+}
+
+#mapDiv #levelsContainer {
+  gap: 0;
+  padding: 42px 0 76px;
+  align-items: center;
+}
+
+#mapDiv #levelsContainer::before {
+  left: 50%;
+  width: 10px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent),
+    linear-gradient(180deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.44), rgba(255, 255, 255, 0.92), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), rgba(255, 224, 128, 0.78), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), rgba(255, 255, 255, 0.88), rgba(var(--map-r), var(--map-g), var(--map-b), 0.42), transparent);
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    0 0 48px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42);
+  opacity: 0.9;
+}
+
+.levelNode,
+.levelNode:nth-child(odd),
+.levelNode:nth-child(even) {
+  width: 100%;
+  min-height: 132px;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  position: relative;
+}
+
+.levelNode::after,
+.levelNode:nth-child(odd)::after,
+.levelNode:nth-child(even)::after {
+  top: calc(50% + 39px);
+  left: 50%;
+  width: 6px;
+  height: 92px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.86), rgba(var(--map-r), var(--map-g), var(--map-b), 0.86), transparent);
+  box-shadow:
+    0 0 16px rgba(var(--map-r), var(--map-g), var(--map-b), 0.9),
+    0 0 34px rgba(var(--map-r), var(--map-g), var(--map-b), 0.38);
+}
+
+.levelNode:last-child::after,
+.levelNode.infinity-level-node::after {
+  display: none;
+}
+
+.levelNode::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    radial-gradient(circle, transparent 56%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 57%, transparent 70%),
+    conic-gradient(from 12deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.34), transparent 32%, rgba(255, 255, 255, 0.24), transparent 64%);
+  box-shadow:
+    0 0 26px rgba(var(--map-r), var(--map-g), var(--map-b), 0.22),
+    inset 0 0 24px rgba(var(--map-r), var(--map-g), var(--map-b), 0.12);
+  pointer-events: none;
+}
+
+.levelNode.locked::before {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border-color: rgba(190, 210, 230, 0.12);
+  background:
+    radial-gradient(circle, transparent 58%, rgba(170, 185, 205, 0.08) 59%, transparent 72%),
+    conic-gradient(from 12deg, transparent, rgba(170, 185, 205, 0.18), transparent 48%);
+  box-shadow: none;
+}
+
+.levelsBtn {
+  width: var(--planet-size);
+  height: var(--planet-size);
+  border-radius: 50%;
+  z-index: 3;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.9) 0 7%, rgba(255, 255, 255, 0.3) 8% 15%, transparent 16%),
+    radial-gradient(circle at 66% 68%, rgba(0, 0, 0, 0.28) 0 13%, transparent 14%),
+    radial-gradient(circle at 44% 42%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.94), rgba(var(--map-r), var(--map-g), var(--map-b), 0.58) 46%, rgba(4, 12, 30, 0.98) 78%);
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.46),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.2),
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.74),
+    0 16px 30px rgba(0, 0, 0, 0.58);
+}
+
+.levelsBtn::before {
+  inset: -13px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.42);
+  background:
+    linear-gradient(90deg, transparent 8%, rgba(255, 255, 255, 0.44), transparent 92%),
+    conic-gradient(from 90deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.5), transparent 36%);
+  transform: rotate(-12deg) scaleY(0.36);
+}
+
+.levelsBtn::after {
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--map-r), var(--map-g), var(--map-b), 0.36), transparent 70%);
+  opacity: 0.7;
+  filter: blur(12px);
+}
+
+.levelsBtn.current {
+  transform: scale(1.14);
+  border-color: #ffffff;
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.36),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.28),
+    0 0 20px rgba(255, 255, 255, 0.72),
+    0 0 48px rgba(var(--map-r), var(--map-g), var(--map-b), 1),
+    0 0 92px rgba(var(--map-r), var(--map-g), var(--map-b), 0.5);
+}
+
+.levelsBtn.current::before {
+  inset: -18px;
+  border-radius: 50%;
+  transform: rotate(-12deg) scaleY(0.38);
+  animation: none;
+}
+
+.levelNode.current-node::before {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 22px rgba(255, 255, 255, 0.38),
+    0 0 52px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72),
+    inset 0 0 28px rgba(var(--map-r), var(--map-g), var(--map-b), 0.24);
+}
+
+.levelNode.locked {
+  opacity: 0.62;
+}
+
+.levelNode.locked .levelsBtn {
+  border-color: rgba(210, 224, 240, 0.18);
+  color: rgba(230, 238, 248, 0.42);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.26) 0 6%, transparent 15%),
+    radial-gradient(circle at 48% 42%, rgba(78, 90, 112, 0.76), rgba(25, 31, 46, 0.98) 76%);
+  box-shadow:
+    inset -14px -16px 22px rgba(0, 0, 0, 0.5),
+    0 12px 24px rgba(0, 0, 0, 0.38);
+}
+
+.levelNode.boss-node .levelsBtn {
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.82) 0 7%, transparent 16%),
+    radial-gradient(circle at 42% 44%, rgba(255, 88, 88, 0.95), rgba(129, 13, 31, 0.94) 54%, rgba(23, 3, 10, 0.98) 80%);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 122px;
+  height: 122px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95) 0 7%, rgba(255, 255, 255, 0.36) 8% 15%, transparent 16%),
+    radial-gradient(circle at 48% 42%, rgba(255, 232, 116, 0.98), rgba(255, 166, 42, 0.84) 46%, rgba(94, 40, 5, 0.98) 78%);
+}
+
+.levelNode.infinity-level-node {
+  min-height: 138px;
+}
+
+.levelNode.infinity-level-node .levelsBtn,
+.levelNode .levelsBtn.infinity-level-btn {
+  width: 150px;
+  height: 82px;
+  border-radius: 999px;
+}
+
+@media (max-width: 380px) {
+  #mapDiv {
+    --planet-size: 74px;
+    --orbit-ring: 102px;
+  }
+
+  .levelNode,
+  .levelNode:nth-child(odd),
+  .levelNode:nth-child(even) {
+    min-height: 122px;
+  }
+}
+
+/* ================= STRAIGHT PLANET MAP PATH ================= */
+#mapDiv {
+  --planet-size: 82px;
+  --orbit-ring: 112px;
+  background:
+    radial-gradient(circle at 50% -6%, rgba(255, 255, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 18% 20%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.22), transparent 34%),
+    radial-gradient(circle at 82% 78%, rgba(255, 218, 112, 0.14), transparent 40%),
+    linear-gradient(180deg, rgba(2, 9, 29, 0.99), var(--map-deep) 58%, #02030c);
+}
+
+#mapDiv #levelsContainer {
+  gap: 0;
+  padding: 42px 0 76px;
+  align-items: center;
+  background:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.8) 0 1px, transparent 2px),
+    radial-gradient(circle at 84% 26%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.74) 0 1px, transparent 2px),
+    radial-gradient(circle at 22% 68%, rgba(255, 224, 132, 0.58) 0 1px, transparent 2px),
+    radial-gradient(circle at 76% 84%, rgba(255, 255, 255, 0.56) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 50% 50%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.16), transparent 46%),
+    linear-gradient(180deg, rgba(1, 8, 26, 0.98), var(--map-deep));
+  background-size:
+    124px 156px,
+    162px 190px,
+    186px 226px,
+    98px 132px,
+    auto,
+    auto;
+}
+
+#mapDiv #levelsContainer::before {
+  left: 50%;
+  width: 10px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent),
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.42) 4%,
+      rgba(255, 255, 255, 0.92) 13%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.72) 24%,
+      rgba(255, 224, 128, 0.78) 38%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.72) 56%,
+      rgba(255, 255, 255, 0.88) 76%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.42) 94%,
+      transparent
+    );
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    0 0 48px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42),
+    0 0 84px rgba(255, 255, 255, 0.14);
+  opacity: 0.9;
+}
+
+#mapDiv #levelsContainer::after {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.16), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%, rgba(0, 0, 0, 0.34));
+}
+
+.levelNode,
+.levelNode:nth-child(odd),
+.levelNode:nth-child(even) {
+  width: 100%;
+  min-height: 132px;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  position: relative;
+}
+
+.levelNode::after,
+.levelNode:nth-child(odd)::after,
+.levelNode:nth-child(even)::after {
+  top: calc(50% + 39px);
+  left: 50%;
+  width: 6px;
+  height: 92px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0), rgba(255, 255, 255, 0.86), rgba(var(--map-r), var(--map-g), var(--map-b), 0.86), rgba(var(--map-r), var(--map-g), var(--map-b), 0));
+  box-shadow:
+    0 0 16px rgba(var(--map-r), var(--map-g), var(--map-b), 0.9),
+    0 0 34px rgba(var(--map-r), var(--map-g), var(--map-b), 0.38);
+}
+
+.levelNode:last-child::after,
+.levelNode.infinity-level-node::after {
+  display: none;
+}
+
+.levelNode::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    radial-gradient(circle, transparent 56%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 57%, transparent 70%),
+    conic-gradient(from 12deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.34), transparent 32%, rgba(255, 255, 255, 0.24), transparent 64%);
+  box-shadow:
+    0 0 26px rgba(var(--map-r), var(--map-g), var(--map-b), 0.22),
+    inset 0 0 24px rgba(var(--map-r), var(--map-g), var(--map-b), 0.12);
+  pointer-events: none;
+}
+
+.levelNode.locked::before {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border-color: rgba(190, 210, 230, 0.12);
+  background:
+    radial-gradient(circle, transparent 58%, rgba(170, 185, 205, 0.08) 59%, transparent 72%),
+    conic-gradient(from 12deg, transparent, rgba(170, 185, 205, 0.18), transparent 48%);
+  box-shadow: none;
+}
+
+.levelsBtn {
+  width: var(--planet-size);
+  height: var(--planet-size);
+  border-radius: 50%;
+  z-index: 3;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.9) 0 7%, rgba(255, 255, 255, 0.3) 8% 15%, transparent 16%),
+    radial-gradient(circle at 66% 68%, rgba(0, 0, 0, 0.28) 0 13%, transparent 14%),
+    radial-gradient(circle at 44% 42%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.94), rgba(var(--map-r), var(--map-g), var(--map-b), 0.58) 46%, rgba(4, 12, 30, 0.98) 78%);
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.46),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.2),
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.74),
+    0 16px 30px rgba(0, 0, 0, 0.58);
+}
+
+.levelsBtn::before {
+  inset: -13px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.42);
+  background:
+    linear-gradient(90deg, transparent 8%, rgba(255, 255, 255, 0.44), transparent 92%),
+    conic-gradient(from 90deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.5), transparent 36%);
+  transform: rotate(-12deg) scaleY(0.36);
+  box-shadow: 0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.32);
+}
+
+.levelsBtn::after {
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--map-r), var(--map-g), var(--map-b), 0.36), transparent 70%);
+  opacity: 0.7;
+  filter: blur(12px);
+}
+
+.levelsBtn.current {
+  transform: scale(1.14);
+  border-color: #ffffff;
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.36),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.28),
+    0 0 20px rgba(255, 255, 255, 0.72),
+    0 0 48px rgba(var(--map-r), var(--map-g), var(--map-b), 1),
+    0 0 92px rgba(var(--map-r), var(--map-g), var(--map-b), 0.5);
+}
+
+.levelsBtn.current::before {
+  inset: -18px;
+  border-radius: 50%;
+  transform: rotate(-12deg) scaleY(0.38);
+  animation: none;
+}
+
+.levelNode.current-node::before {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 22px rgba(255, 255, 255, 0.38),
+    0 0 52px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72),
+    inset 0 0 28px rgba(var(--map-r), var(--map-g), var(--map-b), 0.24);
+}
+
+.levelNode.current-node::after {
+  width: 8px;
+}
+
+.levelNode.locked {
+  opacity: 0.62;
+}
+
+.levelNode.locked .levelsBtn {
+  border-color: rgba(210, 224, 240, 0.18);
+  color: rgba(230, 238, 248, 0.42);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.26) 0 6%, transparent 15%),
+    radial-gradient(circle at 48% 42%, rgba(78, 90, 112, 0.76), rgba(25, 31, 46, 0.98) 76%);
+  box-shadow:
+    inset -14px -16px 22px rgba(0, 0, 0, 0.5),
+    0 12px 24px rgba(0, 0, 0, 0.38);
+}
+
+.levelNode.locked::after {
+  opacity: 0.24;
+}
+
+.levelNode.boss-node .levelsBtn {
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.82) 0 7%, transparent 16%),
+    radial-gradient(circle at 42% 44%, rgba(255, 88, 88, 0.95), rgba(129, 13, 31, 0.94) 54%, rgba(23, 3, 10, 0.98) 80%);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 122px;
+  height: 122px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95) 0 7%, rgba(255, 255, 255, 0.36) 8% 15%, transparent 16%),
+    radial-gradient(circle at 48% 42%, rgba(255, 232, 116, 0.98), rgba(255, 166, 42, 0.84) 46%, rgba(94, 40, 5, 0.98) 78%);
+}
+
+.levelNode.infinity-level-node {
+  min-height: 138px;
+}
+
+.levelNode.infinity-level-node .levelsBtn,
+.levelNode .levelsBtn.infinity-level-btn {
+  width: 150px;
+  height: 82px;
+  border-radius: 999px;
+}
+
+@media (max-width: 380px) {
+  #mapDiv {
+    --planet-size: 74px;
+    --orbit-ring: 102px;
+  }
+
+  .levelNode,
+  .levelNode:nth-child(odd),
+  .levelNode:nth-child(even) {
+    min-height: 122px;
+  }
+}
+
+/* ================= LEVEL MAP ORBIT ROUTE ================= */
+#mapDiv {
+  --map-r: 0;
+  --map-g: 198;
+  --map-b: 255;
+  --map-deep: #020614;
+  --map-warm: 255, 214, 120;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.72);
+  background:
+    radial-gradient(
+      ellipse at 50% -12%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 12% 68%,
+      rgba(var(--map-warm), 0.14),
+      transparent 32%
+    ),
+    linear-gradient(180deg, rgba(5, 11, 27, 0.98), var(--map-deep));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 26px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42),
+    0 24px 52px rgba(0, 0, 0, 0.78);
+}
+
+#mapDiv::before {
+  inset: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.18);
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0 46%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 46.3% 46.8%,
+      transparent 47.2% 100%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 0 58%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.08) 58.5% 59.5%,
+      transparent 60%
+    );
+  opacity: 0.9;
+}
+
+#mapDiv::after {
+  border-radius: inherit;
+  background:
+    linear-gradient(
+        90deg,
+        rgba(var(--map-r), var(--map-g), var(--map-b), 0.9),
+        transparent 22% 78%,
+        rgba(var(--map-r), var(--map-g), var(--map-b), 0.9)
+      )
+      top / 100% 2px no-repeat,
+    linear-gradient(
+        90deg,
+        rgba(var(--map-r), var(--map-g), var(--map-b), 0.75),
+        transparent 24% 76%,
+        rgba(var(--map-r), var(--map-g), var(--map-b), 0.75)
+      )
+      bottom / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 34%, rgba(0, 0, 0, 0.42));
+}
+
+#mapDiv #levelsContainer {
+  top: 76px;
+  height: calc(100% - 76px);
+  gap: 18px;
+  padding: 32px 0 56px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.72) 0 1px, transparent 2px),
+    radial-gradient(
+      circle,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.5) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      ellipse at 50% 18%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.18),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 50% 84%,
+      rgba(var(--map-warm), 0.12),
+      transparent 38%
+    ),
+    linear-gradient(180deg, rgba(1, 8, 22, 0.4), rgba(0, 0, 0, 0.18));
+  background-size:
+    92px 128px,
+    132px 166px,
+    auto,
+    auto,
+    auto;
+  background-position:
+    14px 22px,
+    58px 86px,
+    center,
+    center,
+    center;
+}
+
+#mapDiv #levelsContainer::before {
+  left: 50%;
+  width: 18px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.95) 0 2px,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.82) 3px 5px,
+      transparent 6px
+    )
+    center 0 / 18px 54px repeat-y,
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.72),
+      rgba(var(--map-warm), 0.36),
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.58),
+      transparent
+    );
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.46),
+    0 0 54px rgba(var(--map-r), var(--map-g), var(--map-b), 0.2);
+}
+
+#levelMapStars {
+  position: fixed;
+  inset: 82px 14px 16px;
+  z-index: 0;
+  opacity: 0.42;
+  background:
+    radial-gradient(circle at 12% 18%, #fff 0 1px, transparent 2px),
+    radial-gradient(
+      circle at 84% 28%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.9) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 28% 74%, rgba(var(--map-warm), 0.72) 0 1px, transparent 2px);
+  background-size:
+    116px 158px,
+    154px 206px,
+    188px 238px;
+}
+
+.levelNode {
+  min-height: 86px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.levelNode:nth-child(odd),
+.levelNode:nth-child(even) {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.levelNode:nth-child(3n + 1) .levelsBtn {
+  transform: translateX(-86px);
+}
+
+.levelNode:nth-child(3n + 2) .levelsBtn {
+  transform: translateX(86px);
+}
+
+.levelNode:nth-child(3n) .levelsBtn {
+  transform: translateX(0);
+}
+
+.levelNode::after {
+  top: 50%;
+  left: 50%;
+  width: 92px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.78),
+    transparent
+  );
+  box-shadow: 0 0 14px rgba(var(--map-r), var(--map-g), var(--map-b), 0.5);
+}
+
+.levelNode:nth-child(3n + 1)::after {
+  transform: translate(-50%, -50%) rotate(-26deg);
+}
+
+.levelNode:nth-child(3n + 2)::after {
+  transform: translate(-50%, -50%) rotate(26deg);
+}
+
+.levelNode:nth-child(3n)::after {
+  width: 32px;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.levelsBtn {
+  width: 72px;
+  height: 72px;
+  clip-path: polygon(50% 0, 88% 18%, 100% 58%, 74% 100%, 26% 100%, 0 58%, 12% 18%);
+  border: 0;
+  border-radius: 0;
+  color: #f7fdff;
+  font-size: 24px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.32), transparent 33%),
+    radial-gradient(
+      circle at 50% 76%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.62),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(18, 39, 72, 0.98), rgba(2, 8, 18, 0.98));
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42),
+    0 12px 22px rgba(0, 0, 0, 0.5);
+}
+
+.levelsBtn::before {
+  inset: 8px;
+  clip-path: inherit;
+  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.levelsBtn::after {
+  inset: -12px;
+  clip-path: inherit;
+  border-radius: 0;
+  background: radial-gradient(
+    circle,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.5),
+    transparent 68%
+  );
+  filter: blur(10px);
+}
+
+.levelsBtn.current {
+  transform: translateX(-86px) scale(1.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), transparent 35%),
+    radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.34), transparent 34%),
+    linear-gradient(
+      180deg,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+      rgba(2, 10, 24, 0.98)
+    );
+  box-shadow:
+    0 0 28px rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    0 0 70px rgba(var(--map-r), var(--map-g), var(--map-b), 0.52),
+    0 14px 28px rgba(0, 0, 0, 0.56);
+}
+
+.levelNode:nth-child(3n + 2) .levelsBtn.current {
+  transform: translateX(86px) scale(1.18);
+}
+
+.levelNode:nth-child(3n) .levelsBtn.current {
+  transform: translateX(0) scale(1.18);
+}
+
+.levelsBtn.current::before {
+  inset: -10px;
+  animation: ringSpin 2.4s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(255, 255, 255, 0.88),
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.94),
+    transparent 72%
+  );
+}
+
+.levelNode.locked {
+  opacity: 0.42;
+}
+
+.levelNode.locked::before {
+  left: calc(50% + 26px);
+  top: 18px;
+}
+
+.levelNode.locked .levelsBtn {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(28, 36, 52, 0.98), rgba(4, 7, 13, 0.98));
+  color: rgba(235, 246, 255, 0.34);
+  box-shadow: 0 9px 18px rgba(0, 0, 0, 0.44);
+}
+
+.levelNode.boss-node .levelsBtn {
+  width: 86px;
+  height: 86px;
+  font-size: 27px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.34), transparent 35%),
+    radial-gradient(circle at 50% 78%, rgba(255, 84, 72, 0.72), transparent 60%),
+    linear-gradient(180deg, #811728, #1a0409);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 118px;
+  height: 118px;
+  font-size: 33px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.42), transparent 35%),
+    radial-gradient(circle at 50% 78%, rgba(255, 226, 112, 0.72), transparent 60%),
+    linear-gradient(180deg, #9a5f08, #28050c 74%, #07020d);
+}
+
+#mapDiv.level-green {
+  --map-r: 58;
+  --map-g: 232;
+  --map-b: 142;
+  --map-deep: #03150d;
+  --map-warm: 148, 255, 201;
+}
+
+#mapDiv.level-pink {
+  --map-r: 255;
+  --map-g: 92;
+  --map-b: 190;
+  --map-deep: #180318;
+  --map-warm: 255, 195, 224;
+}
+
+#mapDiv.level-red {
+  --map-r: 255;
+  --map-g: 78;
+  --map-b: 78;
+  --map-deep: #170305;
+  --map-warm: 255, 170, 92;
+}
+
+#mapDiv.level-purple {
+  --map-r: 178;
+  --map-g: 105;
+  --map-b: 255;
+  --map-deep: #10051f;
+  --map-warm: 238, 190, 255;
+}
+
+#mapDiv.level-orange,
+#mapDiv.level-ogange {
+  --map-r: 255;
+  --map-g: 150;
+  --map-b: 54;
+  --map-deep: #170a03;
+  --map-warm: 255, 222, 126;
+}
+
+#mapDiv.level-lightBlue {
+  --map-r: 76;
+  --map-g: 224;
+  --map-b: 255;
+  --map-deep: #02121a;
+  --map-warm: 181, 245, 255;
+}
+
+#mapDiv.level-yellow {
+  --map-r: 255;
+  --map-g: 232;
+  --map-b: 74;
+  --map-deep: #161303;
+  --map-warm: 255, 248, 172;
+}
+
+#mapDiv.level-black {
+  --map-r: 156;
+  --map-g: 164;
+  --map-b: 188;
+  --map-deep: #030407;
+  --map-warm: 116, 201, 255;
+}
+
+#mapDiv.level-gold {
+  --map-r: 255;
+  --map-g: 194;
+  --map-b: 64;
+  --map-deep: #150b02;
+  --map-warm: 255, 236, 168;
+}
+
+#mapDiv.level-infinity {
+  --map-r: 126;
+  --map-g: 230;
+  --map-b: 255;
+  --map-deep: #020614;
+  --map-warm: 190, 154, 255;
+}
+
+/* ================= LEVEL MAP COSMIC PLANETS ================= */
+#mapDiv {
+  --planet-r: var(--map-r);
+  --planet-g: var(--map-g);
+  --planet-b: var(--map-b);
+  --planet-hot: var(--map-warm);
+  border-radius: 16px;
+  border: 1px solid rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.72);
+  background:
+    radial-gradient(
+      ellipse at 50% -10%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.28),
+      transparent 38%
+    ),
+    radial-gradient(circle at 16% 78%, rgba(var(--planet-hot), 0.13), transparent 34%),
+    radial-gradient(circle at 90% 24%, rgba(165, 135, 255, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(1, 5, 18, 0.99), var(--map-deep));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 34px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.42),
+    0 26px 58px rgba(0, 0, 0, 0.8);
+}
+
+#mapDiv::before {
+  inset: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.16);
+  background:
+    radial-gradient(
+      ellipse at 50% 22%,
+      transparent 0 34%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.1) 34.5% 35.2%,
+      transparent 35.8%
+    ),
+    radial-gradient(
+      ellipse at 50% 58%,
+      transparent 0 48%,
+      rgba(var(--planet-hot), 0.08) 48.5% 49.4%,
+      transparent 50%
+    ),
+    linear-gradient(
+      125deg,
+      transparent 0 44%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.09) 44.4% 45%,
+      transparent 45.4% 100%
+    );
+}
+
+#mapDiv::after {
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.65) 0 1px, transparent 2px),
+    radial-gradient(circle at 86% 34%, rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 30% 84%, rgba(var(--planet-hot), 0.6) 0 1px, transparent 2px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%, rgba(0, 0, 0, 0.48));
+  background-size:
+    128px 172px,
+    152px 214px,
+    184px 244px,
+    auto;
+  opacity: 0.9;
+}
+
+#mapTitle {
+  background:
+    radial-gradient(
+      ellipse at 50% 0,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.24),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(3, 12, 34, 0.98), rgba(2, 5, 18, 0.92));
+  border-bottom: 1px solid rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.5);
+}
+
+#mapDiv #levelsContainer {
+  gap: 20px;
+  padding: 32px 0 62px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px),
+    radial-gradient(
+      circle,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.5) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 50% 16%, rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.16), transparent 34%),
+    radial-gradient(circle at 50% 88%, rgba(var(--planet-hot), 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.24));
+  background-size:
+    92px 132px,
+    146px 196px,
+    auto,
+    auto,
+    auto;
+  background-position:
+    12px 18px,
+    48px 74px,
+    center,
+    center,
+    center;
+}
+
+#mapDiv #levelsContainer::before {
+  left: 50%;
+  width: 6px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.78),
+      rgba(255, 255, 255, 0.44),
+      rgba(var(--planet-hot), 0.38),
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.58),
+      transparent
+    );
+  box-shadow:
+    0 0 14px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.72),
+    0 0 48px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.28);
+  opacity: 0.86;
+}
+
+#mapDiv #levelsContainer::after {
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      transparent 0 58%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.07) 58.5% 59.5%,
+      transparent 60%
+    ),
+    linear-gradient(180deg, transparent 0 62%, rgba(0, 0, 0, 0.26));
+}
+
+#levelMapStars {
+  position: fixed;
+  inset: 82px 14px 16px;
+  z-index: 0;
+  opacity: 0.52;
+  background:
+    radial-gradient(circle at 12% 18%, #fff 0 1px, transparent 2px),
+    radial-gradient(
+      circle at 84% 28%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.84) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 28% 74%, rgba(var(--planet-hot), 0.68) 0 1px, transparent 2px);
+  background-size:
+    116px 158px,
+    154px 206px,
+    188px 238px;
+}
+
+.levelNode {
+  min-height: 92px;
+  justify-content: center;
+  padding: 0;
+}
+
+.levelNode:nth-child(odd),
+.levelNode:nth-child(even) {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.levelNode:nth-child(3n + 1) .levelsBtn,
+.levelNode:nth-child(3n + 1) .levelsBtn.current {
+  transform: translateX(-78px);
+}
+
+.levelNode:nth-child(3n + 2) .levelsBtn,
+.levelNode:nth-child(3n + 2) .levelsBtn.current {
+  transform: translateX(78px);
+}
+
+.levelNode:nth-child(3n) .levelsBtn,
+.levelNode:nth-child(3n) .levelsBtn.current {
+  transform: translateX(0);
+}
+
+.levelNode::after {
+  top: 50%;
+  left: 50%;
+  width: 82px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.72),
+    rgba(255, 255, 255, 0.42),
+    transparent
+  );
+  box-shadow: 0 0 14px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.52);
+}
+
+.levelNode:nth-child(3n + 1)::after {
+  transform: translate(-50%, -50%) rotate(-24deg);
+}
+
+.levelNode:nth-child(3n + 2)::after {
+  transform: translate(-50%, -50%) rotate(24deg);
+}
+
+.levelNode:nth-child(3n)::after {
+  width: 30px;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.levelsBtn {
+  width: 74px;
+  height: 74px;
+  clip-path: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  color: #f8fdff;
+  font-size: 24px;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.78), transparent 0 10%, rgba(255, 255, 255, 0.18) 11%, transparent 24%),
+    radial-gradient(circle at 68% 72%, rgba(0, 0, 0, 0.38), transparent 0 38%),
+    radial-gradient(
+      circle at 48% 48%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.98),
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.5) 42%,
+      rgba(2, 9, 22, 0.96) 76%
+    );
+  box-shadow:
+    0 0 0 6px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.08),
+    0 0 22px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.48),
+    0 14px 28px rgba(0, 0, 0, 0.56),
+    inset -12px -16px 22px rgba(0, 0, 0, 0.45),
+    inset 8px 8px 18px rgba(255, 255, 255, 0.12);
+}
+
+.levelsBtn::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 1px solid rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.36);
+  border-radius: 50%;
+  background: transparent;
+  transform: rotate(-18deg) scaleY(0.34);
+  box-shadow: 0 0 14px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.34);
+}
+
+.levelsBtn::after {
+  content: '';
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.46),
+    transparent 68%
+  );
+  opacity: 0.72;
+  filter: blur(12px);
+}
+
+.levelsBtn.current {
+  border-color: rgba(255, 255, 255, 0.82);
+  background:
+    radial-gradient(circle at 30% 22%, #ffffff, transparent 0 11%, rgba(255, 255, 255, 0.26) 12%, transparent 28%),
+    radial-gradient(circle at 72% 76%, rgba(0, 0, 0, 0.34), transparent 0 38%),
+    radial-gradient(
+      circle at 48% 48%,
+      rgba(255, 255, 255, 0.92),
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.96) 24%,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.58) 62%,
+      rgba(2, 8, 20, 0.98)
+    );
+  box-shadow:
+    0 0 0 8px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.12),
+    0 0 34px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.96),
+    0 0 80px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.42),
+    0 16px 30px rgba(0, 0, 0, 0.58),
+    inset -14px -18px 24px rgba(0, 0, 0, 0.34),
+    inset 8px 8px 18px rgba(255, 255, 255, 0.26);
+}
+
+.levelNode:nth-child(3n + 1) .levelsBtn.current {
+  transform: translateX(-78px) scale(1.16);
+}
+
+.levelNode:nth-child(3n + 2) .levelsBtn.current {
+  transform: translateX(78px) scale(1.16);
+}
+
+.levelNode:nth-child(3n) .levelsBtn.current {
+  transform: translateX(0) scale(1.16);
+}
+
+.levelsBtn.current::before {
+  inset: -14px;
+  border-radius: 50%;
+  background: transparent;
+  transform: rotate(-18deg) scaleY(0.35);
+  animation: none;
+  border-color: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.56),
+    0 0 20px rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.72);
+}
+
+.levelsBtn.current::after {
+  inset: -26px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.68),
+    rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.2) 45%,
+    transparent 72%
+  );
+}
+
+.levelNode.locked {
+  opacity: 0.5;
+}
+
+.levelNode.locked::before {
+  top: 20px;
+  left: calc(50% + 24px);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(9, 13, 24, 0.92);
+}
+
+.levelNode.locked .levelsBtn {
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.18), transparent 0 18%),
+    radial-gradient(circle at 48% 48%, rgba(54, 66, 86, 0.9), rgba(8, 11, 20, 0.98) 72%);
+  border-color: rgba(205, 224, 240, 0.12);
+  color: rgba(230, 240, 248, 0.36);
+  box-shadow:
+    0 0 0 5px rgba(120, 140, 160, 0.04),
+    0 10px 20px rgba(0, 0, 0, 0.48),
+    inset -10px -14px 18px rgba(0, 0, 0, 0.44);
+}
+
+.levelNode.boss-node .levelsBtn {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  font-size: 28px;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.72), transparent 0 10%, rgba(255, 255, 255, 0.16) 11%, transparent 24%),
+    radial-gradient(circle at 70% 76%, rgba(0, 0, 0, 0.42), transparent 0 38%),
+    radial-gradient(circle at 48% 48%, #ff7a5c, #e11d48 46%, #23050c 78%);
+}
+
+.levelNode.boss-node .levelsBtn::before {
+  inset: -15px;
+  border-radius: 50%;
+  transform: rotate(-18deg) scaleY(0.34);
+  border-color: rgba(255, 142, 118, 0.72);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  font-size: 33px;
+  background:
+    radial-gradient(circle at 30% 22%, #fff8d1, transparent 0 10%, rgba(255, 255, 255, 0.24) 11%, transparent 25%),
+    radial-gradient(circle at 70% 76%, rgba(0, 0, 0, 0.38), transparent 0 38%),
+    radial-gradient(circle at 48% 48%, #ffe27a, #f59e0b 42%, #3a1004 78%);
+}
+
+.levelNode.final-level-node .levelsBtn::before,
+.levelNode .levelsBtn.final-level-btn::before {
+  inset: -22px;
+  border-radius: 50%;
+  transform: rotate(-18deg) scaleY(0.32);
+  border-color: rgba(255, 236, 170, 0.82);
+}
+
+.levelNode.infinity-level-node .levelsBtn,
+.levelNode .levelsBtn.infinity-level-btn {
+  width: 158px;
+  height: 82px;
+  border-radius: 999px;
+  font-size: 52px;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.78), transparent 0 10%, rgba(255, 255, 255, 0.16) 11%, transparent 25%),
+    linear-gradient(
+      135deg,
+      rgba(var(--planet-r), var(--planet-g), var(--planet-b), 0.92),
+      rgba(154, 116, 255, 0.72),
+      rgba(3, 9, 24, 0.98)
+    );
+}
+
 #planetSelectModal {
   position: fixed;
   inset: 0;
@@ -3868,13 +6200,6 @@ body {
   right: 22px;
 }
 
-.planetArrow:hover {
-  color: white;
-  text-shadow:
-    0 0 22px rgba(var(--planet-color), 1),
-    0 4px 16px rgba(0, 0, 0, 1);
-}
-
 .planetArrow:active {
   transform: translateY(-50%) scale(0.86);
 }
@@ -3985,9 +6310,21 @@ body {
 /* ================= PLANET SELECT REDESIGN ================= */
 #planetSelectModal {
   background:
-    radial-gradient(circle at 50% 42%, rgba(var(--planet-color, 0, 198, 255), 0.18), transparent 34%),
-    radial-gradient(circle at 20% 18%, rgba(120, 245, 255, 0.1), transparent 28%),
-    radial-gradient(circle at 78% 82%, rgba(255, 220, 110, 0.08), transparent 30%),
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(var(--planet-color, 0, 198, 255), 0.18),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 20% 18%,
+      rgba(120, 245, 255, 0.1),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 78% 82%,
+      rgba(255, 220, 110, 0.08),
+      transparent 30%
+    ),
     rgba(0, 0, 0, 0.78);
   backdrop-filter: none;
 }
@@ -3998,11 +6335,27 @@ body {
   border-radius: 22px;
   overflow: hidden;
   background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.8px) 14px 18px / 92px 118px repeat,
-    radial-gradient(circle, rgba(125, 236, 255, 0.48) 0 1.2px, transparent 2.2px) 48px 72px / 138px 164px repeat,
-    radial-gradient(circle, rgba(255, 224, 130, 0.35) 0 1px, transparent 2px) 84px 24px / 176px 214px repeat,
-    radial-gradient(circle at 50% 42%, rgba(var(--planet-color), 0.24), transparent 36%),
-    linear-gradient(180deg, rgba(4, 22, 48, 0.98), rgba(2, 8, 24, 0.99) 58%, rgba(1, 4, 14, 0.99));
+    radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.8px)
+      14px 18px / 92px 118px repeat,
+    radial-gradient(
+        circle,
+        rgba(125, 236, 255, 0.48) 0 1.2px,
+        transparent 2.2px
+      )
+      48px 72px / 138px 164px repeat,
+    radial-gradient(circle, rgba(255, 224, 130, 0.35) 0 1px, transparent 2px)
+      84px 24px / 176px 214px repeat,
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(var(--planet-color), 0.24),
+      transparent 36%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(4, 22, 48, 0.98),
+      rgba(2, 8, 24, 0.99) 58%,
+      rgba(1, 4, 14, 0.99)
+    );
   border: 1px solid rgba(var(--planet-color), 0.9);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08) inset,
@@ -4019,22 +6372,34 @@ body {
   border-radius: 18px;
   border-color: rgba(160, 240, 255, 0.14);
   background:
-    linear-gradient(90deg, rgba(var(--planet-color), 0.5), transparent 36px) 0 0 / 84px 1px no-repeat,
-    linear-gradient(180deg, rgba(var(--planet-color), 0.5), transparent 36px) 0 0 / 1px 84px no-repeat,
-    linear-gradient(270deg, rgba(var(--planet-color), 0.5), transparent 36px) 100% 0 / 84px 1px no-repeat,
-    linear-gradient(180deg, rgba(var(--planet-color), 0.5), transparent 36px) 100% 0 / 1px 84px no-repeat,
-    linear-gradient(90deg, rgba(var(--planet-color), 0.38), transparent 36px) 0 100% / 84px 1px no-repeat,
-    linear-gradient(0deg, rgba(var(--planet-color), 0.38), transparent 36px) 0 100% / 1px 84px no-repeat,
-    linear-gradient(270deg, rgba(var(--planet-color), 0.38), transparent 36px) 100% 100% / 84px 1px no-repeat,
-    linear-gradient(0deg, rgba(var(--planet-color), 0.38), transparent 36px) 100% 100% / 1px 84px no-repeat;
+    linear-gradient(90deg, rgba(var(--planet-color), 0.5), transparent 36px) 0
+      0 / 84px 1px no-repeat,
+    linear-gradient(180deg, rgba(var(--planet-color), 0.5), transparent 36px) 0
+      0 / 1px 84px no-repeat,
+    linear-gradient(270deg, rgba(var(--planet-color), 0.5), transparent 36px)
+      100% 0 / 84px 1px no-repeat,
+    linear-gradient(180deg, rgba(var(--planet-color), 0.5), transparent 36px)
+      100% 0 / 1px 84px no-repeat,
+    linear-gradient(90deg, rgba(var(--planet-color), 0.38), transparent 36px) 0
+      100% / 84px 1px no-repeat,
+    linear-gradient(0deg, rgba(var(--planet-color), 0.38), transparent 36px) 0
+      100% / 1px 84px no-repeat,
+    linear-gradient(270deg, rgba(var(--planet-color), 0.38), transparent 36px)
+      100% 100% / 84px 1px no-repeat,
+    linear-gradient(0deg, rgba(var(--planet-color), 0.38), transparent 36px)
+      100% 100% / 1px 84px no-repeat;
 }
 
 #planetSelectBox::after {
   width: 230px;
   height: 230px;
   top: 48%;
-  background:
-    radial-gradient(circle, rgba(var(--planet-color), 0.36), rgba(var(--planet-color), 0.12) 48%, transparent 72%);
+  background: radial-gradient(
+    circle,
+    rgba(var(--planet-color), 0.36),
+    rgba(var(--planet-color), 0.12) 48%,
+    transparent 72%
+  );
   filter: none;
   opacity: 0.82;
   transition:
@@ -4061,8 +6426,12 @@ body {
   inset: -10px;
   border-radius: 50%;
   pointer-events: none;
-  background:
-    radial-gradient(circle, transparent 58%, rgba(var(--planet-color), 0.34) 60%, transparent 68%);
+  background: radial-gradient(
+    circle,
+    transparent 58%,
+    rgba(var(--planet-color), 0.34) 60%,
+    transparent 68%
+  );
   opacity: 0.76;
 }
 
@@ -4123,7 +6492,11 @@ body {
   height: 58px;
   border-radius: 16px;
   background:
-    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.14), transparent 44%),
+    radial-gradient(
+      circle at 50% 18%,
+      rgba(255, 255, 255, 0.14),
+      transparent 44%
+    ),
     linear-gradient(180deg, rgba(9, 38, 70, 0.34), rgba(1, 8, 24, 0.2));
   border: 1px solid rgba(var(--planet-color), 0.28);
   color: rgba(235, 252, 255, 0.95);
@@ -4146,13 +6519,6 @@ body {
   right: 18px;
 }
 
-.planetArrow:hover {
-  color: #ffffff;
-  text-shadow:
-    0 0 10px rgba(var(--planet-color), 0.9),
-    0 3px 8px rgba(0, 0, 0, 0.9);
-}
-
 .planetArrow:active {
   transform: translateY(-50%) scale(0.94);
   background: rgba(var(--planet-color), 0.16);
@@ -4165,8 +6531,16 @@ body {
   border-radius: 18px;
   border-color: rgba(var(--planet-color), 0.82);
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.18), transparent 46%),
-    linear-gradient(180deg, rgba(var(--planet-color), 0.28), rgba(2, 14, 36, 0.94));
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255, 255, 255, 0.18),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(var(--planet-color), 0.28),
+      rgba(2, 14, 36, 0.94)
+    );
   box-shadow:
     0 0 16px rgba(var(--planet-color), 0.36),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -4271,7 +6645,7 @@ body {
 }
 
 #homeScreen::before {
-  content: 'COSMORUSH';
+  content: 'ORBIT VELOCITY';
   position: absolute;
   top: calc(72px + var(--safe-t));
   left: 50%;
@@ -4322,8 +6696,20 @@ body {
       rgba(110, 230, 255, 0.05) 0 1px,
       transparent 1px 72px
     );
-  mask-image: linear-gradient(to bottom, transparent 8%, #000 23%, #000 84%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 8%, #000 23%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 8%,
+    #000 23%,
+    #000 84%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 8%,
+    #000 23%,
+    #000 84%,
+    transparent 100%
+  );
 }
 
 #centerPlanet {
@@ -4353,15 +6739,14 @@ body {
   z-index: -1;
   border-radius: 50%;
   border: 1px solid var(--glow1, rgba(0, 180, 255, 0.28));
-  background:
-    radial-gradient(
-      circle,
-      transparent 0 29%,
-      var(--glow1, rgba(0, 180, 255, 0.42)) 43%,
-      var(--glow2, rgba(70, 120, 255, 0.34)) 57%,
-      var(--glow3, rgba(255, 255, 255, 0.22)) 68%,
-      transparent 84%
-    );
+  background: radial-gradient(
+    circle,
+    transparent 0 29%,
+    var(--glow1, rgba(0, 180, 255, 0.42)) 43%,
+    var(--glow2, rgba(70, 120, 255, 0.34)) 57%,
+    var(--glow3, rgba(255, 255, 255, 0.22)) 68%,
+    transparent 84%
+  );
   filter: blur(9px);
   opacity: 0.92;
   box-shadow:
@@ -4378,22 +6763,31 @@ body {
   z-index: -2;
   border-radius: 50%;
   pointer-events: none;
-  background:
-    conic-gradient(
-      from 0deg,
-      transparent 0 10%,
-      var(--glow1, rgba(0, 180, 255, 0.28)) 12%,
-      transparent 14% 32%,
-      var(--glow2, rgba(70, 120, 255, 0.2)) 35%,
-      transparent 38% 64%,
-      var(--glow3, rgba(255, 255, 255, 0.12)) 67%,
-      transparent 70% 100%
-    );
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 10%,
+    var(--glow1, rgba(0, 180, 255, 0.28)) 12%,
+    transparent 14% 32%,
+    var(--glow2, rgba(70, 120, 255, 0.2)) 35%,
+    transparent 38% 64%,
+    var(--glow3, rgba(255, 255, 255, 0.12)) 67%,
+    transparent 70% 100%
+  );
   filter: blur(2px);
   opacity: 0.82;
   animation: homeOrbitSpin 13s linear infinite;
-  mask-image: radial-gradient(circle, transparent 0 52%, #000 55% 67%, transparent 70%);
-  -webkit-mask-image: radial-gradient(circle, transparent 0 52%, #000 55% 67%, transparent 70%);
+  mask-image: radial-gradient(
+    circle,
+    transparent 0 52%,
+    #000 55% 67%,
+    transparent 70%
+  );
+  -webkit-mask-image: radial-gradient(
+    circle,
+    transparent 0 52%,
+    #000 55% 67%,
+    transparent 70%
+  );
 }
 
 @media (max-width: 700px), (pointer: coarse) {
@@ -4401,15 +6795,14 @@ body {
     inset: -46px;
     opacity: 1;
     filter: blur(10px);
-    background:
-      radial-gradient(
-        circle,
-        transparent 0 28%,
-        var(--glow1, rgba(0, 180, 255, 0.48)) 42%,
-        var(--glow2, rgba(70, 120, 255, 0.38)) 58%,
-        var(--glow3, rgba(255, 255, 255, 0.26)) 70%,
-        transparent 85%
-      );
+    background: radial-gradient(
+      circle,
+      transparent 0 28%,
+      var(--glow1, rgba(0, 180, 255, 0.48)) 42%,
+      var(--glow2, rgba(70, 120, 255, 0.38)) 58%,
+      var(--glow3, rgba(255, 255, 255, 0.26)) 70%,
+      transparent 85%
+    );
     box-shadow:
       0 0 50px var(--glow1, rgba(0, 180, 255, 0.48)),
       0 0 130px var(--glow2, rgba(70, 120, 255, 0.38)),
@@ -4431,9 +6824,21 @@ body {
   border: 1px solid rgba(176, 249, 255, 0.95);
   color: #ffffff;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255, 246, 151, 0.2), transparent 24%),
-    radial-gradient(circle at 18% 34%, rgba(62, 255, 212, 0.28), transparent 34%),
-    radial-gradient(circle at 82% 66%, rgba(124, 91, 255, 0.3), transparent 38%),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 246, 151, 0.2),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 18% 34%,
+      rgba(62, 255, 212, 0.28),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 82% 66%,
+      rgba(124, 91, 255, 0.3),
+      transparent 38%
+    ),
     linear-gradient(
       115deg,
       rgba(21, 236, 255, 0.28),
@@ -4474,7 +6879,11 @@ body {
       rgba(255, 255, 255, 0.08) 19px 20px,
       transparent 21px 42px
     ),
-    radial-gradient(circle at 50% 50%, rgba(255, 240, 118, 0.22), transparent 28%),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 240, 118, 0.22),
+      transparent 28%
+    ),
     linear-gradient(
       110deg,
       transparent 0 18%,
@@ -4495,30 +6904,22 @@ body {
   inset: -5px;
   border-radius: inherit;
   opacity: 0.95;
-  background:
-    conic-gradient(
-      from 210deg,
-      transparent 0deg,
-      rgba(83, 229, 255, 0.98) 46deg,
-      transparent 92deg,
-      rgba(255, 221, 92, 0.78) 156deg,
-      transparent 210deg,
-      rgba(129, 96, 255, 0.88) 288deg,
-      transparent
-    );
+  background: conic-gradient(
+    from 210deg,
+    transparent 0deg,
+    rgba(83, 229, 255, 0.98) 46deg,
+    transparent 92deg,
+    rgba(255, 221, 92, 0.78) 156deg,
+    transparent 210deg,
+    rgba(129, 96, 255, 0.88) 288deg,
+    transparent
+  );
   filter: blur(8px);
   transform: rotate(0deg) scale(1);
   z-index: -1;
   animation:
     homeButtonAura 3.8s linear infinite,
     homeBattleAuraPulse 1.9s ease-in-out infinite;
-}
-
-#startGameBtn:hover {
-  filter: brightness(1.12) saturate(1.16);
-  animation:
-    homeBattleHoverHot 1.45s ease-in-out infinite,
-    homeBattleCharge 1.35s ease-in-out infinite;
 }
 
 #startGameBtn:active {
@@ -4637,7 +7038,10 @@ body {
 
 @keyframes homeBattleScan {
   to {
-    background-position: 62px 0, 0 0, 0 0;
+    background-position:
+      62px 0,
+      0 0,
+      0 0;
   }
 }
 
@@ -4653,16 +7057,111 @@ body {
   }
 }
 
+.perf-mid #homeScreen #centerPlanet,
+.perf-low #homeScreen #centerPlanet,
+.perf-mid #homeScreen #startGameBtn,
+.perf-low #homeScreen #startGameBtn,
+.perf-mid #homeScreen #settingsBtn.spin,
+.perf-low #homeScreen #settingsBtn.spin {
+  animation: none !important;
+}
+
+.perf-mid #homeScreen #centerPlanet {
+  box-shadow:
+    0 0 24px var(--glow1, rgba(0, 180, 255, 0.32)),
+    inset 0 -18px 26px rgba(0, 0, 0, 0.28);
+}
+
+.perf-mid #homeScreen #centerPlanet::before {
+  opacity: 0.45;
+  filter: blur(5px);
+  box-shadow: 0 0 24px var(--glow1, rgba(0, 180, 255, 0.28));
+  animation: none !important;
+}
+
+.perf-mid #homeScreen #centerPlanet::after,
+.perf-mid #homeScreen #startGameBtn::after {
+  display: none;
+}
+
+.perf-mid #homeScreen #startGameBtn {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset,
+    0 0 20px rgba(106, 242, 255, 0.42),
+    0 12px 28px rgba(0, 0, 0, 0.58);
+}
+
+.perf-mid #homeScreen #startGameBtn::before {
+  opacity: 0.35;
+  transform: none;
+  animation: none !important;
+}
+
+.perf-low #homeScreen {
+  background:
+    radial-gradient(
+      circle at 50% 28%,
+      rgba(0, 130, 180, 0.18),
+      transparent 42%
+    ),
+    linear-gradient(180deg, #061326, #02040c 72%);
+}
+
+.perf-low #homeScreen::after,
+.perf-low #homeScreen #centerPlanet::before,
+.perf-low #homeScreen #centerPlanet::after,
+.perf-low #homeScreen #startGameBtn::before,
+.perf-low #homeScreen #startGameBtn::after {
+  display: none;
+}
+
+.perf-low #homeScreen #centerPlanet {
+  filter: none;
+  box-shadow:
+    0 0 10px rgba(0, 180, 255, 0.24),
+    inset 0 -12px 18px rgba(0, 0, 0, 0.32);
+}
+
+.perf-low #homeScreen #profileSettingsBtn,
+.perf-low #homeScreen #settingsBtn {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.32);
+}
+
+.perf-low #homeScreen #startGameBtn {
+  background: linear-gradient(180deg, #116987, #061832);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+  text-shadow: none;
+}
+
 /* ================= LEVEL MAP BACKDROP REFRESH ================= */
 #mapDiv {
   overflow: hidden;
   border: 1px solid rgba(174, 248, 255, 0.96);
   border-radius: 18px;
   background:
-    radial-gradient(circle at 50% -8%, rgba(112, 235, 255, 0.28), transparent 36%),
-    radial-gradient(circle at 92% 24%, rgba(146, 96, 255, 0.22), transparent 38%),
-    radial-gradient(circle at 14% 84%, rgba(255, 218, 96, 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(6, 22, 60, 0.98), rgba(2, 5, 28, 0.98) 42%, rgba(3, 2, 18, 0.98));
+    radial-gradient(
+      circle at 50% -8%,
+      rgba(112, 235, 255, 0.28),
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 92% 24%,
+      rgba(146, 96, 255, 0.22),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 14% 84%,
+      rgba(255, 218, 96, 0.14),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(6, 22, 60, 0.98),
+      rgba(2, 5, 28, 0.98) 42%,
+      rgba(3, 2, 18, 0.98)
+    );
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1) inset,
     0 0 0 3px rgba(18, 72, 120, 0.55),
@@ -4682,12 +7181,37 @@ body {
 #mapDiv::before {
   z-index: 0;
   background:
-    linear-gradient(90deg, rgba(107, 226, 255, 0.16) 0 1px, transparent 1px 38px),
+    linear-gradient(
+      90deg,
+      rgba(107, 226, 255, 0.16) 0 1px,
+      transparent 1px 38px
+    ),
     linear-gradient(0deg, rgba(107, 226, 255, 0.1) 0 1px, transparent 1px 42px),
-    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.16), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%, rgba(0, 0, 0, 0.34));
-  mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    radial-gradient(
+      ellipse at 50% 12%,
+      rgba(255, 255, 255, 0.16),
+      transparent 38%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06),
+      transparent 24%,
+      rgba(0, 0, 0, 0.34)
+    );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 10%,
+    #000 88%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 10%,
+    #000 88%,
+    transparent 100%
+  );
   opacity: 0.72;
 }
 
@@ -4696,18 +7220,90 @@ body {
   border-radius: inherit;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(116, 237, 255, 0.95), transparent 42px) 14px 14px / 82px 2px no-repeat,
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(116, 237, 255, 0.95), transparent 42px) 14px 14px / 2px 82px no-repeat,
-    linear-gradient(270deg, rgba(255, 255, 255, 0.5), rgba(116, 237, 255, 0.95), transparent 42px) calc(100% - 14px) 14px / 82px 2px no-repeat,
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(116, 237, 255, 0.95), transparent 42px) calc(100% - 16px) 14px / 2px 82px no-repeat,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.42), rgba(116, 237, 255, 0.86), transparent 42px) 14px calc(100% - 16px) / 82px 2px no-repeat,
-    linear-gradient(0deg, rgba(255, 255, 255, 0.42), rgba(116, 237, 255, 0.86), transparent 42px) 14px calc(100% - 14px) / 2px 82px no-repeat,
-    linear-gradient(270deg, rgba(255, 255, 255, 0.42), rgba(116, 237, 255, 0.86), transparent 42px) calc(100% - 14px) calc(100% - 16px) / 82px 2px no-repeat,
-    linear-gradient(0deg, rgba(255, 255, 255, 0.42), rgba(116, 237, 255, 0.86), transparent 42px) calc(100% - 16px) calc(100% - 14px) / 2px 82px no-repeat,
-    linear-gradient(90deg, rgba(115, 238, 255, 0.95), transparent 18% 82%, rgba(115, 238, 255, 0.95)) top / 100% 2px no-repeat,
-    linear-gradient(90deg, rgba(115, 238, 255, 0.95), transparent 20% 80%, rgba(115, 238, 255, 0.95)) bottom / 100% 2px no-repeat,
-    linear-gradient(180deg, rgba(115, 238, 255, 0.95), transparent 16% 84%, rgba(115, 238, 255, 0.95)) left / 2px 100% no-repeat,
-    linear-gradient(180deg, rgba(115, 238, 255, 0.95), transparent 16% 84%, rgba(115, 238, 255, 0.95)) right / 2px 100% no-repeat;
+    linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.5),
+        rgba(116, 237, 255, 0.95),
+        transparent 42px
+      )
+      14px 14px / 82px 2px no-repeat,
+    linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.5),
+        rgba(116, 237, 255, 0.95),
+        transparent 42px
+      )
+      14px 14px / 2px 82px no-repeat,
+    linear-gradient(
+        270deg,
+        rgba(255, 255, 255, 0.5),
+        rgba(116, 237, 255, 0.95),
+        transparent 42px
+      )
+      calc(100% - 14px) 14px / 82px 2px no-repeat,
+    linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.5),
+        rgba(116, 237, 255, 0.95),
+        transparent 42px
+      )
+      calc(100% - 16px) 14px / 2px 82px no-repeat,
+    linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.42),
+        rgba(116, 237, 255, 0.86),
+        transparent 42px
+      )
+      14px calc(100% - 16px) / 82px 2px no-repeat,
+    linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.42),
+        rgba(116, 237, 255, 0.86),
+        transparent 42px
+      )
+      14px calc(100% - 14px) / 2px 82px no-repeat,
+    linear-gradient(
+        270deg,
+        rgba(255, 255, 255, 0.42),
+        rgba(116, 237, 255, 0.86),
+        transparent 42px
+      )
+      calc(100% - 14px) calc(100% - 16px) / 82px 2px no-repeat,
+    linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.42),
+        rgba(116, 237, 255, 0.86),
+        transparent 42px
+      )
+      calc(100% - 16px) calc(100% - 14px) / 2px 82px no-repeat,
+    linear-gradient(
+        90deg,
+        rgba(115, 238, 255, 0.95),
+        transparent 18% 82%,
+        rgba(115, 238, 255, 0.95)
+      )
+      top / 100% 2px no-repeat,
+    linear-gradient(
+        90deg,
+        rgba(115, 238, 255, 0.95),
+        transparent 20% 80%,
+        rgba(115, 238, 255, 0.95)
+      )
+      bottom / 100% 2px no-repeat,
+    linear-gradient(
+        180deg,
+        rgba(115, 238, 255, 0.95),
+        transparent 16% 84%,
+        rgba(115, 238, 255, 0.95)
+      )
+      left / 2px 100% no-repeat,
+    linear-gradient(
+        180deg,
+        rgba(115, 238, 255, 0.95),
+        transparent 16% 84%,
+        rgba(115, 238, 255, 0.95)
+      )
+      right / 2px 100% no-repeat;
   box-shadow:
     inset 0 0 0 1px rgba(185, 250, 255, 0.2),
     inset 0 0 0 4px rgba(24, 94, 146, 0.18),
@@ -4735,7 +7331,11 @@ body {
 #mapTitle {
   height: 76px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(110, 230, 255, 0.22), transparent 54%),
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(110, 230, 255, 0.22),
+      transparent 54%
+    ),
     linear-gradient(180deg, rgba(3, 13, 42, 0.98), rgba(3, 7, 28, 0.94));
   border-bottom: 1px solid rgba(112, 235, 255, 0.72);
   box-shadow:
@@ -4749,15 +7349,44 @@ body {
   height: calc(100% - 76px);
   position: absolute;
   background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.82) 0 1.2px, transparent 2.7px),
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.82) 0 1.2px,
+      transparent 2.7px
+    ),
     radial-gradient(circle, rgba(117, 235, 255, 0.56) 0 1.5px, transparent 3px),
-    radial-gradient(circle, rgba(255, 228, 129, 0.5) 0 1.3px, transparent 2.8px),
+    radial-gradient(
+      circle,
+      rgba(255, 228, 129, 0.5) 0 1.3px,
+      transparent 2.8px
+    ),
     radial-gradient(circle, rgba(255, 255, 255, 0.38) 0 0.9px, transparent 2px),
-    radial-gradient(circle at 50% 7%, rgba(185, 245, 255, 0.24), transparent 22%),
-    radial-gradient(circle at 22% 30%, rgba(86, 222, 255, 0.2), transparent 32%),
-    radial-gradient(circle at 84% 18%, rgba(119, 99, 255, 0.2), transparent 34%),
-    radial-gradient(circle at 28% 78%, rgba(255, 216, 95, 0.12), transparent 40%),
-    linear-gradient(180deg, rgba(8, 42, 84, 0.6), rgba(4, 13, 56, 0.72) 44%, rgba(6, 4, 35, 0.85));
+    radial-gradient(
+      circle at 50% 7%,
+      rgba(185, 245, 255, 0.24),
+      transparent 22%
+    ),
+    radial-gradient(
+      circle at 22% 30%,
+      rgba(86, 222, 255, 0.2),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 84% 18%,
+      rgba(119, 99, 255, 0.2),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 28% 78%,
+      rgba(255, 216, 95, 0.12),
+      transparent 40%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(8, 42, 84, 0.6),
+      rgba(4, 13, 56, 0.72) 44%,
+      rgba(6, 4, 35, 0.85)
+    );
   background-position:
     0 0,
     46px 72px,
@@ -4769,14 +7398,7 @@ body {
     center,
     center;
   background-repeat:
-    repeat,
-    repeat,
-    repeat,
-    repeat,
-    no-repeat,
-    no-repeat,
-    no-repeat,
-    no-repeat,
+    repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat,
     no-repeat;
   background-size:
     118px 168px,
@@ -4802,9 +7424,17 @@ body {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.84) 0 1.3px, transparent 2.8px),
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.84) 0 1.3px,
+      transparent 2.8px
+    ),
     radial-gradient(circle, rgba(117, 235, 255, 0.62) 0 1.6px, transparent 3px),
-    radial-gradient(circle, rgba(255, 228, 129, 0.56) 0 1.4px, transparent 2.8px),
+    radial-gradient(
+      circle,
+      rgba(255, 228, 129, 0.56) 0 1.4px,
+      transparent 2.8px
+    ),
     radial-gradient(circle, rgba(255, 255, 255, 0.44) 0 0.9px, transparent 2px);
   background-position:
     0 0,
@@ -4837,7 +7467,13 @@ body {
   pointer-events: none;
   background:
     linear-gradient(90deg, transparent, rgba(116, 235, 255, 0.22), transparent),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(87, 225, 255, 0.42), rgba(255, 218, 94, 0.28), rgba(118, 91, 255, 0.32));
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(87, 225, 255, 0.42),
+      rgba(255, 218, 94, 0.28),
+      rgba(118, 91, 255, 0.32)
+    );
   box-shadow:
     0 0 28px rgba(82, 225, 255, 0.34),
     0 0 64px rgba(74, 94, 255, 0.18);
@@ -4850,8 +7486,7 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, transparent 0 58%, rgba(0, 0, 0, 0.24));
+  background: linear-gradient(180deg, transparent 0 58%, rgba(0, 0, 0, 0.24));
   opacity: 0.54;
 }
 
@@ -4876,5 +7511,1740 @@ body {
 @media (prefers-reduced-motion: reduce) {
   #mapDiv.open #levelMapStars {
     animation: none;
+  }
+}
+
+/* ================= Orbit Velocity MAP REDESIGN ================= */
+#mapDiv {
+  --map-r: 0;
+  --map-g: 198;
+  --map-b: 255;
+  --map-deep: #020614;
+  width: min(360px, calc(100vw - 28px));
+  height: min(742px, calc(100dvh - 34px));
+  border-radius: 22px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.76);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12),
+      transparent 18% 82%,
+      rgba(255, 255, 255, 0.08)
+    ),
+    radial-gradient(
+      circle at 50% -8%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.28),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgba(5, 17, 45, 0.98), rgba(1, 5, 18, 0.98));
+  box-shadow:
+    0 0 30px rgba(var(--map-r), var(--map-g), var(--map-b), 0.42),
+    0 26px 54px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -26px 48px rgba(0, 0, 0, 0.5);
+}
+
+#mapDiv::before {
+  inset: 9px;
+  z-index: 1;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.12) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 1px,
+      transparent 1px
+    );
+  background-size: 34px 34px;
+  mask-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55),
+    transparent 42%,
+    rgba(0, 0, 0, 0.42)
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55),
+    transparent 42%,
+    rgba(0, 0, 0, 0.42)
+  );
+}
+
+#mapDiv::after {
+  z-index: 1;
+  border: 0;
+  background:
+    radial-gradient(
+      circle at 16% 18%,
+      rgba(255, 255, 255, 0.88) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 82% 24%,
+      rgba(255, 255, 255, 0.68) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 28% 72%,
+      rgba(255, 255, 255, 0.58) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 74% 82%,
+      rgba(255, 255, 255, 0.7) 0 1px,
+      transparent 2px
+    );
+  opacity: 0.55;
+}
+
+#mapTitle {
+  height: 76px;
+  padding-top: 4px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.28),
+      transparent 62%
+    ),
+    linear-gradient(180deg, rgba(6, 18, 46, 0.96), rgba(2, 7, 20, 0.78));
+  border-bottom: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.42);
+  color: #f4fbff;
+  font-size: 25px;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    0 3px 0 rgba(0, 0, 0, 0.78);
+}
+
+#mapTitle::before {
+  inset: auto 54px 14px;
+  height: 5px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.9),
+    transparent
+  );
+  box-shadow: 0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72);
+}
+
+#mapTitle::after {
+  bottom: 10px;
+  width: 112px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+#closeMapDiv {
+  top: 17px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 135, 135, 0.72);
+  background:
+    radial-gradient(
+      circle at 35% 28%,
+      rgba(255, 255, 255, 0.28),
+      transparent 36%
+    ),
+    linear-gradient(180deg, #ff4f61, #64101a);
+  box-shadow:
+    0 0 16px rgba(255, 60, 75, 0.42),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.42);
+}
+
+#mapDiv #levelsContainer {
+  top: 76px;
+  height: calc(100% - 76px);
+  gap: 26px;
+  padding: 34px 0 58px;
+  background:
+    radial-gradient(
+      circle at 20% 16%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.2),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 80% 72%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.16),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 50% 48%,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(180deg, rgba(2, 8, 24, 0.98), var(--map-deep));
+  background-size:
+    auto,
+    auto,
+    42px 42px,
+    auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--map-r), var(--map-g), var(--map-b), 0.86)
+    rgba(0, 0, 0, 0.3);
+}
+
+#mapDiv #levelsContainer::before {
+  width: 44px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.22),
+      transparent
+    ),
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.76),
+      rgba(255, 255, 255, 0.24),
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.48),
+      transparent
+    );
+  box-shadow:
+    0 0 28px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+    0 0 64px rgba(var(--map-r), var(--map-g), var(--map-b), 0.18);
+}
+
+#levelMapStars {
+  position: fixed;
+  inset: 82px 14px 16px;
+  flex: 0 0 auto;
+  min-height: 0;
+  margin: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background:
+    radial-gradient(circle at 18% 12%, #fff 0 1px, transparent 2px),
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.9) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 34% 48%,
+      rgba(255, 255, 255, 0.7) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 68% 76%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.76) 0 1px,
+      transparent 2px
+    );
+  background-size:
+    140px 180px,
+    120px 150px,
+    170px 130px,
+    150px 210px;
+}
+
+.levelNode {
+  width: 100%;
+  min-height: 98px;
+  align-items: center;
+}
+
+.levelNode:nth-child(odd) {
+  justify-content: flex-start;
+  padding-left: 48px;
+}
+
+.levelNode:nth-child(even) {
+  justify-content: flex-end;
+  padding-right: 48px;
+}
+
+.levelNode::after {
+  top: 66px;
+  left: 50%;
+  width: 4px;
+  height: 58px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0),
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.94),
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0)
+  );
+  box-shadow:
+    0 0 14px rgba(var(--map-r), var(--map-g), var(--map-b), 0.76),
+    0 0 30px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34);
+}
+
+.levelNode:nth-child(odd)::after {
+  transform: translateX(-50%) rotate(-20deg);
+}
+
+.levelNode:nth-child(even)::after {
+  transform: translateX(-50%) rotate(20deg);
+}
+
+.levelsBtn {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.82);
+  color: #f4fbff;
+  font-family: var(--font-ui);
+  font-size: 24px;
+  letter-spacing: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 28%),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.5),
+      transparent 54%
+    ),
+    linear-gradient(180deg, rgba(12, 35, 82, 0.96), rgba(2, 8, 24, 0.98));
+  box-shadow:
+    0 0 20px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+    0 12px 24px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -16px 24px rgba(0, 0, 0, 0.42);
+  text-shadow:
+    0 0 10px rgba(var(--map-r), var(--map-g), var(--map-b), 0.8),
+    0 2px 0 rgba(0, 0, 0, 0.72);
+}
+
+.levelsBtn::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.levelsBtn::after {
+  inset: -9px;
+  border-radius: 24px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.36),
+    transparent 70%
+  );
+  opacity: 0.55;
+  filter: blur(10px);
+}
+
+.levelsBtn.current {
+  transform: scale(1.07);
+  border-color: rgba(255, 255, 255, 0.92);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent 30%),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(var(--map-r), var(--map-g), var(--map-b), 0.72),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(26, 69, 136, 0.98), rgba(3, 12, 34, 0.98));
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.48),
+    0 0 38px rgba(var(--map-r), var(--map-g), var(--map-b), 0.88),
+    0 0 80px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34),
+    inset 0 0 18px rgba(255, 255, 255, 0.16);
+}
+
+.levelsBtn.current::before {
+  inset: -7px;
+  border-radius: 26px;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.95),
+    transparent 34%,
+    rgba(255, 255, 255, 0.86),
+    transparent 68%
+  );
+  opacity: 0.95;
+  animation: ringSpin 2.4s linear infinite;
+}
+
+.levelsBtn.current::after {
+  inset: -18px;
+  border-radius: 30px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 0.6),
+    transparent 72%
+  );
+}
+
+.levelNode.locked {
+  filter: none;
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+.levelNode.locked::before {
+  content: '';
+  top: 26px;
+  right: auto;
+  left: calc(50% + 34px);
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent),
+    rgba(7, 12, 24, 0.96);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.55);
+}
+
+.levelNode.locked .levelsBtn {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(39, 47, 66, 0.95), rgba(7, 10, 18, 0.98));
+  border-color: rgba(185, 210, 232, 0.18);
+  color: rgba(222, 236, 246, 0.42);
+  box-shadow:
+    inset 0 0 14px rgba(255, 255, 255, 0.04),
+    0 10px 20px rgba(0, 0, 0, 0.42);
+  filter: none;
+}
+
+.levelNode.locked::after {
+  opacity: 0.26;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(150, 170, 190, 0.46),
+    transparent
+  );
+  box-shadow: none;
+}
+
+.levelNode.current-node::after {
+  width: 6px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    #ffffff,
+    rgba(var(--map-r), var(--map-g), var(--map-b), 1),
+    transparent
+  );
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.96),
+    0 0 44px rgba(var(--map-r), var(--map-g), var(--map-b), 0.62);
+}
+
+.levelNode.boss-node .levelsBtn {
+  width: 100px;
+  height: 100px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 96, 96, 0.9);
+  color: #fff6f3;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 28%),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(255, 56, 56, 0.54),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #64121f, #18050a);
+}
+
+.levelNode.boss-node .levelsBtn::before {
+  inset: -7px;
+  border-radius: 32px;
+  border-color: rgba(255, 130, 130, 0.36);
+  box-shadow: 0 0 18px rgba(255, 46, 60, 0.52);
+}
+
+.levelNode.boss-current .levelsBtn,
+.levelNode .levelsBtn.boss-current-btn {
+  transform: scale(1.09);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 124px;
+  height: 124px;
+  border-radius: 34px;
+  font-size: 34px;
+  letter-spacing: 0;
+  border: 1px solid rgba(255, 226, 122, 0.96);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34), transparent 28%),
+    radial-gradient(
+      circle at 50% 105%,
+      rgba(255, 213, 80, 0.64),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #8b4d05, #28050c 72%, #08020f);
+}
+
+.levelNode.final-level-node .levelsBtn::before,
+.levelNode .levelsBtn.final-level-btn::before {
+  inset: -8px;
+  border-radius: 38px;
+}
+
+.levelNode.final-level-node .levelsBtn::after,
+.levelNode .levelsBtn.final-level-btn::after {
+  content: '';
+  inset: -18px;
+  width: auto;
+  height: auto;
+  border-radius: 42px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 218, 92, 0.46),
+    transparent 72%
+  );
+  filter: blur(12px);
+}
+
+.levelNode.infinity-level-node {
+  min-height: 128px;
+  margin-bottom: 12px;
+  padding: 0;
+  justify-content: center;
+}
+
+.levelNode.infinity-level-node .levelsBtn,
+.levelNode .levelsBtn.infinity-level-btn {
+  width: 168px;
+  height: 78px;
+  border-radius: 22px;
+  font-size: 54px;
+}
+
+.infinityLevelLabel {
+  border-radius: 8px;
+  color: #f4fbff;
+  background: rgba(4, 12, 30, 0.72);
+}
+
+#levelsContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+#levelsContainer::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+#levelsContainer::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0.36);
+  background: rgba(var(--map-r), var(--map-g), var(--map-b), 0.84);
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72);
+}
+
+#mapDiv.level-green {
+  --map-r: 60;
+  --map-g: 255;
+  --map-b: 165;
+  --map-deep: #02140e;
+}
+
+#mapDiv.level-pink {
+  --map-r: 255;
+  --map-g: 80;
+  --map-b: 202;
+  --map-deep: #18031a;
+}
+
+#mapDiv.level-red {
+  --map-r: 255;
+  --map-g: 72;
+  --map-b: 82;
+  --map-deep: #170407;
+}
+
+#mapDiv.level-purple {
+  --map-r: 186;
+  --map-g: 96;
+  --map-b: 255;
+  --map-deep: #130522;
+}
+
+#mapDiv.level-orange,
+#mapDiv.level-ogange {
+  --map-r: 255;
+  --map-g: 162;
+  --map-b: 56;
+  --map-deep: #170d03;
+}
+
+#mapDiv.level-lightBlue {
+  --map-r: 72;
+  --map-g: 236;
+  --map-b: 255;
+  --map-deep: #02131a;
+}
+
+#mapDiv.level-yellow {
+  --map-r: 255;
+  --map-g: 236;
+  --map-b: 82;
+  --map-deep: #171403;
+}
+
+#mapDiv.level-black {
+  --map-r: 165;
+  --map-g: 176;
+  --map-b: 196;
+  --map-deep: #050609;
+}
+
+#mapDiv.level-gold {
+  --map-r: 255;
+  --map-g: 202;
+  --map-b: 72;
+  --map-deep: #150d02;
+}
+
+#mapDiv.level-infinity {
+  --map-r: 132;
+  --map-g: 232;
+  --map-b: 255;
+  --map-deep: #020716;
+}
+
+/* ================= ACTIVE STRAIGHT PLANET MAP PATH ================= */
+#mapDiv {
+  --planet-size: 82px;
+  --orbit-ring: 112px;
+}
+
+#mapDiv #levelsContainer {
+  gap: 0;
+  padding: 42px 0 76px;
+  align-items: center;
+}
+
+#mapDiv #levelsContainer::before {
+  left: 50%;
+  width: 10px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent),
+    linear-gradient(180deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.44), rgba(255, 255, 255, 0.92), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), rgba(255, 224, 128, 0.78), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), transparent);
+}
+
+.levelNode,
+.levelNode:nth-child(odd),
+.levelNode:nth-child(even) {
+  width: 100%;
+  min-height: 132px;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  position: relative;
+}
+
+.levelNode::after,
+.levelNode:nth-child(odd)::after,
+.levelNode:nth-child(even)::after {
+  top: calc(50% + 39px);
+  left: 50%;
+  width: 6px;
+  height: 92px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.86), rgba(var(--map-r), var(--map-g), var(--map-b), 0.86), transparent);
+}
+
+.levelNode:last-child::after,
+.levelNode.infinity-level-node::after {
+  display: none;
+}
+
+.levelNode::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    radial-gradient(circle, transparent 56%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 57%, transparent 70%),
+    conic-gradient(from 12deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.34), transparent 32%, rgba(255, 255, 255, 0.24), transparent 64%);
+  pointer-events: none;
+}
+
+.levelNode.locked::before {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border-color: rgba(190, 210, 230, 0.12);
+  background:
+    radial-gradient(circle, transparent 58%, rgba(170, 185, 205, 0.08) 59%, transparent 72%),
+    conic-gradient(from 12deg, transparent, rgba(170, 185, 205, 0.18), transparent 48%);
+}
+
+.levelsBtn {
+  width: var(--planet-size);
+  height: var(--planet-size);
+  border-radius: 50%;
+  z-index: 3;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.9) 0 7%, rgba(255, 255, 255, 0.3) 8% 15%, transparent 16%),
+    radial-gradient(circle at 66% 68%, rgba(0, 0, 0, 0.28) 0 13%, transparent 14%),
+    radial-gradient(circle at 44% 42%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.94), rgba(var(--map-r), var(--map-g), var(--map-b), 0.58) 46%, rgba(4, 12, 30, 0.98) 78%);
+}
+
+.levelsBtn::before {
+  inset: -13px;
+  border-radius: 50%;
+  transform: rotate(-12deg) scaleY(0.36);
+}
+
+.levelsBtn::after {
+  inset: -20px;
+  border-radius: 50%;
+}
+
+.levelsBtn.current {
+  transform: scale(1.14);
+  border-color: #ffffff;
+}
+
+.levelsBtn.current::before {
+  inset: -18px;
+  border-radius: 50%;
+  transform: rotate(-12deg) scaleY(0.38);
+  animation: none;
+}
+
+.levelNode.boss-node .levelsBtn,
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  border-radius: 50%;
+}
+
+@media (max-width: 380px) {
+  #mapDiv {
+    --planet-size: 74px;
+    --orbit-ring: 102px;
+  }
+
+  .levelNode,
+  .levelNode:nth-child(odd),
+  .levelNode:nth-child(even) {
+    min-height: 122px;
+  }
+}
+
+/* ================= FINAL MAP POLISH: CENTERED PLANET JOURNEY ================= */
+@property --map-r {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --map-g {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 198;
+}
+
+@property --map-b {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 255;
+}
+
+@property --map-deep {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #020614;
+}
+
+#mapDiv {
+  --planet-size: 104px;
+  --orbit-ring: 146px;
+  --path-width: 8px;
+  overflow: hidden;
+  contain: layout paint;
+  backface-visibility: hidden;
+  will-change: auto;
+  border-radius: 0;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.92);
+  background:
+    linear-gradient(#061635, #061635) padding-box,
+    linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.82),
+        rgba(var(--map-r), var(--map-g), var(--map-b), 0.98) 18%,
+        rgba(119, 94, 255, 0.82) 42%,
+        rgba(255, 220, 116, 0.76) 66%,
+        rgba(var(--map-r), var(--map-g), var(--map-b), 0.96)
+      )
+      border-box,
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 18% 14%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.24), transparent 32%),
+    radial-gradient(circle at 82% 76%, rgba(255, 217, 119, 0.13), transparent 40%),
+    linear-gradient(180deg, #061635 0%, var(--map-deep) 54%, #01030d 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset,
+    0 0 0 3px rgba(var(--map-r), var(--map-g), var(--map-b), 0.2),
+    0 0 22px rgba(var(--map-r), var(--map-g), var(--map-b), 0.74),
+    0 0 58px rgba(105, 95, 255, 0.36),
+    0 0 92px rgba(255, 210, 92, 0.14),
+    0 26px 58px rgba(0, 0, 0, 0.82),
+    inset 0 0 32px rgba(var(--map-r), var(--map-g), var(--map-b), 0.14),
+    inset 0 -42px 70px rgba(0, 0, 0, 0.42);
+  transition:
+    --map-r 2.2s ease,
+    --map-g 2.2s ease,
+    --map-b 2.2s ease,
+    --map-deep 2.2s ease,
+    border-color 1.35s ease,
+    box-shadow 1.35s ease,
+    background 2.2s ease,
+    transform 0.4s ease,
+    opacity 0.4s ease,
+    visibility 0.4s ease;
+}
+
+#mapDiv::before {
+  inset: 8px;
+  z-index: 0;
+  border-radius: 0;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(var(--map-r), var(--map-g), var(--map-b), 0.92), transparent 58px) 0 0 / 96px 2px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(var(--map-r), var(--map-g), var(--map-b), 0.82), transparent 58px) 0 0 / 2px 96px no-repeat,
+    linear-gradient(270deg, rgba(255, 255, 255, 0.44), rgba(var(--map-r), var(--map-g), var(--map-b), 0.82), transparent 58px) 100% 0 / 96px 2px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(var(--map-r), var(--map-g), var(--map-b), 0.82), transparent 58px) 100% 0 / 2px 96px no-repeat,
+    linear-gradient(90deg, rgba(255, 220, 116, 0.48), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), transparent 58px) 0 100% / 96px 2px no-repeat,
+    linear-gradient(0deg, rgba(255, 220, 116, 0.48), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), transparent 58px) 0 100% / 2px 96px no-repeat,
+    linear-gradient(270deg, rgba(255, 220, 116, 0.48), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), transparent 58px) 100% 100% / 96px 2px no-repeat,
+    linear-gradient(0deg, rgba(255, 220, 116, 0.48), rgba(var(--map-r), var(--map-g), var(--map-b), 0.72), transparent 58px) 100% 100% / 2px 96px no-repeat,
+    linear-gradient(90deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0.08) 1px, transparent 1px);
+  background-size:
+    96px 2px,
+    2px 96px,
+    96px 2px,
+    2px 96px,
+    96px 2px,
+    2px 96px,
+    96px 2px,
+    2px 96px,
+    42px 42px,
+    42px 42px;
+  opacity: 0.7;
+  transition:
+    border-color 1.35s ease,
+    background 1.35s ease,
+    opacity 1.35s ease;
+}
+
+#mapDiv::after {
+  z-index: 1;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.9) 0 1px, transparent 2px),
+    radial-gradient(circle at 84% 22%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.72) 0 1px, transparent 2px),
+    radial-gradient(circle at 22% 66%, rgba(255, 224, 132, 0.58) 0 1px, transparent 2px),
+    radial-gradient(circle at 74% 86%, rgba(255, 255, 255, 0.54) 0 1px, transparent 2px);
+  background-size: 118px 166px, 144px 188px, 178px 226px, 92px 132px;
+  opacity: 0.5;
+  transition:
+    background 1.35s ease,
+    opacity 1.35s ease;
+}
+
+#mapDiv #levelsContainer {
+  top: 76px;
+  height: calc(100% - 76px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 34px 0 82px;
+  overflow-x: hidden;
+  contain: layout paint;
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(ellipse at 50% 22%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.18), transparent 44%),
+    radial-gradient(ellipse at 50% 78%, rgba(255, 216, 112, 0.1), transparent 42%),
+    linear-gradient(180deg, rgba(1, 8, 27, 0.96), rgba(1, 4, 15, 0.98));
+  transition:
+    background 2.2s ease;
+}
+
+#mapDiv #mapTitle {
+  top: -1px;
+  left: 0;
+  width: 100%;
+  height: 78px;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.62);
+  background:
+    radial-gradient(circle at 50% 100%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.18), transparent 66%),
+    linear-gradient(180deg, rgba(5, 21, 50, 0.96), rgba(2, 8, 28, 0.96));
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.32),
+    inset 0 -14px 22px rgba(0, 0, 0, 0.32);
+  transition:
+    border-color 1.35s ease,
+    background 1.35s ease,
+    box-shadow 1.35s ease;
+}
+
+#levelMapStars {
+  opacity: 0.42;
+}
+
+#mapDiv #levelsContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 0;
+  width: var(--path-width);
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent),
+    linear-gradient(180deg, transparent 0%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.42) 8%, rgba(255, 255, 255, 0.92) 18%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.82) 32%, rgba(255, 224, 128, 0.8) 50%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.82) 68%, rgba(255, 255, 255, 0.86) 84%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.36) 94%, transparent 100%);
+  box-shadow:
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.92),
+    0 0 46px rgba(var(--map-r), var(--map-g), var(--map-b), 0.36);
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+#mapDiv #levelsContainer::after {
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255, 255, 255, 0.1), transparent 34%),
+    radial-gradient(ellipse at 50% 102%, rgba(0, 0, 0, 0.34), transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 48%, rgba(0, 0, 0, 0.18));
+}
+
+.levelNode,
+.levelNode:nth-child(odd),
+.levelNode:nth-child(even),
+.levelNode:nth-child(3n),
+.levelNode:nth-child(3n + 1),
+.levelNode:nth-child(3n + 2) {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  min-height: 174px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+}
+
+.levelNode::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  background:
+    radial-gradient(circle, transparent 56%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 57%, transparent 70%),
+    conic-gradient(from 20deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.34), transparent 32%, rgba(255, 255, 255, 0.24), transparent 64%);
+  box-shadow:
+    0 0 24px rgba(var(--map-r), var(--map-g), var(--map-b), 0.24),
+    inset 0 0 24px rgba(var(--map-r), var(--map-g), var(--map-b), 0.1);
+  pointer-events: none;
+}
+
+.levelNode::after,
+.levelNode:nth-child(odd)::after,
+.levelNode:nth-child(even)::after,
+.levelNode:nth-child(3n)::after,
+.levelNode:nth-child(3n + 1)::after,
+.levelNode:nth-child(3n + 2)::after {
+  content: '';
+  position: absolute;
+  top: calc(50% + 58px);
+  left: 50%;
+  z-index: 0;
+  width: var(--path-width);
+  height: 124px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.8), rgba(var(--map-r), var(--map-g), var(--map-b), 0.86), transparent);
+  box-shadow:
+    0 0 16px rgba(var(--map-r), var(--map-g), var(--map-b), 0.82),
+    0 0 34px rgba(var(--map-r), var(--map-g), var(--map-b), 0.34);
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+.levelNode:last-child::after,
+.levelNode.infinity-level-node::after {
+  display: none;
+}
+
+.levelNode .levelsBtn,
+.levelNode:nth-child(3n) .levelsBtn,
+.levelNode:nth-child(3n + 1) .levelsBtn,
+.levelNode:nth-child(3n + 2) .levelsBtn,
+.levelNode:nth-child(3n) .levelsBtn.current,
+.levelNode:nth-child(3n + 1) .levelsBtn.current,
+.levelNode:nth-child(3n + 2) .levelsBtn.current {
+  width: var(--planet-size);
+  height: var(--planet-size);
+  transform: none;
+  border-radius: 50%;
+  z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  color: #ffffff;
+  letter-spacing: 0;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.95) 0 7%, rgba(255, 255, 255, 0.34) 8% 15%, transparent 16%),
+    radial-gradient(circle at 66% 68%, rgba(0, 0, 0, 0.3) 0 13%, transparent 14%),
+    radial-gradient(circle at 44% 42%, rgba(var(--map-r), var(--map-g), var(--map-b), 0.98), rgba(var(--map-r), var(--map-g), var(--map-b), 0.56) 46%, rgba(4, 12, 30, 0.98) 78%);
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.46),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.2),
+    0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.72),
+    0 16px 30px rgba(0, 0, 0, 0.56);
+}
+
+.levelNode .levelsBtn::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--map-r), var(--map-g), var(--map-b), 0.42);
+  background:
+    linear-gradient(90deg, transparent 8%, rgba(255, 255, 255, 0.44), transparent 92%),
+    conic-gradient(from 90deg, transparent, rgba(var(--map-r), var(--map-g), var(--map-b), 0.48), transparent 36%);
+  transform: rotate(-12deg) scaleY(0.36);
+  box-shadow: 0 0 18px rgba(var(--map-r), var(--map-g), var(--map-b), 0.32);
+  pointer-events: none;
+}
+
+.levelNode .levelsBtn::after {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--map-r), var(--map-g), var(--map-b), 0.34), transparent 70%);
+  opacity: 0.68;
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.levelNode.current-node::before {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 22px rgba(255, 255, 255, 0.38),
+    0 0 56px rgba(var(--map-r), var(--map-g), var(--map-b), 0.74),
+    inset 0 0 28px rgba(var(--map-r), var(--map-g), var(--map-b), 0.24);
+}
+
+.levelNode .levelsBtn.current,
+.levelNode:nth-child(3n) .levelsBtn.current,
+.levelNode:nth-child(3n + 1) .levelsBtn.current,
+.levelNode:nth-child(3n + 2) .levelsBtn.current {
+  transform: scale(1.14);
+  border-color: #ffffff;
+  filter: brightness(1.12) saturate(1.16);
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.36),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.3),
+    0 0 20px rgba(255, 255, 255, 0.72),
+    0 0 52px rgba(var(--map-r), var(--map-g), var(--map-b), 1),
+    0 0 96px rgba(var(--map-r), var(--map-g), var(--map-b), 0.52);
+}
+
+.levelNode .levelsBtn.current::before {
+  inset: -20px;
+  border-radius: 50%;
+  transform: rotate(-12deg) scaleY(0.38);
+  animation: none;
+}
+
+.levelNode.locked {
+  filter: none;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.levelNode.locked::before {
+  content: '';
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: var(--orbit-ring);
+  height: var(--orbit-ring);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border-color: rgba(190, 210, 230, 0.1);
+  background:
+    radial-gradient(circle, transparent 58%, rgba(170, 185, 205, 0.08) 59%, transparent 72%),
+    conic-gradient(from 20deg, transparent, rgba(170, 185, 205, 0.16), transparent 48%);
+  box-shadow: none;
+}
+
+.levelNode.locked .levelsBtn {
+  color: rgba(230, 238, 248, 0.38);
+  border-color: rgba(210, 224, 240, 0.16);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.24) 0 6%, transparent 15%),
+    radial-gradient(circle at 48% 42%, rgba(78, 90, 112, 0.74), rgba(25, 31, 46, 0.98) 76%);
+  box-shadow:
+    inset -14px -16px 22px rgba(0, 0, 0, 0.52),
+    0 12px 24px rgba(0, 0, 0, 0.36);
+}
+
+.levelNode.locked::after {
+  background: linear-gradient(180deg, transparent, rgba(160, 180, 205, 0.38), transparent);
+  box-shadow: none;
+  opacity: 0.28;
+}
+
+.levelNode.boss-node .levelsBtn,
+.levelNode .levelsBtn.boss-btn {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border-color: rgba(255, 140, 140, 0.9);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.84) 0 7%, transparent 16%),
+    radial-gradient(circle at 42% 44%, rgba(255, 88, 88, 0.96), rgba(129, 13, 31, 0.94) 54%, rgba(23, 3, 10, 0.98) 80%);
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.46),
+    0 0 24px rgba(255, 74, 74, 0.78),
+    0 16px 30px rgba(0, 0, 0, 0.58);
+}
+
+.levelNode.final-level-node .levelsBtn,
+.levelNode .levelsBtn.final-level-btn {
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  border-color: rgba(255, 232, 136, 0.96);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95) 0 7%, rgba(255, 255, 255, 0.36) 8% 15%, transparent 16%),
+    radial-gradient(circle at 48% 42%, rgba(255, 232, 116, 0.98), rgba(255, 166, 42, 0.84) 46%, rgba(94, 40, 5, 0.98) 78%);
+  box-shadow:
+    inset -18px -20px 26px rgba(58, 25, 0, 0.46),
+    0 0 30px rgba(255, 210, 84, 0.88),
+    0 18px 34px rgba(0, 0, 0, 0.6);
+}
+
+.levelNode.infinity-level-node {
+  min-height: 180px;
+  justify-content: center;
+}
+
+.levelNode.infinity-level-node .levelsBtn,
+.levelNode .levelsBtn.infinity-level-btn {
+  width: 176px;
+  height: 98px;
+  border-radius: 999px;
+}
+
+@media (max-width: 380px) {
+  #mapDiv {
+    --planet-size: 98px;
+    --orbit-ring: 140px;
+  }
+
+  .levelNode,
+  .levelNode:nth-child(odd),
+  .levelNode:nth-child(even),
+  .levelNode:nth-child(3n),
+  .levelNode:nth-child(3n + 1),
+  .levelNode:nth-child(3n + 2) {
+    min-height: 170px;
+  }
+
+  .levelNode.boss-node .levelsBtn,
+  .levelNode .levelsBtn.boss-btn {
+    width: 116px;
+    height: 116px;
+  }
+}
+
+@media (max-width: 700px), (pointer: coarse) {
+  #mapDiv {
+    width: calc(100vw - 26px);
+    height: calc(100dvh - 28px);
+    max-height: none;
+    transform: translate3d(-50%, -50%, 0) scale(0);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+      0 0 0 2px rgba(var(--map-r), var(--map-g), var(--map-b), 0.28),
+      0 0 22px rgba(var(--map-r), var(--map-g), var(--map-b), 0.52),
+      0 14px 34px rgba(0, 0, 0, 0.78);
+    transition:
+      --map-r 1.6s ease,
+      --map-g 1.6s ease,
+      --map-b 1.6s ease,
+      --map-deep 1.6s ease,
+      border-color 1.2s ease,
+      box-shadow 1.2s ease,
+      transform 0.28s ease,
+      opacity 0.22s ease,
+      visibility 0.22s ease;
+  }
+
+  #mapDiv.open {
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+
+  #mapDiv.closing {
+    transform: translate3d(-50%, -50%, 0) scale(0.98);
+  }
+
+  #mapDiv::before {
+    opacity: 0.38;
+    background:
+      linear-gradient(90deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0.14) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(var(--map-r), var(--map-g), var(--map-b), 0.1) 1px, transparent 1px);
+    background-size: 48px 48px, 48px 48px;
+  }
+
+  #mapDiv::after {
+    opacity: 0.26;
+  }
+
+  #mapDiv #levelsContainer {
+    contain: layout paint;
+    overflow-y: auto;
+    touch-action: pan-y;
+    transform: translateZ(0);
+    transition:
+      background 1.6s ease;
+  }
+
+  #mapDiv #levelsContainer::before {
+    box-shadow:
+      0 0 12px rgba(var(--map-r), var(--map-g), var(--map-b), 0.58),
+      0 0 24px rgba(var(--map-r), var(--map-g), var(--map-b), 0.22);
+  }
+
+  #mapDiv.open #levelMapStars,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked)::before,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn::after,
+  #mapDiv.open .levelNode.map-node-visible.current-node .levelsBtn,
+  #mapDiv.open .levelNode.map-node-visible.current-node .levelsBtn::after {
+    animation: none;
+  }
+}
+
+#mapDiv .levelNode.animated-node .levelsBtn,
+#mapDiv .levelNode.animated-node::after,
+#mapDiv .levelNode .levelsBtn,
+#mapDiv .levelNode .levelsBtn.current {
+  animation: none;
+}
+
+#mapDiv .levelNode.final-level-node::before {
+  display: block;
+}
+
+#mapDiv .levelNode .levelsBtn:active {
+  transform: scale(0.96);
+}
+
+#mapDiv .levelNode .levelsBtn.current:active {
+  transform: scale(1.08);
+}
+
+/* ================= SUBTLE LIVING STAR MAP MOTION ================= */
+#mapDiv.open #levelMapStars {
+  animation:
+    livingStarDrift 28s linear infinite,
+    livingStarTwinkle 4.8s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode:not(.locked)::before {
+  animation: planetOrbitLife 7s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode:not(.locked) .levelsBtn::after {
+  animation: planetAuraLife 3.8s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode.current-node::before {
+  animation: planetOrbitLife 4.8s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode.current-node .levelsBtn::after {
+  animation: currentPlanetAuraLife 2.4s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode:nth-child(3n + 1)::before,
+#mapDiv.open .levelNode:nth-child(3n + 1) .levelsBtn::after {
+  animation-delay: -1.3s;
+}
+
+#mapDiv.open .levelNode:nth-child(3n + 2)::before,
+#mapDiv.open .levelNode:nth-child(3n + 2) .levelsBtn::after {
+  animation-delay: -2.2s;
+}
+
+@keyframes livingStarDrift {
+  0% {
+    background-position:
+      0 0,
+      46px 72px,
+      90px 28px,
+      26px 34px;
+  }
+
+  100% {
+    background-position:
+      22px 40px,
+      18px 122px,
+      126px 4px,
+      54px 12px;
+  }
+}
+
+@keyframes livingStarTwinkle {
+  0%,
+  100% {
+    opacity: 0.36;
+  }
+
+  45% {
+    opacity: 0.58;
+  }
+
+  70% {
+    opacity: 0.44;
+  }
+}
+
+@keyframes planetOrbitLife {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(-4deg) scale(0.98);
+    opacity: 0.76;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) rotate(8deg) scale(1.03);
+    opacity: 1;
+  }
+}
+
+@keyframes planetAuraLife {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.82;
+  }
+}
+
+@keyframes currentPlanetAuraLife {
+  0%,
+  100% {
+    opacity: 0.68;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mapDiv.open #levelMapStars,
+  #mapDiv.open .levelNode:not(.locked)::before,
+  #mapDiv.open .levelNode:not(.locked) .levelsBtn::after,
+  #mapDiv.open .levelNode.current-node::before,
+  #mapDiv.open .levelNode.current-node .levelsBtn::after {
+    animation: none;
+  }
+}
+
+/* ================= VISIBLE-ONLY PLANET MOTION ================= */
+#mapDiv.open #levelMapStars,
+#mapDiv.open .levelNode::before,
+#mapDiv.open .levelNode .levelsBtn,
+#mapDiv.open .levelNode .levelsBtn::after {
+  animation: none;
+}
+
+#mapDiv.open .levelNode.map-node-visible:not(.locked)::before {
+  animation: visibleOrbitFloat 6.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+#mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn {
+  animation: visiblePlanetFloat 5.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+#mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn::after {
+  animation: visiblePlanetGlow 3.6s ease-in-out infinite;
+  will-change: opacity;
+}
+
+#mapDiv.open .levelNode.map-node-visible.current-node .levelsBtn {
+  animation: visibleCurrentPlanetFloat 4.4s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode.map-node-visible.current-node .levelsBtn::after {
+  animation: visibleCurrentPlanetGlow 2.4s ease-in-out infinite;
+}
+
+#mapDiv.open .levelNode.map-node-visible:nth-child(3n + 1)::before,
+#mapDiv.open .levelNode.map-node-visible:nth-child(3n + 1) .levelsBtn,
+#mapDiv.open .levelNode.map-node-visible:nth-child(3n + 1) .levelsBtn::after {
+  animation-delay: -1.2s;
+}
+
+#mapDiv.open .levelNode.map-node-visible:nth-child(3n + 2)::before,
+#mapDiv.open .levelNode.map-node-visible:nth-child(3n + 2) .levelsBtn,
+#mapDiv.open .levelNode.map-node-visible:nth-child(3n + 2) .levelsBtn::after {
+  animation-delay: -2s;
+}
+
+#mapDiv .levelNode:not(.map-node-visible)::before,
+#mapDiv .levelNode:not(.map-node-visible) .levelsBtn,
+#mapDiv .levelNode:not(.map-node-visible) .levelsBtn::after {
+  will-change: auto;
+}
+
+@keyframes visiblePlanetFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-5px) scale(1.015);
+  }
+}
+
+@keyframes visibleCurrentPlanetFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.14);
+  }
+
+  50% {
+    transform: translateY(-6px) scale(1.17);
+  }
+}
+
+@keyframes visibleOrbitFloat {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(-5deg) scale(0.99);
+    opacity: 0.78;
+  }
+
+  50% {
+    transform: translate(-50%, -51.5%) rotate(7deg) scale(1.025);
+    opacity: 1;
+  }
+}
+
+@keyframes visiblePlanetGlow {
+  0%,
+  100% {
+    opacity: 0.54;
+  }
+
+  50% {
+    opacity: 0.78;
+  }
+}
+
+@keyframes visibleCurrentPlanetGlow {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mapDiv.open .levelNode.map-node-visible:not(.locked)::before,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn,
+  #mapDiv.open .levelNode.map-node-visible:not(.locked) .levelsBtn::after,
+  #mapDiv.open .levelNode.map-node-visible.current-node .levelsBtn,
+  #mapDiv.open .levelNode.map-node-visible.current-node .levelsBtn::after {
+    animation: none;
+  }
+}
+
+/* ================= PER-LEVEL PLANET COLORS AND LIGHT STARFIELD ================= */
+#mapDiv .levelNode.map-planet-blue {
+  --node-r: 0;
+  --node-g: 198;
+  --node-b: 255;
+  --node-warm: 155, 235, 255;
+}
+
+#mapDiv .levelNode.map-planet-green {
+  --node-r: 60;
+  --node-g: 255;
+  --node-b: 165;
+  --node-warm: 148, 255, 201;
+}
+
+#mapDiv .levelNode.map-planet-pink {
+  --node-r: 255;
+  --node-g: 80;
+  --node-b: 202;
+  --node-warm: 255, 195, 224;
+}
+
+#mapDiv .levelNode.map-planet-red {
+  --node-r: 255;
+  --node-g: 72;
+  --node-b: 82;
+  --node-warm: 255, 170, 92;
+}
+
+#mapDiv .levelNode.map-planet-purple {
+  --node-r: 186;
+  --node-g: 96;
+  --node-b: 255;
+  --node-warm: 238, 190, 255;
+}
+
+#mapDiv .levelNode.map-planet-orange {
+  --node-r: 255;
+  --node-g: 162;
+  --node-b: 56;
+  --node-warm: 255, 222, 126;
+}
+
+#mapDiv .levelNode.map-planet-lightBlue {
+  --node-r: 72;
+  --node-g: 236;
+  --node-b: 255;
+  --node-warm: 181, 245, 255;
+}
+
+#mapDiv .levelNode.map-planet-yellow {
+  --node-r: 255;
+  --node-g: 236;
+  --node-b: 82;
+  --node-warm: 255, 248, 172;
+}
+
+#mapDiv .levelNode.map-planet-black {
+  --node-r: 165;
+  --node-g: 176;
+  --node-b: 196;
+  --node-warm: 116, 201, 255;
+}
+
+#mapDiv .levelNode.map-planet-gold {
+  --node-r: 255;
+  --node-g: 202;
+  --node-b: 72;
+  --node-warm: 255, 236, 168;
+}
+
+#mapDiv .levelNode.map-planet-infinity {
+  --node-r: 132;
+  --node-g: 232;
+  --node-b: 255;
+  --node-warm: 190, 154, 255;
+}
+
+#mapDiv .levelNode::before {
+  border-color: rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.24);
+  background:
+    radial-gradient(circle, transparent 56%, rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.12) 57%, transparent 70%),
+    conic-gradient(from 20deg, transparent, rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.36), transparent 32%, rgba(var(--node-warm, 255, 255, 255), 0.28), transparent 64%);
+}
+
+#mapDiv .levelNode::after {
+  background:
+    linear-gradient(180deg, transparent, rgba(var(--node-warm, 255, 255, 255), 0.78), rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.86), transparent);
+  box-shadow:
+    0 0 16px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.82),
+    0 0 34px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.34);
+}
+
+#mapDiv .levelNode .levelsBtn,
+#mapDiv .levelNode:nth-child(3n) .levelsBtn,
+#mapDiv .levelNode:nth-child(3n + 1) .levelsBtn,
+#mapDiv .levelNode:nth-child(3n + 2) .levelsBtn {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.95) 0 7%, rgba(var(--node-warm, 255, 255, 255), 0.36) 8% 15%, transparent 16%),
+    radial-gradient(circle at 66% 68%, rgba(0, 0, 0, 0.3) 0 13%, transparent 14%),
+    radial-gradient(circle at 44% 42%, rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.98), rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.56) 46%, rgba(4, 12, 30, 0.98) 78%);
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.46),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.2),
+    0 0 18px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.72),
+    0 16px 30px rgba(0, 0, 0, 0.56);
+}
+
+#mapDiv .levelNode .levelsBtn::before {
+  border-color: rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.42);
+  background:
+    linear-gradient(90deg, transparent 8%, rgba(var(--node-warm, 255, 255, 255), 0.46), transparent 92%),
+    conic-gradient(from 90deg, transparent, rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.5), transparent 36%);
+}
+
+#mapDiv .levelNode .levelsBtn::after {
+  background: radial-gradient(circle, rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.35), transparent 70%);
+}
+
+#mapDiv .levelNode .levelsBtn.current {
+  box-shadow:
+    inset -16px -18px 24px rgba(0, 0, 0, 0.36),
+    inset 10px 9px 18px rgba(255, 255, 255, 0.3),
+    0 0 20px rgba(255, 255, 255, 0.72),
+    0 0 52px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 1),
+    0 0 96px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.52);
+}
+
+#mapDiv.open #levelMapStars {
+  animation:
+    smallStarsColorDrift 24s linear infinite,
+    smallStarsColorTwinkle 5.2s ease-in-out infinite;
+  will-change: background-position, opacity, filter;
+}
+
+@keyframes smallStarsColorDrift {
+  0% {
+    background-position:
+      0 0,
+      46px 72px,
+      90px 28px,
+      26px 34px;
+  }
+
+  100% {
+    background-position:
+      28px 44px,
+      12px 126px,
+      134px 2px,
+      58px 16px;
+  }
+}
+
+@keyframes smallStarsColorTwinkle {
+  0%,
+  100% {
+    opacity: 0.34;
+    filter: saturate(1) brightness(0.95);
+  }
+
+  45% {
+    opacity: 0.62;
+    filter: saturate(1.5) brightness(1.3);
+  }
+
+  72% {
+    opacity: 0.46;
+    filter: saturate(1.2) brightness(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mapDiv.open #levelMapStars {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+#mapDiv #levelMapStars {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.86) 0 1.3px, transparent 2.8px),
+    radial-gradient(circle, rgba(var(--map-r), var(--map-g), var(--map-b), 0.72) 0 1.6px, transparent 3px),
+    radial-gradient(circle, rgba(255, 228, 129, 0.58) 0 1.4px, transparent 2.8px),
+    radial-gradient(circle, rgba(var(--map-r), var(--map-g), var(--map-b), 0.44) 0 0.9px, transparent 2px);
+  background-position:
+    0 0,
+    46px 72px,
+    90px 28px,
+    26px 34px;
+  background-size:
+    118px 168px,
+    154px 206px,
+    188px 238px,
+    74px 96px;
+}
+
+#mapDiv .levelNode.locked .levelsBtn {
+  color: rgba(230, 238, 248, 0.38);
+  border-color: rgba(210, 224, 240, 0.16);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.24) 0 6%, transparent 15%),
+    radial-gradient(circle at 48% 42%, rgba(78, 90, 112, 0.74), rgba(25, 31, 46, 0.98) 76%);
+  box-shadow:
+    inset -14px -16px 22px rgba(0, 0, 0, 0.52),
+    0 12px 24px rgba(0, 0, 0, 0.36);
+}
+
+#mapDiv .levelNode.boss-node .levelsBtn,
+#mapDiv .levelNode .levelsBtn.boss-btn {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border-color: rgba(255, 140, 140, 0.9);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.84) 0 7%, transparent 16%),
+    radial-gradient(circle at 42% 44%, rgba(255, 88, 88, 0.96), rgba(129, 13, 31, 0.94) 54%, rgba(23, 3, 10, 0.98) 80%);
+}
+
+#mapDiv .levelNode.final-level-node .levelsBtn,
+#mapDiv .levelNode .levelsBtn.final-level-btn {
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  border-color: rgba(255, 232, 136, 0.96);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95) 0 7%, rgba(255, 255, 255, 0.36) 8% 15%, transparent 16%),
+    radial-gradient(circle at 48% 42%, rgba(255, 232, 116, 0.98), rgba(255, 166, 42, 0.84) 46%, rgba(94, 40, 5, 0.98) 78%);
+}
+
+@media (max-width: 380px) {
+  #mapDiv .levelNode.boss-node .levelsBtn,
+  #mapDiv .levelNode .levelsBtn.boss-btn {
+    width: 116px;
+    height: 116px;
+  }
+
+  #mapDiv .levelNode.final-level-node .levelsBtn,
+  #mapDiv .levelNode .levelsBtn.final-level-btn {
+    width: 142px;
+    height: 142px;
   }
 }

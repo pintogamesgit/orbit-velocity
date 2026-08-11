@@ -23,6 +23,14 @@ function invTranslatedValue(value) {
   return typeof value === 'string' && value.includes('.') ? invT(value) : value;
 }
 
+function setInvText(el, text) {
+  if (el && el.textContent !== String(text)) el.textContent = String(text);
+}
+
+function playInventoryEquipSound() {
+  window.playEquipSound?.();
+}
+
 function invRarityT(rarity) {
   const key = String(rarity || 'COMMON').toUpperCase();
   return invT(`rarity.${key}`);
@@ -79,7 +87,7 @@ function getAllSkinsArr() {
       image: './images/shopAInventoryicons/playerIcones/starBreakerIcone.png',
       desc: 'Unlocked by beating Level 100',
       rarity: 'LEGENDARY',
-      price: 0,
+      price: window.ORBIT_VELOCITY_PRICES.skins.star_breaker,
     });
   }
 
@@ -103,6 +111,7 @@ function equipSkin(id) {
   const n = normalizeSkinId(id);
   if (!isSkinOwnedInv(n)) return;
   setEquippedSkin(n);
+  playInventoryEquipSound();
   openInv('skins');
   renderInventoryOverview?.();
 }
@@ -162,7 +171,7 @@ function openInv(type) {
 
       const renderSkinCard = (s, owned) => {
         const equipped = getEquippedSkin() === s.id;
-        const img = s.image || './images/shopAInventoryicons/skin1Icon.png';
+        const img = s.image || './images/shopAInventoryicons/playerIcones/skin1Icon.png';
         const name = s.name || s.id;
 
         const el = document.createElement('div');
@@ -241,7 +250,7 @@ function openInv(type) {
     const renderWeaponCard = (wid, owned) => {
       const w = WEAPONS[wid] || {};
       const name = invWeaponName(wid);
-      const img = w.img || './images/skins/placeholder.png';
+      const img = w.img || './images/logosImage/weaponlogo.png';
       const equipped = getEquippedWeapon() === wid;
 
       const el = document.createElement('div');
@@ -310,7 +319,7 @@ function openInv(type) {
     const renderPetCard = (pid, owned) => {
       const p = PETS[pid] || {};
       const name = p.name || pid;
-      const img = p.img || './images/skins/placeholder.png';
+      const img = p.img || './images/logosImage/petIcone.png';
       const equipped = getEquippedPet() === normalizeSkinId(pid);
 
       const el = document.createElement('div');
@@ -336,6 +345,7 @@ function openInv(type) {
           e.stopPropagation();
           if (equipped) return;
           setEquippedPet(pid);
+          playInventoryEquipSound();
           openInv('pets');
           renderInventoryOverview?.();
         });
@@ -420,6 +430,7 @@ function openInv(type) {
           e.stopPropagation();
           if (btnDisabled) return;
           setEquippedSuper(sKey);
+          playInventoryEquipSound();
           updateSuperEquipUI?.();
           openInv('supers');
           renderInventoryOverview?.();
@@ -458,6 +469,7 @@ function openInv(type) {
   modal.classList.toggle('isPets', type === 'pets');
 
   modal.classList.remove('hidden');
+  document.body.classList.add('inventory-modal-open');
 }
 
 function closeWeaponPreview() {
@@ -492,7 +504,7 @@ function openWeaponPreview(id) {
 
   wrap.classList.remove('hidden');
 
-  img.src = w.img || './images/skins/placeholder.png';
+  img.src = w.img || './images/logosImage/weaponlogo.png';
   nameEl.textContent = invWeaponName(id);
 
   const desc = invWeaponDesc(id) || w.info || w.text || w.lore || '';
@@ -626,11 +638,19 @@ function openSkinPreview(s) {
 
   wrap.classList.remove('hidden');
 
-  img.src = s.image || './images/shopAInventoryicons/skin1Icon.png';
+  img.src = s.image || './images/shopAInventoryicons/playerIcones/skin1Icon.png';
   nameEl.textContent = s.name || id;
 
   const rarity = String(s.rarity || 'COMMON').toUpperCase();
   rarityEl.textContent = invRarityT(rarity);
+
+  wrap.classList.remove(
+    'rarity-COMMON',
+    'rarity-RARE',
+    'rarity-EPIC',
+    'rarity-LEGENDARY'
+  );
+  wrap.classList.add(`rarity-${rarity}`);
 
   rarityEl.classList.remove('is-COMMON', 'is-RARE', 'is-EPIC', 'is-LEGENDARY');
   rarityEl.classList.add(`is-${rarity}`);
@@ -712,6 +732,7 @@ function openSkinPreview(s) {
   equipBtn.textContent = equipped ? invT('ui.equipped') : invT('ui.equip');
 
   equipBtn.disabled = equipped || !owned;
+  equipBtn.classList.toggle('is-equipped', equipped);
 
   equipBtn.classList.toggle('hidden', !owned);
 
@@ -738,6 +759,7 @@ function closeInv() {
   modal?.classList.remove('isSkins', 'isPets');
 
   modal?.classList.add('hidden');
+  document.body.classList.remove('inventory-modal-open');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -828,45 +850,112 @@ function getOwnedSupersSet() {
   return new Set(JSON.parse(localStorage.getItem('ownedSupers') || '[]'));
 }
 
+function renderInvPreviewSlots(gridId, items, imageGetter, isOwned = () => true) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+
+  const ownedItems = items.filter((item) => isOwned(item));
+  const lockedItems = items.filter((item) => !isOwned(item));
+  const previewItems = [...ownedItems, ...lockedItems].slice(0, 4);
+
+  const signature = previewItems
+    .map((item) => {
+      const id =
+        typeof item === 'string'
+          ? item
+          : item?.id || item?.key || item?.name || JSON.stringify(item);
+      return `${id}:${isOwned(item) ? 1 : 0}:${imageGetter(item)}`;
+    })
+    .join('|');
+
+  if (grid.dataset.previewSig === signature) return;
+  grid.dataset.previewSig = signature;
+
+  grid.innerHTML = '';
+
+  previewItems.forEach((item) => {
+    const owned = isOwned(item);
+    const slot = document.createElement('div');
+    slot.className = `invCard ${owned ? 'filled' : 'ghost'}`;
+
+    const img = document.createElement('img');
+    img.src = imageGetter(item);
+    img.draggable = false;
+    slot.appendChild(img);
+
+    grid.appendChild(slot);
+  });
+}
+
 function renderInventoryOverview() {
   // ===== SKINS =====
-  const allSkins = getAllSkinsArr().length;
+  const allSkinsArr = getAllSkinsArr();
+  const allSkins = allSkinsArr.length;
 
   const skinsCount = document.getElementById('invSkinsCount');
   if (skinsCount) {
-    skinsCount.textContent = `${getOwnedSkinsCount()}/${allSkins}`;
+    setInvText(skinsCount, `${getOwnedSkinsCount()}/${allSkins}`);
   }
+  renderInvPreviewSlots(
+    'invSkinsGrid',
+    allSkinsArr,
+    (s) => s.image || './images/shopAInventoryicons/playerIcones/skin1Icon.png',
+    (s) => isSkinOwnedInv(s.id)
+  );
 
   // ===== WEAPONS =====
-  const allWeapons = Object.keys(WEAPONS || {}).length;
+  const allWeaponIds = Object.keys(WEAPONS || {});
+  const allWeapons = allWeaponIds.length;
   const ownedWeapons = getOwnedWeaponsCount();
 
   const weaponsCount = document.getElementById('invWeaponsCount');
   if (weaponsCount) {
-    weaponsCount.textContent = `${ownedWeapons}/${allWeapons}`;
+    setInvText(weaponsCount, `${ownedWeapons}/${allWeapons}`);
   }
+  renderInvPreviewSlots(
+    'invWeaponsGrid',
+    allWeaponIds,
+    (wid) => WEAPONS?.[wid]?.img || './images/logosImage/weaponlogo.png',
+    (wid) => isWeaponOwned(wid)
+  );
 
   // ===== pets =====
   const allPetIds = Object.keys(PETS || {});
   const allPets = allPetIds.length;
   const ownedPetsSet = getOwnedPetsSet();
-  const ownedPets = allPetIds.filter((pid) =>
+  const ownedPetIds = allPetIds.filter((pid) =>
     ownedPetsSet.has(normalizeSkinId(pid))
-  ).length;
+  );
+  const ownedPets = ownedPetIds.length;
 
   const petsCount = document.getElementById('invPetsCount');
   if (petsCount) {
-    petsCount.textContent = `${ownedPets}/${allPets}`;
+    setInvText(petsCount, `${ownedPets}/${allPets}`);
     const pct = allPets ? Math.round((ownedPets / allPets) * 100) : 0;
-    petsCount.style.setProperty('--pct', pct);
+    if (petsCount.style.getPropertyValue('--pct') !== String(pct)) {
+      petsCount.style.setProperty('--pct', pct);
+    }
   }
+  renderInvPreviewSlots(
+    'invPetsGrid',
+    allPetIds,
+    (pid) => PETS?.[pid]?.img || './images/logosImage/petIcone.png',
+    (pid) => ownedPetsSet.has(normalizeSkinId(pid))
+  );
 
   // ===== SUPERS =====
-  const allSupers = Object.keys(SUPERS || {}).length;
+  const allSuperIds = Object.keys(SUPERS || {});
+  const allSupers = allSuperIds.length;
   const ownedSupers = getOwnedSupersSet().size;
 
   const supersCount = document.getElementById('invSupersCount');
-  if (supersCount) supersCount.textContent = `${ownedSupers}/${allSupers}`;
+  if (supersCount) setInvText(supersCount, `${ownedSupers}/${allSupers}`);
+  renderInvPreviewSlots(
+    'invSupersGrid',
+    allSuperIds,
+    (sid) => SUPERS?.[sid]?.img || './images/logosImage/superIcone.png',
+    (sid) => isSuperOwned(sid)
+  );
 }
 
 const STORAGE_KEY_OWNED_PETS = 'ownedPets';
@@ -926,7 +1015,7 @@ function openPetPreview(p) {
 
   wrap.classList.remove('hidden');
 
-  img.src = p.img || './images/skins/placeholder.png';
+  img.src = p.img || './images/logosImage/petIcone.png';
   nameEl.textContent = p.name || id;
 
   if (roleEl) {
@@ -992,6 +1081,7 @@ function openPetPreview(p) {
   equipBtn.onclick = () => {
     if (!owned || equipped) return;
     setEquippedPet(id);
+    playInventoryEquipSound();
     openInv('pets');
     renderInventoryOverview?.();
     closePetPreview();
@@ -1055,6 +1145,7 @@ function openSuperPreview(s) {
   equipBtn.onclick = () => {
     if (!owned || equipped) return;
     setEquippedSuper(id);
+    playInventoryEquipSound();
     updateSuperEquipUI?.();
     openInv('supers');
     renderInventoryOverview?.();

@@ -1,4 +1,4 @@
-﻿// item shop script
+// item shop script
 function shopT(key, params = {}) {
   const lang = localStorage.getItem('language') || 'en';
   const str = TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.en?.[key] ?? key;
@@ -16,6 +16,10 @@ function formatCashPrice(price) {
   return `$${n.toFixed(2)}`;
 }
 
+function setShopText(el, text) {
+  if (el && el.textContent !== String(text)) el.textContent = String(text);
+}
+
 const SHOP = {
   ownedSkins: new Set(JSON.parse(localStorage.getItem('ownedSkins') || '[]')),
   equippedSkin: localStorage.getItem('equippedSkin') || '',
@@ -23,6 +27,9 @@ const SHOP = {
 };
 
 const K_SHOP_HIGHLIGHT_SKIN = 'shopHighlightSkin';
+const SHOP_VISIBLE_TIMER_MS = 500;
+let shopVisibleUiTimer = 0;
+const SHOP_DOM = {};
 const normId = (id) =>
   String(id || '')
     .toLowerCase()
@@ -32,18 +39,19 @@ const normId = (id) =>
 const shopData = {
   featured: [
     {
-      id: 'galaxyPass',
-      name: 'Galaxy Pass',
-      desc: 'Unlock a premium reward track + bonus coins',
-      icon: '✨',
-      price: 2500,
+      id: 'adReward',
+      name: 'Ad Bonus',
+      desc: 'Watch a short ad and receive a small reward',
+      icon: '📺',
+      reward: window.ORBIT_VELOCITY_PRICES.featured.adRewardCoins,
+      adReward: true,
     },
     {
       id: 'galaxySkin',
       name: 'Galaxy Skin',
       desc: 'get this skin before it leaving',
       icon: '🏆',
-      price: 2000,
+      price: window.ORBIT_VELOCITY_PRICES.featured.galaxySkin,
     },
   ],
   dailyPool: [
@@ -52,7 +60,7 @@ const shopData = {
       name: 'Pet Treat',
       desc: 'Pet bonus for 3 battles',
       icon: '🐾',
-      price: 220,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_pet_food,
       badge: 'NEW',
     },
     {
@@ -60,7 +68,7 @@ const shopData = {
       name: 'Mini Coins',
       desc: '+350 coins',
       icon: '🪙',
-      price: 150,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_coin_bundle,
       badge: 'VALUE',
     },
     {
@@ -68,7 +76,7 @@ const shopData = {
       name: 'Rapid Fire',
       desc: '+25% fire rate (2 battles)',
       icon: '🔥',
-      price: 260,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_fire_rate,
       badge: 'LIMIT',
     },
     {
@@ -76,7 +84,7 @@ const shopData = {
       name: 'Instant Revive',
       desc: 'Revive once on death',
       icon: '💖',
-      price: 300,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_revive,
       badge: 'RARE',
     },
 
@@ -85,7 +93,7 @@ const shopData = {
       name: 'Super Charge',
       desc: 'Start battle with full super',
       icon: '⚡',
-      price: 280,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_super_charge,
       badge: 'POWER',
     },
     {
@@ -93,7 +101,7 @@ const shopData = {
       name: 'Mystery Box',
       desc: 'Random reward',
       icon: '🎁',
-      price: 350,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_random_box,
       badge: '???',
     },
     {
@@ -101,7 +109,7 @@ const shopData = {
       name: 'Coin Rush',
       desc: 'Double coins for 2 battles',
       icon: '💰',
-      price: 260,
+      price: window.ORBIT_VELOCITY_PRICES.dailyOffers.daily_coin_rush,
       badge: 'VALUE',
     },
   ],
@@ -111,7 +119,7 @@ const shopData = {
       name: 'Classic',
       image: './images/shopAInventoryicons/playerIcones/skin1Icon.png',
       rarity: 'COMMON',
-      price: 0,
+      price: window.ORBIT_VELOCITY_PRICES.skins.default,
     },
     {
       id: 'redclassic',
@@ -119,7 +127,7 @@ const shopData = {
       image: './images/shopAInventoryicons/playerIcones/redSkunIcone.png',
       desc: 'Red classic',
       rarity: 'RARE',
-      price: 500,
+      price: window.ORBIT_VELOCITY_PRICES.skins.redclassic,
     },
     {
       id: 'dark_reaper',
@@ -128,7 +136,7 @@ const shopData = {
       desc: 'Dark metallic finish',
       rarity: 'EPIC',
       icon: '⬛',
-      price: 1600,
+      price: window.ORBIT_VELOCITY_PRICES.skins.dark_reaper,
     },
     {
       id: 'celestial_sakura',
@@ -137,7 +145,7 @@ const shopData = {
       desc: 'Pink petals FX',
       rarity: 'EPIC',
       icon: '🌸',
-      price: 1400,
+      price: window.ORBIT_VELOCITY_PRICES.skins.celestial_sakura,
     },
     {
       id: 'goden_core',
@@ -146,7 +154,7 @@ const shopData = {
       desc: 'Gold shine aura',
       rarity: 'LEGENDARY',
       icon: '🏆',
-      price: 2200,
+      price: window.ORBIT_VELOCITY_PRICES.skins.goden_core,
     },
     {
       id: 'star_breaker',
@@ -154,7 +162,7 @@ const shopData = {
       image: './images/shopAInventoryicons/playerIcones/starBreakerIcone.png',
       desc: 'Unlocked by beating Level 100',
       rarity: 'LEGENDARY',
-      price: 0,
+      price: window.ORBIT_VELOCITY_PRICES.skins.star_breaker,
     },
   ],
   coinPacks: [
@@ -164,8 +172,8 @@ const shopData = {
       desc: 'Small boost',
       rarity: 'RARE',
       icon: '🪙',
-      price: 0.99,
-      add: 1000,
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_1000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_1000.coins,
     },
     {
       id: 'coins_3000',
@@ -173,8 +181,8 @@ const shopData = {
       desc: 'Good value',
       rarity: 'RARE',
       icon: '💰',
-      price: 2.49,
-      add: 3000,
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_3000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_3000.coins,
     },
     {
       id: 'coins_6000',
@@ -182,8 +190,8 @@ const shopData = {
       desc: 'Big pack',
       rarity: 'EPIC',
       icon: '🏦',
-      price: 4.49,
-      add: 6000,
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_6000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_6000.coins,
     },
     {
       id: 'coins_10000',
@@ -191,8 +199,8 @@ const shopData = {
       desc: 'Mega pack',
       rarity: 'LEGENDARY',
       icon: '👑',
-      price: 6.99,
-      add: 10000,
+      price: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_10000.price,
+      add: window.ORBIT_VELOCITY_PRICES.coinPacks.coins_10000.coins,
     },
   ],
 };
@@ -206,7 +214,7 @@ const DAILY_GIFT_POOL = [
   {
     id: 'small_coin_pack',
     type: 'coins',
-    amount: 50,
+    amount: window.ORBIT_VELOCITY_PRICES.dailyGift.small_coin_pack,
     weight: 5,
     name: 'Small Coin Pack',
     icon: '🪙',
@@ -214,7 +222,7 @@ const DAILY_GIFT_POOL = [
   {
     id: 'coin_pack',
     type: 'coins',
-    amount: 100,
+    amount: window.ORBIT_VELOCITY_PRICES.dailyGift.coin_pack,
     weight: 3,
     name: 'Coin Pack',
     icon: '💰',
@@ -222,7 +230,7 @@ const DAILY_GIFT_POOL = [
   {
     id: 'big_coin_pack',
     type: 'coins',
-    amount: 150,
+    amount: window.ORBIT_VELOCITY_PRICES.dailyGift.big_coin_pack,
     weight: 1,
     name: 'Big Coin Pack',
     icon: '🏦',
@@ -293,6 +301,7 @@ function setCoins(v) {
   const n = Number(v) || 0;
 
   localStorage.setItem('coins', String(n));
+  window.OrbitVelocityCloud?.markDirty?.();
 
   try {
     coins = n;
@@ -355,9 +364,19 @@ function shopRenderFeatured() {
   document.getElementById('featuredName').textContent = f.name;
   document.getElementById('featuredDesc').textContent = f.desc;
   document.getElementById('featuredIcon').textContent = f.icon;
-  document.getElementById('featuredPrice').textContent = f.price;
+  document.getElementById('featuredPrice').textContent = f.adReward
+    ? `+${f.reward}`
+    : f.price;
 
   const btn = document.getElementById('featuredBuyBtn');
+  if (f.adReward) {
+    const claimed = isAdRewardClaimed();
+    btn.textContent = claimed ? shopT('ui.claimed') : shopT('shop.watchAd');
+    btn.disabled = claimed || claimAdReward.loading;
+    btn.onclick = () => claimAdReward(f);
+    return;
+  }
+
   btn.textContent = SHOP.ownedFeatured ? shopT('ui.owned') : shopT('ui.get');
   btn.disabled = SHOP.ownedFeatured;
 
@@ -392,24 +411,122 @@ function setFeaturedIndex(i) {
   localStorage.setItem(K_FEATURED_INDEX, String(i));
 }
 
+const K_AD_REWARD_DATE = 'orbitvelocity.shopAdRewardDate';
+
+function getLocalDateKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isAdRewardClaimed() {
+  return localStorage.getItem(K_AD_REWARD_DATE) === getLocalDateKey();
+}
+
+async function claimAdReward(item) {
+  if (claimAdReward.loading || isAdRewardClaimed()) return;
+  const btn = document.getElementById('featuredBuyBtn');
+  claimAdReward.loading = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = shopT('shop.loadingAd');
+  }
+
+  try {
+    const result = await window.OrbitVelocityAds?.showRewardedAd?.();
+    if (!result?.rewarded) {
+      showToast(
+        result?.shown ? shopT('shop.adRewardNotCompleted') : shopT('shop.adUnavailable'),
+        'info'
+      );
+      return;
+    }
+
+    const reward = Math.max(1, Number(item.reward) || 100);
+    localStorage.setItem(K_AD_REWARD_DATE, getLocalDateKey());
+    setCoins(getCoins() + reward);
+    showToast(shopT('shop.adRewardClaimed', { coins: reward }), 'success');
+  } catch (error) {
+    console.warn('Shop rewarded ad could not be shown.', error);
+    showToast(shopT('shop.adUnavailable'), 'info');
+  } finally {
+    claimAdReward.loading = false;
+    shopRenderFeatured();
+    updateFeaturedTimer();
+  }
+}
+
 function isShopScreenActive() {
-  return document.getElementById('shopScreen')?.classList.contains('active');
+  SHOP_DOM.screen ||= document.getElementById('shopScreen');
+
+  return (
+    !document.hidden &&
+    SHOP_DOM.screen?.classList.contains('active')
+  );
+}
+
+function updateShopVisibleUi() {
+  if (!isShopScreenActive()) return;
+
+  updateDailyGiftUI();
+  updateFeaturedTimer();
+  updateDailyTimer();
+  updateSkinOffersTimer();
+}
+
+function startShopVisibleUiTimer() {
+  if (shopVisibleUiTimer || !isShopScreenActive()) return;
+
+  updateShopVisibleUi();
+  shopVisibleUiTimer = setInterval(() => {
+    if (!isShopScreenActive()) {
+      stopShopVisibleUiTimer();
+      return;
+    }
+
+    updateShopVisibleUi();
+  }, SHOP_VISIBLE_TIMER_MS);
+}
+
+function stopShopVisibleUiTimer() {
+  if (!shopVisibleUiTimer) return;
+  clearInterval(shopVisibleUiTimer);
+  shopVisibleUiTimer = 0;
+}
+
+function syncShopVisibleUiTimer() {
+  if (isShopScreenActive()) startShopVisibleUiTimer();
+  else stopShopVisibleUiTimer();
 }
 
 function updateFeaturedTimer() {
   if (!isShopScreenActive()) return;
 
-  const el = document.getElementById('featuredTimer');
+  const el = SHOP_DOM.featuredTimer ||= document.getElementById('featuredTimer');
   if (!el) return;
+
+  const list = shopData.featured || [];
+  const featured = list[getFeaturedIndex() % Math.max(1, list.length)];
+  if (featured?.adReward) {
+    setShopText(el, isAdRewardClaimed()
+      ? shopT('shop.adRewardAvailableIn', { time: formatRemaining(getMsUntilNextDailyGift()) })
+      : shopT('shop.adRewardReady'));
+    return;
+  }
 
   const start = getFeaturedCycleStart();
   const now = Date.now();
   const elapsed = now - start;
   const remaining = FEATURED_ROTATE_MS - (elapsed % FEATURED_ROTATE_MS);
 
-  el.textContent = shopT('shop.newFeaturedIn', {
-    time: formatRemaining(remaining),
-  });
+  setShopText(
+    el,
+    shopT('shop.newFeaturedIn', {
+      time: formatRemaining(remaining),
+    })
+  );
 }
 
 function rotateFeatured() {
@@ -425,9 +542,6 @@ function rotateFeatured() {
 
 function startFeaturedRotation() {
   updateFeaturedTimer();
-
-  clearInterval(startFeaturedRotation._tick);
-  startFeaturedRotation._tick = setInterval(updateFeaturedTimer, 1000);
 
   const start = getFeaturedCycleStart();
   const now = Date.now();
@@ -514,6 +628,23 @@ function weightedPick(list) {
   return list[list.length - 1];
 }
 
+function getLocalizedDailyGift(gift) {
+  const baseGift = DAILY_GIFT_POOL.find((x) => x.id === gift?.id) || gift || {};
+  const lang = localStorage.getItem('language') || 'en';
+  const localizedName =
+    shopTData(lang, 'dailyGiftPool', baseGift.id, 'name') ||
+    baseGift.name ||
+    gift?.name ||
+    shopT('shop.gift.dailyGift');
+
+  return {
+    ...baseGift,
+    ...gift,
+    name: localizedName,
+    icon: gift?.icon || baseGift.icon || '🎁',
+  };
+}
+
 function getDailyGiftForToday() {
   const ver = Number(localStorage.getItem(STORAGE_KEY_DAILY_GIFT_VERSION) || 0);
   if (ver !== DAILY_GIFT_POOL_VERSION) {
@@ -529,7 +660,7 @@ function getDailyGiftForToday() {
   if (raw) {
     const parsed = JSON.parse(raw);
     if (parsed?.day === getTodayKey() && parsed?.gift?.type === 'coins') {
-      return parsed.gift;
+      return getLocalizedDailyGift(parsed.gift);
     }
   }
 
@@ -538,7 +669,7 @@ function getDailyGiftForToday() {
     STORAGE_KEY_DAILY_GIFT_TODAY,
     JSON.stringify({ day: getTodayKey(), gift })
   );
-  return gift;
+  return getLocalizedDailyGift(gift);
 }
 
 function isDailyGiftClaimed() {
@@ -567,8 +698,8 @@ function renderDailyGiftCard() {
   if (!nameEl || !descEl || !valEl || !iconEl) return;
 
   nameEl.textContent = gift.name || shopT('shop.gift.dailyGift');
-  iconEl.textContent = gift.icon || '🪙';
-  valEl.textContent = `+${gift.amount} 🪙`;
+  iconEl.textContent = gift.icon || '🎁';
+  valEl.textContent = `+${gift.amount}`;
   descEl.textContent = shopT('shop.gift.freeCoinsToday');
 }
 
@@ -600,15 +731,16 @@ function updateDailyGiftUI() {
   const claimed = isDailyGiftClaimed();
   const gift = getDailyGiftForToday();
 
-  btn.textContent = claimed ? shopT('ui.claimed') : shopT('ui.claim');
+  setShopText(btn, claimed ? shopT('ui.claimed') : shopT('ui.claim'));
   btn.disabled = claimed;
 
   if (valEl) {
-    valEl.textContent = claimed ? shopT('ui.claimed') : `+${gift.amount} 🪙`;
+    setShopText(valEl, claimed ? shopT('ui.claimed') : `+${gift.amount}`);
+    valEl.closest('.pricePill')?.classList.toggle('is-claimed', claimed);
   }
 
   if (timerEl) {
-    timerEl.textContent = formatRemaining(getMsUntilNextDailyGift());
+    setShopText(timerEl, formatRemaining(getMsUntilNextDailyGift()));
   }
 }
 
@@ -683,7 +815,7 @@ function getSelectedSkinOffers() {
 function updateSkinOffersTimer() {
   if (!isShopScreenActive()) return;
 
-  const el = document.getElementById('skinOffersTimer');
+  const el = SHOP_DOM.skinOffersTimer ||= document.getElementById('skinOffersTimer');
   if (!el) return;
 
   const start = getSkinOffersCycleStart();
@@ -691,7 +823,7 @@ function updateSkinOffersTimer() {
   const elapsed = now - start;
   const remaining = SKIN_OFFERS_ROTATE_MS - (elapsed % SKIN_OFFERS_ROTATE_MS);
 
-  el.textContent = formatRemaining(remaining);
+  setShopText(el, formatRemaining(remaining));
 }
 
 function shopRenderSkinOffers() {
@@ -771,9 +903,6 @@ function selectNewSkinOffers() {
 
 function startSkinOffersRotation() {
   updateSkinOffersTimer();
-
-  clearInterval(startSkinOffersRotation._tick);
-  startSkinOffersRotation._tick = setInterval(updateSkinOffersTimer, 500);
 
   const start = getSkinOffersCycleStart();
   const now = Date.now();
@@ -934,7 +1063,21 @@ function shopOpenModal(item) {
   const descEl = document.getElementById('shopModalDesc');
   const priceEl = document.getElementById('shopModalPrice');
 
-  if (iconEl) iconEl.textContent = item.icon || '🛒';
+  if (iconEl) {
+    iconEl.textContent = '';
+    iconEl.classList.toggle('hasImage', !!item.image);
+
+    if (item.image) {
+      const img = document.createElement('img');
+      img.className = 'shopModalIconImg';
+      img.src = item.image;
+      img.alt = item.name || shopT('ui.item');
+      img.decoding = 'async';
+      iconEl.appendChild(img);
+    } else {
+      iconEl.textContent = item.icon || '🛒';
+    }
+  }
   if (titleEl) titleEl.textContent = item.name || shopT('ui.item');
   if (descEl) descEl.textContent = item.desc || '';
 
@@ -1034,12 +1177,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDailyGiftCard();
   updateDailyGiftUI();
 
-  clearInterval(window.__giftUiTick);
-  window.__giftUiTick = setInterval(updateDailyGiftUI, 1000);
-
   startDailyRotation();
   startFeaturedRotation();
   startSkinOffersRotation();
+  syncShopVisibleUiTimer();
 });
 
 function initShopBlueScroller() {
@@ -1242,7 +1383,7 @@ const DAILY_ROTATE_MS = 86400000;
 function updateDailyTimer() {
   if (!isShopScreenActive()) return;
 
-  const el = document.getElementById('dailyTimer');
+  const el = SHOP_DOM.dailyTimer ||= document.getElementById('dailyTimer');
   if (!el) return;
 
   const start = getDailyCycleStart();
@@ -1251,7 +1392,7 @@ function updateDailyTimer() {
   const elapsed = now - start;
   const remaining = DAILY_ROTATE_MS - (elapsed % DAILY_ROTATE_MS);
 
-  el.innerHTML = `${formatRemaining(remaining)}`;
+  setShopText(el, formatRemaining(remaining));
 }
 
 function selectNewDaily() {
@@ -1267,9 +1408,6 @@ function selectNewDaily() {
 
 function startDailyRotation() {
   updateDailyTimer();
-
-  clearInterval(startDailyRotation._tick);
-  startDailyRotation._tick = setInterval(updateDailyTimer, 500);
 
   const start = getDailyCycleStart();
   const now = Date.now();
@@ -1318,15 +1456,15 @@ function shopOnEnter() {
   const scroller = document.getElementById('shopScroll');
   if (!scroller) return;
 
-  updateDailyGiftUI();
-  updateFeaturedTimer();
-  updateDailyTimer();
-  updateSkinOffersTimer();
+  syncShopVisibleUiTimer();
+  updateShopVisibleUi();
 
   const jump = sessionStorage.getItem('shopJumpTo');
 
   if (jump !== 'skinOffers') {
-    scroller.scrollTo({ top: 0, behavior: 'auto' });
+    if (scroller.scrollTop !== 0) {
+      scroller.scrollTo({ top: 0, behavior: 'auto' });
+    }
     return;
   }
 
@@ -1358,5 +1496,8 @@ function shopOnEnter() {
     setTimeout(() => card.classList.remove('shopHighlight'), 1800);
   }, 250);
 }
+
+window.addEventListener('orbitvelocity:lobby-page-change', syncShopVisibleUiTimer);
+document.addEventListener('visibilitychange', syncShopVisibleUiTimer);
 
 

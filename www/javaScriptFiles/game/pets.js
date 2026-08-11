@@ -1,3 +1,7 @@
+function getSpriteAnimationDelta(deltaTime) {
+  return deltaTime * (window.OrbitVelocityGamePerf?.spriteAnimScale ?? 1);
+}
+
 class Pet {
   constructor(game) {
     this.game = game;
@@ -45,7 +49,7 @@ class Pet {
     this.x = px + this.offsetX;
     this.y = py - this.offsetY;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % (this.maxFrame + 1);
       this.frameTimer = 0;
@@ -61,8 +65,15 @@ class Pet {
       this.shootTimer = 0;
     }
 
-    this.petBullets.forEach((b) => b.update(deltaTime));
-    this.petBullets = this.petBullets.filter((b) => !b.markedForDeletion);
+    let write = 0;
+    for (let i = 0; i < this.petBullets.length; i++) {
+      const bullet = this.petBullets[i];
+      bullet.update(deltaTime);
+      if (!bullet.markedForDeletion) {
+        this.petBullets[write++] = bullet;
+      }
+    }
+    this.petBullets.length = write;
   }
 
   shoot() {
@@ -129,6 +140,7 @@ class Pet1Bullet {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     this.trail.push({ x: this.x, y: this.y });
     if (this.trail.length > this.trailMax) this.trail.shift();
 
@@ -137,8 +149,8 @@ class Pet1Bullet {
     }
 
     if (!this.target) {
-      this.x += this.vx;
-      this.y += this.vy;
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
 
       if (
         this.x < -50 ||
@@ -168,11 +180,12 @@ class Pet1Bullet {
     const desiredVX = (desiredX / desiredDist) * this.speed;
     const desiredVY = (desiredY / desiredDist) * this.speed;
 
-    this.vx += (desiredVX - this.vx) * this.turnRate;
-    this.vy += (desiredVY - this.vy) * this.turnRate;
+    const turn = 1 - Math.pow(1 - this.turnRate, dt);
+    this.vx += (desiredVX - this.vx) * turn;
+    this.vy += (desiredVY - this.vy) * turn;
 
-    this.x += this.vx;
-    this.y += this.vy;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
   }
 
   draw(ctx) {
@@ -230,7 +243,14 @@ class Siren {
     this.y = this.game.player.y - this.distanceY;
 
     this.lives = 2;
+    this.invulnerable = false;
+    this.invulnerableTimer = 0;
+    this.invulnerableInterval = 2000;
     this.markedForDeletion = false;
+
+    // Keep Siren's ability on the same cooldown as the other pet's shot.
+    this.controlTimer = 0;
+    this.baseControlInterval = 8000;
 
     this.frameX = 0;
     this.frameTimer = 0;
@@ -264,7 +284,7 @@ class Siren {
       Math.round(this.baseControlInterval * this.game.petCooldownMult)
     );
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % (this.maxFrame + 1);
       this.frameTimer = 0;
@@ -272,27 +292,60 @@ class Siren {
 
     this.controlTimer += deltaTime;
     if (this.controlTimer >= this.controlInterval && !this.game.gameOver) {
-      this.findTarget();
-      this.controlTimer = 0;
+      if (this.findTarget()) {
+        this.controlTimer = 0;
+      } else {
+        // Stay ready and activate as soon as two valid enemies are available.
+        this.controlTimer = this.controlInterval;
+      }
     }
   }
 
   findTarget() {
-    const enemies = this.game.enemies.filter(
-      (e) => !e.markedForDeletion && !e.mindControlled
-    );
-    if (enemies.length < 2) return;
+    let first = null;
+    let count = 0;
+    for (let i = 0; i < this.game.enemies.length; i++) {
+      const enemy = this.game.enemies[i];
+      if (
+        !enemy.markedForDeletion &&
+        enemy.lives > 0 &&
+        !enemy.mindControlled &&
+        typeof enemy.clearMindControl === 'function'
+      ) {
+        count++;
+        if (Math.random() < 1 / count) first = enemy;
+      }
+    }
+    if (count < 2 || !first) return false;
 
-    const controller = enemies[Math.floor(Math.random() * enemies.length)];
+    let second = null;
+    let secondCount = 0;
+    for (let i = 0; i < this.game.enemies.length; i++) {
+      const enemy = this.game.enemies[i];
+      if (
+        enemy !== first &&
+        !enemy.markedForDeletion &&
+        enemy.lives > 0 &&
+        !enemy.mindControlled &&
+        typeof enemy.clearMindControl === 'function'
+      ) {
+        secondCount++;
+        if (Math.random() < 1 / secondCount) second = enemy;
+      }
+    }
+    if (!second) return false;
 
-    let target;
-    do {
-      target = enemies[Math.floor(Math.random() * enemies.length)];
-    } while (target === controller);
+    const controller = first;
+    const target = second;
 
     controller.mindControlled = true;
     controller.mindTarget = target;
     controller.mindTimer = 0;
+
+    target.mindControlled = true;
+    target.mindTarget = controller;
+    target.mindTimer = 0;
+    return true;
   }
 
   draw(ctx) {

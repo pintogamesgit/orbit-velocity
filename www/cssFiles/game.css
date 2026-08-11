@@ -12,7 +12,10 @@ body {
   -webkit-touch-callout: none;
   background: #000;
   overscroll-behavior: none;
-  font-family: 'Archivo Black', sans-serif;
+  --font-display: 'Bungee', 'Archivo Black', 'Rubik', system-ui, sans-serif;
+  --font-ui: 'Orbitron', 'Rubik', system-ui, sans-serif;
+  --font-copy: 'Rubik', system-ui, sans-serif;
+  font-family: var(--font-copy);
   font-style: normal;
 }
 
@@ -55,15 +58,20 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   border: 0;
   width: 100%;
   height: 100%;
   max-width: 100%;
   max-height: 100%;
-  background-color: rgb(80, 79, 79);
+  background-color: #000;
   display: block;
   touch-action: none;
+  contain: strict;
+  isolation: isolate;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 
 .screen {
@@ -115,6 +123,7 @@ body {
   padding: 28px 26px;
   text-align: center;
   color: rgba(235, 252, 255, 0.96);
+  font-family: var(--font-copy);
   border-radius: 16px;
   position: relative;
   overflow: hidden;
@@ -176,6 +185,7 @@ body {
 }
 
 .victoryButtons button {
+  font-family: var(--font-ui);
   padding: 14px 26px;
   font-size: 14px;
   font-weight: 800;
@@ -247,16 +257,6 @@ body {
   );
   transform: rotate(12deg) translateX(-60%);
   opacity: 0.9;
-}
-
-#btnNext:hover::after {
-  transform: rotate(12deg) translateX(60%);
-  transition: transform 0.7s ease;
-}
-
-.victoryButtons button:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
 }
 
 #victoryScreen.is-win .victoryBox,
@@ -433,7 +433,7 @@ body {
 }
 
 .skinRewardTitle {
-  font-family: 'Archivo Black', sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   letter-spacing: 1px;
   margin-bottom: 14px;
@@ -451,7 +451,7 @@ body {
 }
 
 .skinRewardName {
-  font-family: 'Bungee', sans-serif;
+  font-family: var(--font-ui);
   font-size: 16px;
   line-height: 1.3;
   margin-bottom: 18px;
@@ -463,7 +463,7 @@ body {
   padding: 12px 18px;
   border: none;
   border-radius: 14px;
-  font-family: 'Archivo Black', sans-serif;
+  font-family: var(--font-ui);
   font-size: 16px;
   cursor: pointer;
   color: white;
@@ -501,6 +501,36 @@ body {
   body {
     background: #000;
   }
+}
+
+#btnReviveAd {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px 18px;
+  color: #2b1800;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  border: 1px solid rgba(255, 238, 140, 0.85);
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(145deg, #fff3a0, #ffb300 62%, #e57a00);
+  box-shadow:
+    0 7px 0 #8a4700,
+    0 0 24px rgba(255, 190, 40, 0.42);
+}
+
+#btnReviveAd:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 4px 0 #8a4700,
+    0 0 18px rgba(255, 190, 40, 0.34);
+}
+
+#btnReviveAd:disabled {
+  cursor: wait;
+  filter: saturate(0.5);
+  opacity: 0.72;
 }
 
 @media (max-width: 700px), (pointer: coarse) {
@@ -558,3 +588,268 @@ body {
     display: none;
   }
 }*/
+
+/* Mission result panel */
+html,
+body,
+button,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  outline: none;
+}
+
+#victoryScreen.overlay {
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(28, 72, 120, 0.24), transparent 42%),
+    linear-gradient(180deg, rgba(2, 5, 15, 0.84), rgba(0, 2, 10, 0.96));
+}
+
+#victoryScreen:not(.hidden) .victoryBox {
+  animation: resultPanelIn 420ms cubic-bezier(0.2, 0.9, 0.24, 1.12) both;
+  will-change: transform, opacity;
+}
+
+#victoryScreen .victoryBox {
+  --result-rgb: 70, 220, 255;
+  --result-bright: #dffaff;
+  --result-deep: #064c74;
+  width: min(84vw, 350px);
+  min-height: 270px;
+  padding: 34px 25px 26px;
+  box-sizing: border-box;
+  border-radius: 24px 8px 24px 8px;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(var(--result-rgb), 0.15), transparent 38%),
+    radial-gradient(circle at 50% -8%, rgba(var(--result-rgb), 0.28), transparent 42%),
+    linear-gradient(155deg, rgba(12, 22, 42, 0.98), rgba(3, 7, 18, 0.99));
+  border: 1px solid rgba(var(--result-rgb), 0.72);
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.78),
+    0 0 34px rgba(var(--result-rgb), 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 0 40px rgba(var(--result-rgb), 0.07);
+  display: flex;
+  flex-direction: column;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout paint;
+}
+
+#victoryScreen .victoryBox::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.65;
+  transform: none;
+  background:
+    linear-gradient(90deg, rgba(var(--result-rgb), 0.9), transparent) 18px 17px / 74px 2px no-repeat,
+    linear-gradient(270deg, rgba(var(--result-rgb), 0.9), transparent) calc(100% - 18px) calc(100% - 17px) / 74px 2px no-repeat,
+    radial-gradient(circle, rgba(255, 255, 255, 0.42) 0 1px, transparent 1.6px) 0 0 / 31px 31px;
+  pointer-events: none;
+}
+
+#victoryScreen .victoryBox::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  z-index: -1;
+  border-radius: 19px 5px 19px 5px;
+  border: 1px solid rgba(var(--result-rgb), 0.12);
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.05) 46%, transparent 62%);
+  pointer-events: none;
+}
+
+#victoryScreen .victoryBox > * {
+  position: relative;
+  z-index: 1;
+}
+
+#victoryScreen .victoryBox h2 {
+  margin: 0;
+  color: var(--result-bright);
+  font-family: var(--font-display);
+  font-size: clamp(27px, 8vw, 38px);
+  line-height: 1.05;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 9px rgba(var(--result-rgb), 0.9),
+    0 0 25px rgba(var(--result-rgb), 0.52),
+    0 4px 0 rgba(0, 0, 0, 0.42);
+}
+
+#victoryScreen .victoryBox h2::before {
+  content: '✦';
+  display: block;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 13px;
+  color: var(--result-bright);
+  font-size: 27px;
+  line-height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--result-rgb), 0.78);
+  background: radial-gradient(circle, rgba(var(--result-rgb), 0.35), rgba(3, 8, 20, 0.86) 70%);
+  box-shadow:
+    0 0 20px rgba(var(--result-rgb), 0.45),
+    inset 0 0 14px rgba(var(--result-rgb), 0.22);
+}
+
+#victoryScreen #rewardText {
+  min-height: 20px;
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  color: rgba(237, 250, 255, 0.9);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.35px;
+  border-block: 1px solid rgba(var(--result-rgb), 0.2);
+  background: linear-gradient(90deg, transparent, rgba(var(--result-rgb), 0.09), transparent);
+}
+
+#victoryScreen .victoryButtons {
+  gap: 12px;
+  margin-top: 22px;
+  order: 3;
+}
+
+#victoryScreen #btnReviveAd {
+  order: 4;
+}
+
+#victoryScreen .victoryButtons button,
+#victoryScreen #btnReviveAd {
+  min-width: 0;
+  min-height: 49px;
+  padding: 12px 14px;
+  border-radius: 10px 3px 10px 3px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+#victoryScreen .victoryButtons button {
+  flex: 1 1 0;
+}
+
+#victoryScreen #btnLobby {
+  color: rgba(230, 245, 255, 0.94);
+  background: linear-gradient(155deg, rgba(39, 60, 88, 0.97), rgba(12, 21, 38, 0.99));
+  border-color: rgba(175, 220, 255, 0.22);
+  box-shadow: 0 6px 0 #050b15, 0 0 15px rgba(70, 160, 220, 0.13);
+}
+
+#victoryScreen #btnNext {
+  color: #03131b;
+  background: linear-gradient(145deg, var(--result-bright), rgba(var(--result-rgb), 0.95));
+  border-color: rgba(var(--result-rgb), 0.9);
+  box-shadow: 0 6px 0 var(--result-deep), 0 0 20px rgba(var(--result-rgb), 0.3);
+}
+
+#victoryScreen #btnNext::after {
+  display: none;
+}
+
+#victoryScreen .victoryButtons button:active,
+#victoryScreen #btnReviveAd:active:not(:disabled) {
+  transform: translateY(3px) scale(0.985);
+  filter: brightness(1.08);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.72), 0 0 13px rgba(var(--result-rgb), 0.22);
+}
+
+#victoryScreen.is-win .victoryBox,
+#victoryScreen .victoryBox.is-win {
+  --result-rgb: 255, 205, 55;
+  --result-bright: #fff3a8;
+  --result-deep: #8b5000;
+}
+
+#victoryScreen.is-win .victoryBox h2::before,
+#victoryScreen .victoryBox.is-win h2::before {
+  content: '★';
+}
+
+#victoryScreen.is-lose .victoryBox,
+#victoryScreen .victoryBox.is-lose {
+  --result-rgb: 255, 67, 104;
+  --result-bright: #ffd7e0;
+  --result-deep: #690d25;
+}
+
+#victoryScreen.is-lose .victoryBox h2::before,
+#victoryScreen .victoryBox.is-lose h2::before {
+  content: '×';
+  color: #ffdce4;
+}
+
+#victoryScreen.is-lose #btnReviveAd {
+  width: 100%;
+  margin-top: 16px;
+  color: #281500;
+  border-color: rgba(255, 234, 130, 0.9);
+  background: linear-gradient(145deg, #fff2a5, #ffc12e 58%, #f28a00);
+  box-shadow: 0 6px 0 #854500, 0 0 23px rgba(255, 187, 35, 0.32);
+}
+
+@keyframes resultPanelIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (max-width: 360px), (max-height: 650px) {
+  #victoryScreen .victoryBox {
+    width: min(90vw, 330px);
+    min-height: 0;
+    padding: 24px 18px 20px;
+  }
+
+  #victoryScreen .victoryBox h2::before {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 10px;
+    font-size: 22px;
+    line-height: 36px;
+  }
+
+  #victoryScreen #rewardText {
+    margin-top: 13px;
+    padding: 8px 9px;
+  }
+
+  #victoryScreen .victoryButtons {
+    margin-top: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #victoryScreen:not(.hidden) .victoryBox {
+    animation: none;
+  }
+}

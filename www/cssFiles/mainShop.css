@@ -24,9 +24,10 @@
   left: 50%;
   top: 35px;
   transform: translate(-50%, -50%);
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 1000;
-  letter-spacing: 6px;
+  letter-spacing: 4px;
   color: #eaf6ff;
   text-shadow:
     0 0 10px rgba(120, 220, 255, 0.8),
@@ -37,6 +38,7 @@
   position: absolute;
   top: 65px;
   margin-top: 6px;
+  font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -54,6 +56,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 
   padding: 0 12px 24px;
@@ -91,6 +94,7 @@
 }
 
 .sectionTitle {
+  font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 1000;
   letter-spacing: 3px;
@@ -279,6 +283,7 @@
 }
 
 .featuredTag {
+  font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 1000;
   letter-spacing: 3px;
@@ -292,6 +297,7 @@
 
 .featuredName {
   margin-top: 10px;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 1000;
   letter-spacing: 1px;
@@ -672,6 +678,17 @@
   font-size: 26px;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shopModalIcon.hasImage {
+  padding: 5px;
+}
+
+.shopModalIconImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .shopModalTitle {
@@ -1172,6 +1189,7 @@
 }
 
 .freeGiftTag {
+  font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 1000;
   letter-spacing: 3px;
@@ -1185,6 +1203,7 @@
 
 .freeGiftName {
   margin-top: 10px;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 1000;
   letter-spacing: 1px;
@@ -1205,6 +1224,41 @@
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.freeGiftPricePill {
+  min-width: 88px;
+  height: 44px;
+  padding: 0 14px;
+  justify-content: center;
+  gap: 9px;
+}
+
+#freeGiftValue {
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.freeGiftPricePill .pricePillCoin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.freeGiftPricePill.is-claimed {
+  min-width: 104px;
+}
+
+.freeGiftPricePill.is-claimed #freeGiftValue {
+  font-size: 12px;
+}
+
+.freeGiftPricePill.is-claimed .pricePillCoin {
+  display: none;
 }
 
 .freeGiftRight {

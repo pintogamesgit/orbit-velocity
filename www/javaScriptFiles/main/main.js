@@ -7,6 +7,66 @@ let isPageTransitioning = false;
 let isPlanetSliding = false;
 let pageTransitionTimer = null;
 let pageTransitionCleanup = null;
+let pendingPerformanceMode = null;
+
+const MAIN_INPUT_WARMUP_MS = 2000;
+const MAIN_INPUT_WARMUP_PENDING_KEY = 'orbitvelocity.mainInputWarmupPending';
+const MAIN_INPUT_WARMUP_EVENTS = [
+  'pointerdown',
+  'pointermove',
+  'pointerup',
+  'pointercancel',
+  'click',
+  'dblclick',
+  'mousedown',
+  'mouseup',
+  'touchstart',
+  'touchmove',
+  'touchend',
+  'wheel',
+  'keydown',
+  'keyup',
+  'contextmenu',
+];
+let mainInputWarmupUntil = 0;
+
+function isMainInputWarmupActive() {
+  return performance.now() < mainInputWarmupUntil;
+}
+
+function blockMainInputWarmupEvent(e) {
+  if (!isMainInputWarmupActive()) return;
+
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}
+
+function endMainInputWarmup() {
+  mainInputWarmupUntil = 0;
+  MAIN_INPUT_WARMUP_EVENTS.forEach((eventName) => {
+    document.removeEventListener(eventName, blockMainInputWarmupEvent, {
+      capture: true,
+    });
+  });
+}
+
+function startMainInputWarmupIfNeeded() {
+  if (sessionStorage.getItem(MAIN_INPUT_WARMUP_PENDING_KEY) !== '1') return;
+
+  sessionStorage.removeItem(MAIN_INPUT_WARMUP_PENDING_KEY);
+  mainInputWarmupUntil = performance.now() + MAIN_INPUT_WARMUP_MS;
+
+  MAIN_INPUT_WARMUP_EVENTS.forEach((eventName) => {
+    document.addEventListener(eventName, blockMainInputWarmupEvent, {
+      capture: true,
+      passive: false,
+    });
+  });
+
+  window.setTimeout(endMainInputWarmup, MAIN_INPUT_WARMUP_MS + 80);
+}
+
+startMainInputWarmupIfNeeded();
 
 const SWIPE_MIN_DISTANCE = {
   touch: 34,
@@ -76,27 +136,42 @@ const WEAPONS = {
   laser: {
     nameKey: 'weapon.laser.name',
     descKey: 'weapon.laser.desc',
-    price: window.COSMORUSH_PRICES.weapons.laser,
+    price: window.ORBIT_VELOCITY_PRICES.weapons.laser,
     img: './images/logosImage/weaponImg/leserIcone.png',
+    stats: {
+      Damage: 'Medium',
+      Rate: 'Fast',
+      Range: 'Long',
+    },
   },
   missile: {
     nameKey: 'weapon.missile.name',
     descKey: 'weapon.missile.desc',
-    price: window.COSMORUSH_PRICES.weapons.missile,
+    price: window.ORBIT_VELOCITY_PRICES.weapons.missile,
     img: './images/logosImage/weaponImg/missileIcone.png',
+    stats: {
+      Damage: 'High',
+      Rate: 'Slow',
+      Range: 'Medium',
+    },
   },
   triangleShooter: {
     nameKey: 'weapon.triangleShooter.name',
     descKey: 'weapon.triangleShooter.desc',
-    price: window.COSMORUSH_PRICES.weapons.triangleShooter,
+    price: window.ORBIT_VELOCITY_PRICES.weapons.triangleShooter,
     img: './images/logosImage/weaponImg/triangleShooter.png',
+    stats: {
+      Damage: 'Low',
+      Rate: 'Medium',
+      Spread: 'Wide',
+    },
   },
 };
 
 const PETS = {
   dog: {
     name: 'Chimpo',
-    price: window.COSMORUSH_PRICES.pets.dog,
+    price: window.ORBIT_VELOCITY_PRICES.pets.dog,
     icon: '🐶',
     img: './images/shopAInventoryicons/petsSIcone/ChimpoIcone.png',
     stats: {
@@ -111,7 +186,7 @@ const PETS = {
 
   siren: {
     name: 'Siren',
-    price: window.COSMORUSH_PRICES.pets.siren,
+    price: window.ORBIT_VELOCITY_PRICES.pets.siren,
     icon: '🧠',
     img: './images/shopAInventoryicons/petsSIcone/sirenIcone.png',
     stats: {
@@ -131,7 +206,7 @@ const SUPERS = {
     titleKey: 'super.waveShield.title',
     descKey: 'super.waveShield.desc',
     img: './images/logosImage/superLogosImage/waveShield.png',
-    price: window.COSMORUSH_PRICES.supers.waveShield,
+    price: window.ORBIT_VELOCITY_PRICES.supers.waveShield,
     stats: {
       Duration: '6s',
       Cooldown: '20s',
@@ -143,7 +218,7 @@ const SUPERS = {
     titleKey: 'super.superLaser.title',
     descKey: 'super.superLaser.desc',
     img: './images/logosImage/superLogosImage/superLaser.png',
-    price: window.COSMORUSH_PRICES.supers.superLaser,
+    price: window.ORBIT_VELOCITY_PRICES.supers.superLaser,
     stats: {
       Duration: '5s',
       Damage: '0.5 Per second',
@@ -178,9 +253,11 @@ let equippedPet = localStorage.getItem('equippedPet') || DEFAULT_PET;
 let audioUnlocked = false;
 let selectedWeaponId = null;
 let pendingSuperBuy = null;
+let pendingPetBuy = null;
 let lastMusicVolume = Number(localStorage.getItem('musicVolume') ?? 70);
 let lastAudioVolume = Number(localStorage.getItem('audioVolume') ?? 80);
 let musicLoopInterval = null;
+let musicLoopVisibilityBound = false;
 
 function getEquippedWeapon() {
   return equippedWeapon;
@@ -210,11 +287,11 @@ const uiClickSound = new Audio(
 uiClickSound.preload = 'auto';
 
 const equipSound = new Audio(
-  './sounds/backgroundSoundEffect/selectWeaponClick.mp3'
+  './sounds/backgroundSoundEffect/equipButton.wav'
 );
 equipSound.preload = 'auto';
 
-const mapClickSound = new Audio('./sounds/backgroundSoundEffect/mapClick.wav');
+const mapClickSound = new Audio('./sounds/backgroundSoundEffect/buttonClick.wav');
 mapClickSound.preload = 'auto';
 
 const music = new Audio('./sounds/backgroundMusics/homeScreen.mp3');
@@ -224,8 +301,44 @@ music.volume = 0.5;
 
 const LOOP_START = 1;
 const LOOP_END = 10;
+const PERFORMANCE_MODE_KEY = 'orbitvelocity.performance.mode';
+const PERFORMANCE_AUTO_TIER_KEY = 'orbitvelocity.performance.autoTier';
+const PERFORMANCE_AUTO_LABEL_KEY = 'orbitvelocity.performance.autoLabel';
+const PERFORMANCE_BENCHMARK_KEY = 'orbitvelocity.performance.benchmark';
+const PERFORMANCE_DEVICE_INFO_KEY = 'orbitvelocity.performance.deviceInfo';
 
 const DOM = {};
+let levelMapVisibilityRaf = 0;
+let levelMapScrollIdleTimer = 0;
+let levelMapThemeRaf = 0;
+let mapClosingTimer = 0;
+let activeMapThemeClass = '';
+let cachedLevelMapNodes = [];
+const MAP_THEME_CLASSES = [
+  'level-gold',
+  'level-black',
+  'level-infinity',
+  'level-yellow',
+  'level-lightBlue',
+  'level-orange',
+  'level-purple',
+  'level-red',
+  'level-pink',
+  'level-green',
+];
+const LEVEL_MAP_NODE_COLOR_CLASSES = [
+  'map-planet-blue',
+  'map-planet-green',
+  'map-planet-pink',
+  'map-planet-red',
+  'map-planet-purple',
+  'map-planet-orange',
+  'map-planet-lightBlue',
+  'map-planet-yellow',
+  'map-planet-black',
+  'map-planet-gold',
+  'map-planet-infinity',
+];
 
 function cacheDom() {
   DOM.profileSettingsDiv = $('#profileSettingsDiv');
@@ -235,6 +348,18 @@ function cacheDom() {
   DOM.mapDiv = $('#mapDiv');
   DOM.settingsDiv = $('#settingsDiv');
   DOM.settingsBtn = $('#settingsBtn');
+  DOM.performanceDiv = $('#performanceDiv');
+  DOM.performanceBtn = $('#performanceBtn');
+  DOM.closePerformanceDiv = $('#closePerformanceDiv');
+  DOM.runBenchmarkBtn = $('#runBenchmarkBtn');
+  DOM.benchmarkResultToast = $('#benchmarkResultToast');
+  DOM.benchmarkResultText = $('#benchmarkResultText');
+  DOM.benchmarkResultOk = $('#benchmarkResultOk');
+  DOM.performanceConfirmDialog = $('#performanceConfirmDialog');
+  DOM.performanceConfirmTitle = $('#performanceConfirmTitle');
+  DOM.performanceConfirmText = $('#performanceConfirmText');
+  DOM.performanceConfirmCancel = $('#performanceConfirmCancel');
+  DOM.performanceConfirmOk = $('#performanceConfirmOk');
   DOM.socialDiv = $('#socialDiv');
   DOM.superShopDiv = $('#superShopDiv');
   DOM.buySuperConfirm = $('#buySuperConfirm');
@@ -248,6 +373,35 @@ function cacheDom() {
   DOM.audioToggle = $('#audioToggle');
   DOM.musicVolume = $('#musicVolume');
   DOM.audioVolume = $('#audioVolume');
+  DOM.performanceModeSelect = $('#performanceModeSelect');
+  DOM.performanceDeviceName = $('#performanceDeviceName');
+  DOM.performanceDeviceBrand = $('#performanceDeviceBrand');
+  DOM.performanceDeviceModel = $('#performanceDeviceModel');
+  DOM.performanceDeviceAndroid = $('#performanceDeviceAndroid');
+  DOM.performanceDeviceHardware = $('#performanceDeviceHardware');
+  DOM.performanceDeviceRenderer = $('#performanceDeviceRenderer');
+  DOM.performanceDeviceSource = $('#performanceDeviceSource');
+  DOM.performanceDeviceCode = $('#performanceDeviceCode');
+  DOM.performanceDeviceProduct = $('#performanceDeviceProduct');
+  DOM.performanceDevicePlatform = $('#performanceDevicePlatform');
+  DOM.performanceDeviceArchitecture = $('#performanceDeviceArchitecture');
+  DOM.performanceDeviceSdk = $('#performanceDeviceSdk');
+  DOM.performanceDeviceVendor = $('#performanceDeviceVendor');
+  DOM.performanceBenchmarkReasons = $('#performanceBenchmarkReasons');
+  DOM.performanceDeviceUa = $('#performanceDeviceUa');
+  DOM.performanceAutoTier = $('#performanceAutoTier');
+  DOM.performanceActiveTier = $('#performanceActiveTier');
+  DOM.performanceScore = $('#performanceScore');
+  DOM.performanceFps = $('#performanceFps');
+  DOM.performanceWorstFrame = $('#performanceWorstFrame');
+  DOM.performanceLastBenchmark = $('#performanceLastBenchmark');
+  DOM.performanceTotalRam = $('#performanceTotalRam');
+  DOM.performanceFreeRam = $('#performanceFreeRam');
+  DOM.performanceCpuCores = $('#performanceCpuCores');
+  DOM.performanceMemoryClass = $('#performanceMemoryClass');
+  DOM.performanceLowMemory = $('#performanceLowMemory');
+  DOM.performanceScreenInfo = $('#performanceScreenInfo');
+  DOM.performanceAbiInfo = $('#performanceAbiInfo');
   DOM.coinsText = $('#coinsText');
   DOM.buyWeaponPopup = $('#buyWeaponPopup');
   DOM.buyConfirmBtn = $('#buyConfirmBtn');
@@ -290,7 +444,7 @@ function playEquipSound() {
 
   const volume = Number(localStorage.getItem('audioVolume') ?? 80);
   equipSound.volume = volume / 100;
-  equipSound.currentTime = 0.15;
+  equipSound.currentTime = 0;
   equipSound.play().catch(console.warn);
 }
 
@@ -363,9 +517,22 @@ function loadCoins() {
   updateCoinsUI();
 }
 
+function setMainText(el, text) {
+  if (el && el.textContent !== String(text)) el.textContent = String(text);
+}
+
+function setMainClassName(el, className) {
+  if (el && el.className !== className) el.className = className;
+}
+
+function setMainDisabled(el, disabled) {
+  if (el && el.disabled !== disabled) el.disabled = disabled;
+}
+
 function updateCoinsUI() {
-  if (DOM.coinsText) DOM.coinsText.textContent = coins;
-  if (DOM.shopCoinsText) DOM.shopCoinsText.textContent = coins;
+  const value = String(coins);
+  setMainText(DOM.coinsText, value);
+  setMainText(DOM.shopCoinsText, value);
 }
 
 function trValue(value, lang = getLang?.() || 'en') {
@@ -387,7 +554,7 @@ function petName(id) {
 function grantCoins(amount) {
   coins = Math.min(maxCoins, getCoins() + amount);
   saveCoins();
-  window.CosmoRushCloud?.markDirty?.();
+  window.OrbitVelocityCloud?.markDirty?.();
   updateCoinsUI();
   flashCoins();
 }
@@ -407,6 +574,343 @@ function loadSettings() {
   if (DOM.audioToggle) {
     DOM.audioToggle.checked = localStorage.getItem('audio') !== 'off';
   }
+  if (DOM.performanceModeSelect) {
+    DOM.performanceModeSelect.value = getSavedPerformanceMode();
+  }
+  applyPerformanceMode();
+}
+
+function normalizePerformanceTier(value) {
+  if (value === 'high') return 'strong';
+  if (value === 'mid') return 'medium';
+  if (value === 'low' || value === 'medium' || value === 'strong') return value;
+  return 'strong';
+}
+
+function getSavedPerformanceMode() {
+  const saved = localStorage.getItem(PERFORMANCE_MODE_KEY);
+  return saved === 'low' || saved === 'medium' || saved === 'strong' ? saved : 'auto';
+}
+
+function getActivePerformanceTier() {
+  const manual = getSavedPerformanceMode();
+  if (manual !== 'auto') return manual;
+  return normalizePerformanceTier(localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY));
+}
+
+function performanceTierLabel(tier) {
+  const normalized = normalizePerformanceTier(tier);
+  if (normalized === 'low') return 'LOW';
+  if (normalized === 'medium') return 'MID';
+  return 'HIGH';
+}
+
+function performanceTierRank(tier) {
+  const normalized = normalizePerformanceTier(tier);
+  if (normalized === 'low') return 1;
+  if (normalized === 'medium') return 2;
+  return 3;
+}
+
+function getPerformanceModeWarning(nextMode, previousMode = getSavedPerformanceMode()) {
+  if (nextMode === 'auto') return null;
+  const autoTier = normalizePerformanceTier(
+    localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY)
+  );
+  const nextTier = normalizePerformanceTier(nextMode);
+  const previousTier = previousMode === 'auto'
+    ? autoTier
+    : normalizePerformanceTier(previousMode);
+  const autoRank = performanceTierRank(autoTier);
+  const nextRank = performanceTierRank(nextTier);
+  const previousRank = performanceTierRank(previousTier);
+
+  if (nextRank > autoRank) {
+    return {
+      title: 'UNOPTIMIZED MODE',
+      text: `AUTO recommends ${performanceTierLabel(autoTier)}.\n\nAre you sure you want to use ${performanceTierLabel(nextTier)}?\nThis is not the optimized version for your device and may cause unwanted lag or an incorrect gameplay experience.`,
+    };
+  }
+
+  if (nextRank < previousRank) {
+    return {
+      title: 'PERFORMANCE CHANGE',
+      text: 'ARE YOU SURE',
+    };
+  }
+
+  return null;
+}
+
+function savePerformanceModeAndReload(value) {
+  if (value === 'low' || value === 'medium' || value === 'strong') {
+    localStorage.setItem(PERFORMANCE_MODE_KEY, value);
+  } else {
+    localStorage.setItem(PERFORMANCE_MODE_KEY, 'auto');
+  }
+  applyPerformanceMode();
+  if (DOM.performanceConfirmDialog) DOM.performanceConfirmDialog.hidden = true;
+  DOM.performanceDiv?.classList.remove('open');
+  document.body.classList.remove('benchmark-result-open', 'performance-panel-open');
+  window.location.href = 'loadingScreen.html?to=main.html&settingsReload=1';
+}
+
+function openPerformanceConfirmDialog(nextMode, previousMode) {
+  const warning = getPerformanceModeWarning(nextMode, previousMode);
+  if (!warning) {
+    savePerformanceModeAndReload(nextMode);
+    return;
+  }
+
+  pendingPerformanceMode = { nextMode, previousMode };
+  if (DOM.performanceConfirmDialog?.parentElement !== document.body) {
+    document.body.appendChild(DOM.performanceConfirmDialog);
+  }
+  if (DOM.performanceConfirmTitle) DOM.performanceConfirmTitle.textContent = warning.title;
+  if (DOM.performanceConfirmText) DOM.performanceConfirmText.textContent = warning.text;
+  if (DOM.performanceConfirmDialog) {
+    DOM.performanceConfirmDialog.hidden = false;
+    document.body.classList.add('benchmark-result-open');
+  }
+}
+
+function closePerformanceConfirmDialog(confirmed = false) {
+  const pending = pendingPerformanceMode;
+  pendingPerformanceMode = null;
+
+  if (DOM.performanceConfirmDialog) DOM.performanceConfirmDialog.hidden = true;
+  document.body.classList.remove('benchmark-result-open');
+
+  if (!pending) return;
+  if (confirmed) {
+    savePerformanceModeAndReload(pending.nextMode);
+    return;
+  }
+  if (DOM.performanceModeSelect) DOM.performanceModeSelect.value = pending.previousMode;
+}
+
+function readStoredJson(key, fallback = null) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function formatBenchmarkDate(value) {
+  const time = Number(value);
+  if (!Number.isFinite(time) || time <= 0) return 'Never';
+
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(time));
+  } catch {
+    return new Date(time).toLocaleString();
+  }
+}
+
+function getPerformanceDeviceName(info) {
+  if (!info) return 'Unknown';
+  return (
+    [info.manufacturer, info.model].filter(Boolean).join(' ') ||
+    info.model ||
+    info.brand ||
+    info.platform ||
+    'Unknown'
+  );
+}
+
+function formatRamMb(value) {
+  const mb = Number(value);
+  if (!Number.isFinite(mb) || mb <= 0) return 'Unknown';
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+  return `${Math.round(mb)} MB`;
+}
+
+function formatMemoryClass(deviceInfo) {
+  const totalMb = Number(deviceInfo.totalRamMb);
+  const browserGb = Number(deviceInfo.browserDeviceMemoryGb);
+  const gb = Number.isFinite(totalMb) && totalMb > 0
+    ? totalMb / 1024
+    : Number.isFinite(browserGb) && browserGb > 0
+      ? browserGb
+      : 0;
+
+  if (!gb) return 'Unknown';
+  if (gb < 4) return 'LOW RAM';
+  if (gb < 7) return 'MID RAM';
+  return 'HIGH RAM';
+}
+
+function refreshPerformancePanel() {
+  const manualMode = getSavedPerformanceMode();
+  const activeTier = getActivePerformanceTier();
+  const autoTier = normalizePerformanceTier(
+    localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY)
+  );
+  const benchmark = readStoredJson(PERFORMANCE_BENCHMARK_KEY, {});
+  const deviceInfo = readStoredJson(PERFORMANCE_DEVICE_INFO_KEY, {});
+
+  if (DOM.performanceModeSelect) {
+    DOM.performanceModeSelect.value = manualMode;
+  }
+  if (DOM.performanceDeviceName) {
+    DOM.performanceDeviceName.textContent = getPerformanceDeviceName(deviceInfo);
+  }
+  if (DOM.performanceDeviceBrand) {
+    DOM.performanceDeviceBrand.textContent = deviceInfo.brand || deviceInfo.manufacturer || 'Unknown';
+  }
+  if (DOM.performanceDeviceModel) {
+    DOM.performanceDeviceModel.textContent = deviceInfo.model || 'Unknown';
+  }
+  if (DOM.performanceDeviceAndroid) {
+    DOM.performanceDeviceAndroid.textContent =
+      deviceInfo.androidRelease || deviceInfo.release || deviceInfo.sdkInt || deviceInfo.sdk || 'Unknown';
+  }
+  if (DOM.performanceDeviceHardware) {
+    DOM.performanceDeviceHardware.textContent = deviceInfo.hardware || deviceInfo.device || 'Unknown';
+  }
+  if (DOM.performanceDeviceRenderer) {
+    DOM.performanceDeviceRenderer.textContent = deviceInfo.renderer || 'Unknown';
+  }
+  if (DOM.performanceDeviceSource) {
+    DOM.performanceDeviceSource.textContent = deviceInfo.source || 'Unknown';
+  }
+  if (DOM.performanceDeviceCode) {
+    DOM.performanceDeviceCode.textContent = deviceInfo.device || 'Unknown';
+  }
+  if (DOM.performanceDeviceProduct) {
+    DOM.performanceDeviceProduct.textContent = deviceInfo.product || 'Unknown';
+  }
+  if (DOM.performanceDevicePlatform) {
+    DOM.performanceDevicePlatform.textContent = deviceInfo.platform || 'Unknown';
+  }
+  if (DOM.performanceDeviceArchitecture) {
+    DOM.performanceDeviceArchitecture.textContent =
+      [deviceInfo.architecture, deviceInfo.bitness].filter(Boolean).join(' / ') || 'Unknown';
+  }
+  if (DOM.performanceDeviceSdk) {
+    DOM.performanceDeviceSdk.textContent = deviceInfo.sdkInt || deviceInfo.sdk || 'Unknown';
+  }
+  if (DOM.performanceDeviceVendor) {
+    DOM.performanceDeviceVendor.textContent = deviceInfo.vendor || 'Unknown';
+  }
+  if (DOM.performanceBenchmarkReasons) {
+    DOM.performanceBenchmarkReasons.textContent =
+      Array.isArray(benchmark.reasons) && benchmark.reasons.length
+        ? benchmark.reasons.join(' | ')
+        : 'Unknown';
+  }
+  if (DOM.performanceDeviceUa) {
+    const ua = deviceInfo.userAgent || 'Unknown';
+    DOM.performanceDeviceUa.textContent = ua.length > 180 ? `${ua.slice(0, 180)}...` : ua;
+  }
+  if (DOM.performanceAutoTier) {
+    DOM.performanceAutoTier.textContent =
+      localStorage.getItem(PERFORMANCE_AUTO_LABEL_KEY) ||
+      performanceTierLabel(autoTier);
+  }
+  if (DOM.performanceActiveTier) {
+    DOM.performanceActiveTier.textContent =
+      manualMode === 'auto'
+        ? `${performanceTierLabel(activeTier)} (AUTO)`
+        : performanceTierLabel(activeTier);
+  }
+  if (DOM.performanceScore) {
+    DOM.performanceScore.textContent = Number.isFinite(Number(benchmark.score))
+      ? String(benchmark.score)
+      : 'Unknown';
+  }
+  if (DOM.performanceFps) {
+    DOM.performanceFps.textContent = Number.isFinite(Number(benchmark.fps))
+      ? `${Math.round(Number(benchmark.fps))} FPS`
+      : 'Unknown';
+  }
+  if (DOM.performanceWorstFrame) {
+    DOM.performanceWorstFrame.textContent = Number.isFinite(Number(benchmark.worstFrameMs))
+      ? `${Math.round(Number(benchmark.worstFrameMs))}ms`
+      : 'Unknown';
+  }
+  if (DOM.performanceLastBenchmark) {
+    DOM.performanceLastBenchmark.textContent = formatBenchmarkDate(benchmark.savedAt);
+  }
+  if (DOM.performanceTotalRam) {
+    const nativeRam = formatRamMb(deviceInfo.totalRamMb);
+    DOM.performanceTotalRam.textContent =
+      nativeRam !== 'Unknown'
+        ? nativeRam
+        : deviceInfo.browserDeviceMemoryGb
+          ? `${deviceInfo.browserDeviceMemoryGb} GB`
+          : 'Unknown';
+  }
+  if (DOM.performanceFreeRam) {
+    DOM.performanceFreeRam.textContent = formatRamMb(deviceInfo.availableRamMb);
+  }
+  if (DOM.performanceCpuCores) {
+    DOM.performanceCpuCores.textContent =
+      deviceInfo.cpuCores || deviceInfo.hardwareConcurrency || 'Unknown';
+  }
+  if (DOM.performanceMemoryClass) {
+    DOM.performanceMemoryClass.textContent = formatMemoryClass(deviceInfo);
+  }
+  if (DOM.performanceLowMemory) {
+    DOM.performanceLowMemory.textContent =
+      deviceInfo.lowMemory === true ? 'YES' : deviceInfo.lowMemory === false ? 'NO' : 'Unknown';
+  }
+  if (DOM.performanceScreenInfo) {
+    const screenText =
+      deviceInfo.screenWidth && deviceInfo.screenHeight
+        ? `${deviceInfo.screenWidth}x${deviceInfo.screenHeight} @${deviceInfo.devicePixelRatio || 1} DPR`
+        : 'Unknown';
+    DOM.performanceScreenInfo.textContent = screenText;
+  }
+  if (DOM.performanceAbiInfo) {
+    DOM.performanceAbiInfo.textContent = deviceInfo.supportedAbis || 'Unknown';
+  }
+}
+
+function showBenchmarkResultDialog() {
+  const benchmark = readStoredJson(PERFORMANCE_BENCHMARK_KEY, {});
+  const tier = localStorage.getItem(PERFORMANCE_AUTO_LABEL_KEY) ||
+    performanceTierLabel(localStorage.getItem(PERFORMANCE_AUTO_TIER_KEY));
+
+  if (!DOM.benchmarkResultToast || !DOM.benchmarkResultText) return;
+  if (DOM.benchmarkResultToast.parentElement !== document.body) {
+    document.body.appendChild(DOM.benchmarkResultToast);
+  }
+
+  const fps = Number.isFinite(Number(benchmark.fps))
+    ? `${Math.round(Number(benchmark.fps))} FPS`
+    : 'Unknown FPS';
+  const worst = Number.isFinite(Number(benchmark.worstFrameMs))
+    ? `${Math.round(Number(benchmark.worstFrameMs))}ms`
+    : 'Unknown worst frame';
+  const gpu = benchmark.gpuAvailable && Number.isFinite(Number(benchmark.gpuFps))
+    ? `${Math.round(Number(benchmark.gpuFps))} FPS`
+    : 'Unavailable';
+  const score = Number.isFinite(Number(benchmark.score))
+    ? benchmark.score
+    : 'Unknown';
+
+  DOM.benchmarkResultText.textContent = `${tier}\nScore: ${score}\nCanvas: ${fps}\nGPU: ${gpu}\nWorst frame: ${worst}`;
+  DOM.benchmarkResultToast.hidden = false;
+  document.body.classList.add('benchmark-result-open');
+}
+
+function closeBenchmarkResultDialog() {
+  if (DOM.benchmarkResultToast) DOM.benchmarkResultToast.hidden = true;
+  document.body.classList.remove('benchmark-result-open');
+}
+
+function applyPerformanceMode() {
+  const tier = getActivePerformanceTier();
+  document.documentElement.classList.remove('perf-low', 'perf-mid', 'perf-high');
+  document.documentElement.classList.add(
+    tier === 'low' ? 'perf-low' : tier === 'medium' ? 'perf-mid' : 'perf-high'
+  );
+  refreshPerformancePanel();
 }
 
 function loadVolumes() {
@@ -424,13 +928,44 @@ function loadVolumes() {
 }
 
 function startMusicLoopWatcher() {
-  if (musicLoopInterval) return;
+  if (document.hidden || music.paused || localStorage.getItem('music') === 'off') {
+    stopMusicLoopWatcher();
+    return;
+  }
 
+  if (musicLoopInterval) return;
   musicLoopInterval = setInterval(() => {
+    if (document.hidden || music.paused || localStorage.getItem('music') === 'off') {
+      stopMusicLoopWatcher();
+      return;
+    }
+
     if (music.currentTime >= LOOP_END - 0.05) {
       music.currentTime = LOOP_START;
     }
   }, 120);
+}
+
+function stopMusicLoopWatcher() {
+  if (!musicLoopInterval) return;
+  clearInterval(musicLoopInterval);
+  musicLoopInterval = null;
+}
+
+function bindMusicLoopVisibility() {
+  if (musicLoopVisibilityBound) return;
+  musicLoopVisibilityBound = true;
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopMusicLoopWatcher();
+      return;
+    }
+
+    if (!music.paused && localStorage.getItem('music') !== 'off') {
+      startMusicLoopWatcher();
+    }
+  });
 }
 
 function closeAll() {
@@ -438,6 +973,8 @@ function closeAll() {
   UI.weapon()?.classList.remove('open');
   UI.overlay()?.classList.remove('show');
   DOM.settingsDiv?.classList.remove('open');
+  DOM.performanceDiv?.classList.remove('open');
+  document.body.classList.remove('performance-panel-open');
   DOM.socialDiv?.classList.remove('open');
   DOM.superShopDiv?.classList.remove('open');
   DOM.buySuperConfirm?.classList.remove('open');
@@ -445,9 +982,16 @@ function closeAll() {
 
   const map = UI.map();
   if (map?.classList.contains('open')) {
+    stopLevelMapVisibilityTracking(false);
     map.classList.remove('open');
     map.classList.add('closing');
-    setTimeout(() => map.classList.remove('closing'), 400);
+    clearTimeout(mapClosingTimer);
+    mapClosingTimer = setTimeout(() => {
+      map.classList.remove('closing');
+      activeMapThemeClass = '';
+      clearVisibleLevelNodes();
+      mapClosingTimer = 0;
+    }, 400);
   }
 }
 
@@ -516,7 +1060,7 @@ function updateCenterPlanetByLevel(level) {
     glow2 = 'rgba(255,176,38,0.19)';
     glow3 = 'rgba(90,220,255,0.12)';
   } else if (level >= 61) {
-    image = './images/centerPlanets/lightBluePlanet.png';
+    image = './images/centerPlanets/lightbluePlanet.png';
     glow1 = 'rgba(0,240,255,0.28)';
     glow2 = 'rgba(70,150,255,0.2)';
     glow3 = 'rgba(255,255,255,0.12)';
@@ -596,7 +1140,7 @@ const planets = [
   },
   {
     name: 'Light Blue',
-    img: './images/centerPlanets/lightBluePlanet.png',
+    img: './images/centerPlanets/lightbluePlanet.png',
     unlock: 61,
     color: '0,255,255',
   },
@@ -739,29 +1283,217 @@ function setMapThemeByLevel(maxLevel) {
   const map = UI.map();
   if (!map) return;
 
-  map.classList.remove(
-    'level-gold',
-    'level-black',
-    'level-infinity',
-    'level-yellow',
-    'level-lightBlue',
-    'level-orange',
-    'level-purple',
-    'level-red',
-    'level-pink',
-    'level-green'
-  );
+  const themeClass = getMapThemeClassByLevel(maxLevel);
+  if (themeClass === activeMapThemeClass) return;
 
-  if (maxLevel >= 101) map.classList.add('level-infinity');
-  else if (maxLevel >= 91) map.classList.add('level-gold');
-  else if (maxLevel >= 81) map.classList.add('level-black');
-  else if (maxLevel >= 71) map.classList.add('level-yellow');
-  else if (maxLevel >= 61) map.classList.add('level-lightBlue');
-  else if (maxLevel >= 51) map.classList.add('level-orange');
-  else if (maxLevel >= 41) map.classList.add('level-purple');
-  else if (maxLevel >= 31) map.classList.add('level-red');
-  else if (maxLevel >= 21) map.classList.add('level-pink');
-  else if (maxLevel >= 11) map.classList.add('level-green');
+  map.classList.remove(...MAP_THEME_CLASSES);
+  activeMapThemeClass = themeClass;
+  if (themeClass) map.classList.add(themeClass);
+}
+
+function getMapThemeClassByLevel(level) {
+  if (level >= 101) return 'level-infinity';
+  if (level >= 91) return 'level-gold';
+  if (level >= 81) return 'level-black';
+  if (level >= 71) return 'level-yellow';
+  if (level >= 61) return 'level-lightBlue';
+  if (level >= 51) return 'level-orange';
+  if (level >= 41) return 'level-purple';
+  if (level >= 31) return 'level-red';
+  if (level >= 21) return 'level-pink';
+  if (level >= 11) return 'level-green';
+  return '';
+}
+
+function getLevelFromMapNode(node) {
+  if (!node || node.classList.contains('is-hidden')) return 0;
+  if (node.classList.contains('infinity-level-node')) return 101;
+
+  const btn = $('.levelsBtn', node);
+  return Number(btn?.textContent.trim()) || 0;
+}
+
+function cacheLevelMapNodes() {
+  const levels = DOM.levelsContainer;
+  cachedLevelMapNodes = levels
+    ? $$('.levelNode', levels)
+        .map((node) => {
+          const top = node.offsetTop;
+          const height = node.offsetHeight;
+          return {
+            node,
+            level: getLevelFromMapNode(node),
+            top,
+            bottom: top + height,
+            center: top + height * 0.5,
+            visible: node.classList.contains('map-node-visible'),
+          };
+        })
+        .filter((item) => item.level)
+    : [];
+}
+
+function isTouchLevelMapMode() {
+  return window.matchMedia?.('(pointer: coarse), (max-width: 700px)')?.matches;
+}
+
+function updateMapThemeForScroll() {
+  const map = UI.map();
+  const levels = DOM.levelsContainer;
+  if (!map || !levels || !map.classList.contains('open')) return;
+
+  if (!cachedLevelMapNodes.length) cacheLevelMapNodes();
+
+  const viewportCenter = levels.scrollTop + levels.clientHeight * 0.5;
+  let closestLevel = 0;
+  let closestDistance = Infinity;
+
+  cachedLevelMapNodes.forEach(({ level, center }) => {
+    const distance = Math.abs(center - viewportCenter);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestLevel = level;
+    }
+  });
+
+  if (!closestLevel) return;
+  setMapThemeByLevel(closestLevel);
+}
+
+function getLevelMapNodeColorClass(level) {
+  if (level > 100) return 'map-planet-infinity';
+  if (level >= 91) return 'map-planet-gold';
+  if (level >= 81) return 'map-planet-black';
+  if (level >= 71) return 'map-planet-yellow';
+  if (level >= 61) return 'map-planet-lightBlue';
+  if (level >= 51) return 'map-planet-orange';
+  if (level >= 41) return 'map-planet-purple';
+  if (level >= 31) return 'map-planet-red';
+  if (level >= 21) return 'map-planet-pink';
+  if (level >= 11) return 'map-planet-green';
+  return 'map-planet-blue';
+}
+
+function clearVisibleLevelNodes() {
+  cachedLevelMapNodes.forEach((item) => {
+    item.visible = false;
+    item.node.classList.remove('map-node-visible');
+  });
+}
+
+function updateVisibleLevelNodes() {
+  const map = UI.map();
+  const levels = DOM.levelsContainer;
+  if (!map || !levels || !map.classList.contains('open')) {
+    clearVisibleLevelNodes();
+    return;
+  }
+
+  if (isTouchLevelMapMode()) {
+    updateMapThemeForScroll();
+    return;
+  }
+
+  const viewportTop = levels.scrollTop;
+  const viewportBottom = viewportTop + levels.clientHeight;
+  const buffer = Math.max(180, levels.clientHeight * 0.35);
+
+  cachedLevelMapNodes.forEach((item) => {
+    const { node } = item;
+    if (node.classList.contains('is-hidden')) {
+      if (item.visible) {
+        item.visible = false;
+        node.classList.remove('map-node-visible');
+      }
+      return;
+    }
+
+    const isVisible =
+      item.bottom >= viewportTop - buffer &&
+      item.top <= viewportBottom + buffer;
+
+    if (item.visible !== isVisible) {
+      item.visible = isVisible;
+      node.classList.toggle('map-node-visible', isVisible);
+    }
+  });
+
+  updateMapThemeForScroll();
+}
+
+function hydrateVisibleLevelNodes() {
+  const levels = DOM.levelsContainer;
+  if (!levels) return;
+
+  const viewportTop = levels.scrollTop;
+  const viewportBottom = viewportTop + levels.clientHeight;
+  const buffer = Math.max(180, levels.clientHeight * 0.35);
+
+  cachedLevelMapNodes.forEach((item) => {
+    const { node } = item;
+    if (node.classList.contains('is-hidden')) {
+      if (item.visible) {
+        item.visible = false;
+        node.classList.remove('map-node-visible');
+      }
+      return;
+    }
+
+    const isVisible =
+      item.bottom >= viewportTop - buffer &&
+      item.top <= viewportBottom + buffer;
+
+    if (item.visible !== isVisible) {
+      item.visible = isVisible;
+      node.classList.toggle('map-node-visible', isVisible);
+    }
+  });
+}
+
+function scheduleVisibleLevelNodesUpdate() {
+  if (!levelMapThemeRaf) {
+    levelMapThemeRaf = requestAnimationFrame(() => {
+      levelMapThemeRaf = 0;
+      updateMapThemeForScroll();
+    });
+  }
+
+  clearTimeout(levelMapScrollIdleTimer);
+  levelMapScrollIdleTimer = setTimeout(() => {
+    cancelAnimationFrame(levelMapVisibilityRaf);
+    levelMapVisibilityRaf = requestAnimationFrame(updateVisibleLevelNodes);
+  }, 120);
+}
+
+function startLevelMapVisibilityTracking() {
+  const levels = DOM.levelsContainer;
+  if (!levels) return;
+
+  stopLevelMapVisibilityTracking(false);
+  cacheLevelMapNodes();
+  hydrateVisibleLevelNodes();
+  levels.addEventListener('scroll', scheduleVisibleLevelNodesUpdate, { passive: true });
+  window.addEventListener('resize', scheduleVisibleLevelNodesUpdate);
+
+  scheduleVisibleLevelNodesUpdate();
+}
+
+function stopLevelMapVisibilityTracking(clearNodes = true) {
+  const levels = DOM.levelsContainer;
+
+  cancelAnimationFrame(levelMapVisibilityRaf);
+  levelMapVisibilityRaf = 0;
+  cancelAnimationFrame(levelMapThemeRaf);
+  levelMapThemeRaf = 0;
+  clearTimeout(levelMapScrollIdleTimer);
+  levelMapScrollIdleTimer = 0;
+
+  levels?.removeEventListener('scroll', scheduleVisibleLevelNodesUpdate);
+  window.removeEventListener('resize', scheduleVisibleLevelNodesUpdate);
+  if (clearNodes) {
+    activeMapThemeClass = '';
+    clearVisibleLevelNodes();
+  }
 }
 
 function openMap(e) {
@@ -773,21 +1505,31 @@ function openMap(e) {
   const levels = DOM.levelsContainer;
   if (!map || !levels) return;
 
-  map.classList.add('open');
+  clearTimeout(mapClosingTimer);
+  mapClosingTimer = 0;
+  map.classList.remove('closing');
+
+  updateLevelsMap();
+
   const maxLevel = getMaxUnlockedLevel();
+  activeMapThemeClass = '';
   setMapThemeByLevel(maxLevel);
+  cacheLevelMapNodes();
 
-  requestAnimationFrame(() => {
-    updateLevelsMap();
-
-    const currentNode = $('.levelNode.current-node', levels);
-    if (!currentNode) return;
-
+  const currentNode = $('.levelNode.current-node', levels);
+  if (currentNode) {
     const target = currentNode.offsetTop - levels.clientHeight * 0.35;
     const maxScroll = levels.scrollHeight - levels.clientHeight;
     const safeTop = Math.max(0, Math.min(target, maxScroll));
 
     levels.scrollTop = safeTop;
+  }
+
+  hydrateVisibleLevelNodes();
+
+  requestAnimationFrame(() => {
+    map.classList.add('open');
+    startLevelMapVisibilityTracking();
   });
 }
 
@@ -796,9 +1538,16 @@ function closeMap(e) {
   const map = UI.map();
   if (!map) return;
 
+  stopLevelMapVisibilityTracking(false);
   map.classList.remove('open');
   map.classList.add('closing');
-  setTimeout(() => map.classList.remove('closing'), 1000);
+  clearTimeout(mapClosingTimer);
+  mapClosingTimer = setTimeout(() => {
+    map.classList.remove('closing');
+    activeMapThemeClass = '';
+    clearVisibleLevelNodes();
+    mapClosingTimer = 0;
+  }, 1000);
 }
 
 function playStartGameAnimation() {
@@ -1018,23 +1767,23 @@ function updateEquipUI() {
     if (!btn) return;
 
     if (id !== DEFAULT_WEAPON && !isWeaponOwned(id)) {
-      btn.textContent = t(lang, 'ui.locked');
-      btn.disabled = true;
+      setMainText(btn, t(lang, 'ui.locked'));
+      setMainDisabled(btn, true);
       btn.classList.add('locked');
       btn.classList.remove('equipped');
       return;
     }
 
     if (id === getEquippedWeapon()) {
-      btn.textContent = t(lang, 'ui.equipped');
-      btn.disabled = true;
+      setMainText(btn, t(lang, 'ui.equipped'));
+      setMainDisabled(btn, true);
       btn.classList.add('equipped');
       btn.classList.remove('locked');
       return;
     }
 
-    btn.textContent = t(lang, 'ui.equip');
-    btn.disabled = false;
+    setMainText(btn, t(lang, 'ui.equip'));
+    setMainDisabled(btn, false);
     btn.classList.remove('equipped', 'locked');
   });
 }
@@ -1082,6 +1831,15 @@ function buyPet(id) {
     return;
   }
 
+  openBuyPetConfirm(id);
+}
+
+function purchasePet(id) {
+  const pet = PETS[id];
+  if (!pet) return;
+
+  const lang = getLang();
+
   if (coins < pet.price) {
     showToast(t(lang, 'toast.noCoins'), 'error');
     return;
@@ -1109,8 +1867,36 @@ function buyPet(id) {
   }
 }
 
+function openBuyPetConfirm(id) {
+  pendingPetBuy = id;
+  pendingSuperBuy = null;
+  const text = DOM.buySuperConfirm?.querySelector('.buySuperText');
+  if (text) text.textContent = t(getLang(), 'shop.confirmPet');
+  DOM.buySuperConfirm?.classList.add('open');
+}
+
+function confirmBuyPet() {
+  coins = Number(localStorage.getItem('coins')) || 0;
+  if (!pendingPetBuy) return;
+
+  const pet = PETS[pendingPetBuy];
+  if (!pet) return;
+
+  if (coins < pet.price) {
+    showToast(t(getLang(), 'toast.noCoins'), 'error');
+    return;
+  }
+
+  const id = pendingPetBuy;
+  pendingPetBuy = null;
+  purchasePet(id);
+  closeBuySuperConfirm();
+}
+
 function equipPet(id) {
   if (!isPetOwned(id)) return;
+  if (getEquippedPet() === id) return;
+  playEquipSound();
   setEquippedPet(id);
   updatePetUI();
 }
@@ -1121,6 +1907,7 @@ function toggleEquipPet(id) {
   if (getEquippedPet() === id) {
     setEquippedPet(null);
   } else {
+    playEquipSound();
     setEquippedPet(id);
   }
 
@@ -1137,20 +1924,20 @@ function updatePetUI() {
     if (!btn || !price) return;
 
     if (!isPetOwned(id)) {
-      btn.textContent = t(lang, 'ui.buy');
-      btn.className = 'petBuyBtn';
+      setMainText(btn, t(lang, 'ui.buy'));
+      setMainClassName(btn, 'petBuyBtn');
       price.textContent = `${PETS[id].price} 🪙`;
       return;
     }
 
-    price.textContent = '';
+    setMainText(price, '');
 
     if (getEquippedPet() === id) {
-      btn.textContent = t(lang, 'pets.unequip');
-      btn.className = 'petBuyBtn equipped';
+      setMainText(btn, t(lang, 'pets.unequip'));
+      setMainClassName(btn, 'petBuyBtn equipped');
     } else {
-      btn.textContent = t(lang, 'pets.equip');
-      btn.className = 'petBuyBtn';
+      setMainText(btn, t(lang, 'pets.equip'));
+      setMainClassName(btn, 'petBuyBtn');
     }
   });
 }
@@ -1290,21 +2077,21 @@ function updateSuperEquipUI() {
 
     if (!isSuperOwned(id)) {
       label.textContent = `${t(lang, 'ui.buy')} (${SUPERS[id].price} 🪙)`;
-      btn.className = 'superEquipBtn buy';
-      btn.disabled = false;
+      setMainClassName(btn, 'superEquipBtn buy');
+      setMainDisabled(btn, false);
       return;
     }
 
     if (equipped === id) {
-      label.textContent = t(lang, 'ui.equipped');
-      btn.className = 'superEquipBtn equipped';
-      btn.disabled = true;
+      setMainText(label, t(lang, 'ui.equipped'));
+      setMainClassName(btn, 'superEquipBtn equipped');
+      setMainDisabled(btn, true);
       return;
     }
 
-    label.textContent = t(lang, 'ui.equip');
-    btn.className = 'superEquipBtn';
-    btn.disabled = false;
+    setMainText(label, t(lang, 'ui.equip'));
+    setMainClassName(btn, 'superEquipBtn');
+    setMainDisabled(btn, false);
   });
 }
 
@@ -1335,12 +2122,16 @@ function buySuper(id) {
 
 function equipSuper(id) {
   if (getEquippedSuper() === id) return;
+  playEquipSound();
   setEquippedSuper(id);
   updateSuperEquipUI();
 }
 
 function openBuySuperConfirm(id) {
   pendingSuperBuy = id;
+  pendingPetBuy = null;
+  const text = DOM.buySuperConfirm?.querySelector('.buySuperText');
+  if (text) text.textContent = t(getLang(), 'shop.confirmSuper');
   DOM.buySuperConfirm?.classList.add('open');
 }
 
@@ -1377,6 +2168,7 @@ function confirmBuySuper() {
 
 function closeBuySuperConfirm() {
   pendingSuperBuy = null;
+  pendingPetBuy = null;
   DOM.buySuperConfirm?.classList.remove('open');
 }
 
@@ -1401,7 +2193,7 @@ function unlockNextLevel(currentLevel) {
   const maxLevel = getMaxUnlockedLevel();
   if (currentLevel >= maxLevel) {
     localStorage.setItem(STORAGE_KEY_MAX_LEVEL, currentLevel + 1);
-    window.CosmoRushCloud?.markDirty?.();
+    window.OrbitVelocityCloud?.markDirty?.();
   }
 }
 
@@ -1415,6 +2207,8 @@ function updateLevelsMap() {
 
   $$('.infinity-level-node').forEach((node) => {
     const isLocked = maxLevel < 101;
+    node.classList.remove(...LEVEL_MAP_NODE_COLOR_CLASSES);
+    node.classList.add('map-planet-infinity');
     node.classList.toggle('is-hidden', isLocked);
     node.classList.toggle('locked', isLocked);
     node.classList.toggle('current-node', !isLocked);
@@ -1430,6 +2224,9 @@ function updateLevelsMap() {
     const isBossLevel = level % 10 === 0;
     const isLocked = level > maxLevel;
     const isCurrent = level === maxLevel;
+
+    node.classList.remove(...LEVEL_MAP_NODE_COLOR_CLASSES);
+    node.classList.add(getLevelMapNodeColorClass(level));
 
     node.classList.remove(
       'locked',
@@ -1574,8 +2371,13 @@ function handleGlobalPointerDown(e) {
 
   const s = btn.dataset.sound;
 
-  if (s === 'equip') {
-    playEquipSound();
+  if (
+    s === 'equip' ||
+    btn.classList.contains('EquipBtn') ||
+    btn.classList.contains('equipBtn') ||
+    btn.classList.contains('superEquipBtn') ||
+    /PreviewEquip$/.test(btn.id)
+  ) {
     return;
   }
 
@@ -1659,6 +2461,7 @@ function setActivePageImmediate(index) {
 
   const targetPage = document.getElementById(targetId);
   targetPage?.classList.add('active');
+  notifyLobbyPageChanged(targetId);
 
   requestAnimationFrame(() => {
     DOM.pages.forEach((page) => {
@@ -1703,8 +2506,18 @@ function finishPageTransition(nextPage) {
   resetInactivePagesWithoutAnimation(nextPage);
   nextPage.classList.remove('enter-left', 'enter-right', 'exit-left', 'exit-right');
   nextPage.classList.add('active');
+  notifyLobbyPageChanged(nextPage.id);
   document.body.classList.remove('page-transitioning');
   isPageTransitioning = false;
+}
+
+function notifyLobbyPageChanged(targetId) {
+  if (!targetId) return;
+  window.dispatchEvent(
+    new CustomEvent('orbitvelocity:lobby-page-change', {
+      detail: { targetId },
+    })
+  );
 }
 
 function finishCurrentPageTransitionNow() {
@@ -1844,7 +2657,7 @@ function shouldIgnoreSwipeStart(target) {
   }
 
   return !!target.closest(
-    '#mapDiv, #weaponDiv, #buyWeaponPopup, #settingsDiv, #profileSettingsDiv, #socialDiv, #superShopDiv, #buySuperConfirm, #invModal, #shopModal, #petInfoOverlay, #petShoopDiv, input, textarea, select'
+    '#mapDiv, #weaponDiv, #buyWeaponPopup, #settingsDiv, #performanceDiv, #profileSettingsDiv, #socialDiv, #superShopDiv, #buySuperConfirm, #invModal, #shopModal, #petInfoOverlay, #petShoopDiv, input, textarea, select'
   );
 }
 
@@ -2140,10 +2953,11 @@ function bindEvents() {
       if (DOM.musicVolume) DOM.musicVolume.value = 0;
       localStorage.setItem('musicVolume', 0);
       localStorage.setItem('music', 'off');
+      stopMusicLoopWatcher();
     } else {
       const restore = lastMusicVolume || 70;
       music.volume = restore / 100;
-      music.play().catch(() => {});
+      music.play().then(startMusicLoopWatcher).catch(() => {});
 
       if (DOM.musicVolume) DOM.musicVolume.value = restore;
       localStorage.setItem('musicVolume', restore);
@@ -2165,6 +2979,55 @@ function bindEvents() {
     }
   });
 
+  DOM.performanceBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    refreshPerformancePanel();
+    DOM.settingsDiv?.classList.remove('open');
+    DOM.performanceDiv?.classList.add('open');
+    document.body.classList.add('performance-panel-open');
+  });
+
+  DOM.closePerformanceDiv?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    DOM.performanceDiv?.classList.remove('open');
+    document.body.classList.remove('performance-panel-open');
+  });
+
+  DOM.performanceDiv?.addEventListener('click', (e) => e.stopPropagation());
+
+  DOM.runBenchmarkBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.location.href = 'loadingScreen.html?to=main.html&benchmark=1';
+  });
+
+  DOM.benchmarkResultOk?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeBenchmarkResultDialog();
+  });
+
+  DOM.performanceConfirmCancel?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePerformanceConfirmDialog(false);
+  });
+
+  DOM.performanceConfirmOk?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePerformanceConfirmDialog(true);
+  });
+
+  DOM.performanceConfirmDialog?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (e.target === DOM.performanceConfirmDialog) {
+      closePerformanceConfirmDialog(false);
+    }
+  });
+
+  DOM.performanceModeSelect?.addEventListener('change', () => {
+    const value = DOM.performanceModeSelect.value;
+    const previousMode = getSavedPerformanceMode();
+    openPerformanceConfirmDialog(value, previousMode);
+  });
+
   DOM.settingsBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
 
@@ -2184,8 +3047,7 @@ function bindEvents() {
     () => {
       if (localStorage.getItem('music') === 'off') return;
       music.currentTime = LOOP_START;
-      music.play().catch(() => {});
-      startMusicLoopWatcher();
+      music.play().then(startMusicLoopWatcher).catch(() => {});
     },
     { once: true }
   );
@@ -2200,11 +3062,12 @@ function bindEvents() {
       if (DOM.musicToggle) DOM.musicToggle.checked = false;
       localStorage.setItem('music', 'off');
       music.pause();
+      stopMusicLoopWatcher();
     } else {
       if (DOM.musicToggle) DOM.musicToggle.checked = true;
       localStorage.setItem('music', 'on');
       if (music.paused) {
-        music.play().catch(() => {});
+        music.play().then(startMusicLoopWatcher).catch(() => {});
       }
     }
   });
@@ -2283,6 +3146,10 @@ function bindEvents() {
     ?.querySelector('.buyConfirmBtn')
     ?.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (pendingPetBuy) {
+        confirmBuyPet();
+        return;
+      }
       confirmBuySuper();
     });
 
@@ -2292,6 +3159,7 @@ function bindEvents() {
 
   DOM.offlinePlayReload?.addEventListener('click', (e) => {
     e.stopPropagation();
+    sessionStorage.removeItem(SESSION_KEY_OFFLINE_ENTRY_WARNING_SHOWN);
     window.location.href = `loadingScreen.html?to=${encodeURIComponent('main.html')}&always=1`;
   });
 
@@ -2304,6 +3172,8 @@ function bindEvents() {
 
 function init() {
   cacheDom();
+  bindMusicLoopVisibility();
+  document.body.classList.remove('benchmark-result-open', 'performance-panel-open');
   loadSettings();
   loadVolumes();
   loadCoins();
@@ -2326,6 +3196,14 @@ function init() {
   setActiveBottomButton(currentPageIndex);
   bindSwipeNavigation();
   showOfflinePlayModalOnMainEntry();
+
+  const mainParams = new URLSearchParams(location.search);
+  if (mainParams.get('benchmarkResult') === '1') {
+    showBenchmarkResultDialog();
+    mainParams.delete('benchmarkResult');
+    const cleanUrl = `${location.pathname}${mainParams.toString() ? `?${mainParams}` : ''}`;
+    history.replaceState(null, '', cleanUrl);
+  }
 
   const centerPlanet = document.getElementById('centerPlanet');
   const planetSelectModal = document.getElementById('planetSelectModal');
@@ -2361,6 +3239,7 @@ window.confirmBuySuper = confirmBuySuper;
 window.closeBuySuperConfirm = closeBuySuperConfirm;
 window.buySuper = buySuper;
 window.equipSuper = equipSuper;
+window.playEquipSound = playEquipSound;
 window.showToast = showToast;
 window.getMaxUnlockedLevel = getMaxUnlockedLevel;
 window.unlockNextLevel = unlockNextLevel;

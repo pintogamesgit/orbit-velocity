@@ -6,8 +6,9 @@ class Upgrades {
     this.x = this.game.width / 2 - this.width / 2;
     this.y = this.game.height + this.height;
     this.targetY = this.game.height / 2 - this.height / 2;
-    this.fontSize = Math.max(14, this.width * 0.12);
-    this.fontFamily = '"Archivo Black", system-ui, sans-serif';
+    this.fontSize = Math.max(13, this.width * 0.105);
+    this.titleFontFamily = '"Bungee", "Archivo Black", "Arial Black", system-ui, sans-serif';
+    this.fontFamily = '"Bungee", "Archivo Black", "Rubik", system-ui, sans-serif';
     this.color = '#111';
     this.type = 'shield';
     this.opacity = 0;
@@ -111,17 +112,136 @@ class Upgrades {
     context.fill();
     context.restore();
 
-    context.save();
-    context.font = `bold ${Math.round(iconR * 1.15)}px ${this.fontFamily}`;
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillStyle = 'white';
-    context.shadowColor = theme.glow;
-    context.shadowBlur = 12;
-    context.fillText(theme.icon, cx, cy + 1);
-    context.restore();
+    this.drawUpgradeIcon(context, cx, cy, iconR, theme);
 
     this.drawText(context, theme);
+
+    context.restore();
+  }
+
+  drawUpgradeIcon(context, cx, cy, radius, theme) {
+    context.save();
+    context.translate(cx, cy);
+    context.scale(radius, radius);
+    context.strokeStyle = 'white';
+    context.fillStyle = 'white';
+    context.lineWidth = 0.13;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.shadowColor = theme.glow;
+    context.shadowBlur = 12;
+
+    switch (this.type) {
+      case 'doubleShooter':
+        for (const x of [-0.3, 0.3]) {
+          context.beginPath();
+          context.moveTo(x, 0.46);
+          context.lineTo(x, -0.34);
+          context.stroke();
+          context.beginPath();
+          context.moveTo(x - 0.16, -0.16);
+          context.lineTo(x, -0.42);
+          context.lineTo(x + 0.16, -0.16);
+          context.stroke();
+        }
+        break;
+
+      case 'plusHp':
+        context.fillRect(-0.12, -0.48, 0.24, 0.96);
+        context.fillRect(-0.48, -0.12, 0.96, 0.24);
+        break;
+
+      case 'fasterShooter':
+        context.beginPath();
+        context.moveTo(0.1, -0.52);
+        context.lineTo(-0.38, 0.08);
+        context.lineTo(-0.04, 0.08);
+        context.lineTo(-0.18, 0.52);
+        context.lineTo(0.42, -0.18);
+        context.lineTo(0.08, -0.18);
+        context.closePath();
+        context.fill();
+        break;
+
+      case 'petFaster':
+        context.beginPath();
+        context.ellipse(0, 0.2, 0.34, 0.27, 0, 0, Math.PI * 2);
+        context.fill();
+        for (const [x, y, r] of [
+          [-0.34, -0.2, 0.14],
+          [-0.12, -0.38, 0.13],
+          [0.14, -0.38, 0.13],
+          [0.36, -0.18, 0.14],
+        ]) {
+          context.beginPath();
+          context.arc(x, y, r, 0, Math.PI * 2);
+          context.fill();
+        }
+        break;
+
+      case 'damageUp':
+        context.beginPath();
+        context.moveTo(0, -0.5);
+        context.lineTo(-0.34, -0.1);
+        context.lineTo(-0.13, -0.1);
+        context.lineTo(-0.13, 0.46);
+        context.lineTo(0.13, 0.46);
+        context.lineTo(0.13, -0.1);
+        context.lineTo(0.34, -0.1);
+        context.closePath();
+        context.fill();
+        break;
+
+      case 'speedBoost':
+        for (const offset of [-0.2, 0.2]) {
+          context.beginPath();
+          context.moveTo(-0.38 + offset, -0.42);
+          context.lineTo(0.02 + offset, 0);
+          context.lineTo(-0.38 + offset, 0.42);
+          context.stroke();
+        }
+        break;
+
+      case 'piercingShot':
+        context.beginPath();
+        context.arc(0, 0.08, 0.3, 0, Math.PI * 2);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(0, 0.52);
+        context.lineTo(0, -0.46);
+        context.moveTo(-0.18, -0.24);
+        context.lineTo(0, -0.5);
+        context.lineTo(0.18, -0.24);
+        context.stroke();
+        break;
+
+      case 'superCharge': {
+        context.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+          const r = i % 2 === 0 ? 0.5 : 0.22;
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
+          if (i === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        }
+        context.closePath();
+        context.fill();
+        break;
+      }
+
+      default:
+        context.beginPath();
+        context.moveTo(0, -0.5);
+        context.lineTo(0.42, -0.28);
+        context.lineTo(0.34, 0.2);
+        context.quadraticCurveTo(0, 0.52, 0, 0.52);
+        context.quadraticCurveTo(0, 0.52, -0.34, 0.2);
+        context.lineTo(-0.42, -0.28);
+        context.closePath();
+        context.stroke();
+        break;
+    }
 
     context.restore();
   }
@@ -131,11 +251,31 @@ class Upgrades {
     context.textAlign = 'center';
     context.textBaseline = 'middle';
 
-    const titleY = this.height * 0.62;
-    const subY = this.height * 0.75;
+    const panelX = this.width * 0.08;
+    const panelY = this.height * 0.55;
+    const panelW = this.width * 0.84;
+    const panelH = this.height * 0.34;
+    const panelR = Math.max(8, this.width * 0.08);
 
-    const titleSize = Math.round(this.fontSize * 1.05);
-    const subSize = Math.round(this.fontSize * 0.78);
+    context.save();
+    context.shadowColor = 'rgba(0,0,0,0.65)';
+    context.shadowBlur = 10;
+    this.roundRect(context, panelX, panelY, panelW, panelH, panelR);
+    context.fillStyle = 'rgba(4, 12, 24, 0.58)';
+    context.fill();
+    context.restore();
+
+    context.lineWidth = 1.5;
+    this.roundRect(context, panelX, panelY, panelW, panelH, panelR);
+    context.strokeStyle = 'rgba(255,255,255,0.24)';
+    context.stroke();
+
+    const titleY = panelY + panelH * 0.38;
+    const subY = panelY + panelH * 0.72;
+
+    const titleSize = Math.round(Math.max(11, this.width * 0.105));
+    const subSize = Math.round(Math.max(9, this.width * 0.082));
+    const maxTextW = panelW * 0.9;
 
     const tr = (key) => t?.(getLang?.() || 'en', key) ?? key;
     let line1, line2;
@@ -178,18 +318,167 @@ class Upgrades {
         break;
     }
 
-    context.font = `900 ${titleSize}px ${this.fontFamily}`;
-    context.fillStyle = 'white';
-    context.shadowColor = theme.glow;
-    context.shadowBlur = 14;
+    const textPalette = this.getTextPalette();
+
+    const titleGradient = context.createLinearGradient(
+      panelX,
+      titleY - titleSize * 0.65,
+      panelX + panelW,
+      titleY + titleSize * 0.45
+    );
+    titleGradient.addColorStop(0, textPalette.titleTop);
+    titleGradient.addColorStop(0.45, '#ffffff');
+    titleGradient.addColorStop(1, textPalette.titleBottom);
+
+    this.setFittedFont(
+      context,
+      line1,
+      titleSize,
+      Math.max(10, titleSize * 0.72),
+      maxTextW,
+      900,
+      this.titleFontFamily
+    );
+    context.fillStyle = titleGradient;
+    context.shadowColor = textPalette.glow;
+    context.shadowBlur = 10;
+    context.lineWidth = Math.max(3, titleSize * 0.22);
+    context.strokeStyle = 'rgba(0,0,0,0.72)';
+    context.strokeText(line1, this.width / 2, titleY);
     context.fillText(line1, this.width / 2, titleY);
 
-    context.shadowBlur = 0;
-    context.font = `700 ${subSize}px ${this.fontFamily}`;
-    context.fillStyle = 'rgba(255,255,255,0.78)';
+    const baseAlpha = context.globalAlpha;
+    context.globalAlpha = baseAlpha * 0.72;
+    context.lineWidth = Math.max(1.2, this.width * 0.012);
+    context.strokeStyle = textPalette.line;
+    context.beginPath();
+    context.moveTo(panelX + panelW * 0.2, panelY + panelH * 0.55);
+    context.lineTo(panelX + panelW * 0.8, panelY + panelH * 0.55);
+    context.stroke();
+    context.globalAlpha = baseAlpha;
+
+    const subGradient = context.createLinearGradient(
+      panelX,
+      subY - subSize * 0.5,
+      panelX + panelW,
+      subY + subSize * 0.4
+    );
+    subGradient.addColorStop(0, textPalette.subTop);
+    subGradient.addColorStop(1, textPalette.subBottom);
+
+    this.setFittedFont(
+      context,
+      line2,
+      subSize,
+      Math.max(8, subSize * 0.78),
+      maxTextW,
+      800,
+      this.fontFamily
+    );
+    context.shadowColor = textPalette.glow;
+    context.shadowBlur = 6;
+    context.lineWidth = Math.max(2, subSize * 0.18);
+    context.strokeStyle = 'rgba(0,0,0,0.68)';
+    context.fillStyle = subGradient;
+    context.strokeText(line2, this.width / 2, subY);
     context.fillText(line2, this.width / 2, subY);
 
     context.restore();
+  }
+
+  setFittedFont(context, text, maxSize, minSize, maxWidth, weight, fontFamily = this.fontFamily) {
+    let size = maxSize;
+    do {
+      context.font = `${weight} ${Math.round(size)}px ${fontFamily}`;
+      if (context.measureText(text).width <= maxWidth) break;
+      size -= 1;
+    } while (size > minSize);
+  }
+
+  getTextPalette() {
+    switch (this.type) {
+      case 'doubleShooter':
+        return {
+          titleTop: '#9fffee',
+          titleBottom: '#22ffbd',
+          subTop: '#eafffb',
+          subBottom: '#8effdf',
+          line: 'rgba(60, 255, 200, 0.78)',
+          glow: 'rgba(60, 255, 200, 0.95)',
+        };
+      case 'plusHp':
+        return {
+          titleTop: '#ffd0e0',
+          titleBottom: '#ff4f96',
+          subTop: '#fff1f6',
+          subBottom: '#ff9fc4',
+          line: 'rgba(255, 80, 140, 0.78)',
+          glow: 'rgba(255, 80, 140, 0.95)',
+        };
+      case 'fasterShooter':
+        return {
+          titleTop: '#dbe7ff',
+          titleBottom: '#73a3ff',
+          subTop: '#ffffff',
+          subBottom: '#aac6ff',
+          line: 'rgba(110, 160, 255, 0.78)',
+          glow: 'rgba(110, 160, 255, 0.95)',
+        };
+      case 'petFaster':
+        return {
+          titleTop: '#d8f9ff',
+          titleBottom: '#41ddff',
+          subTop: '#ffffff',
+          subBottom: '#9df1ff',
+          line: 'rgba(70, 220, 255, 0.78)',
+          glow: 'rgba(70, 220, 255, 0.95)',
+        };
+      case 'damageUp':
+        return {
+          titleTop: '#ffe2b5',
+          titleBottom: '#ff8c3c',
+          subTop: '#fff7eb',
+          subBottom: '#ffc47d',
+          line: 'rgba(255, 140, 60, 0.78)',
+          glow: 'rgba(255, 140, 60, 0.95)',
+        };
+      case 'speedBoost':
+        return {
+          titleTop: '#d8ffd8',
+          titleBottom: '#50ff78',
+          subTop: '#ffffff',
+          subBottom: '#a8ffba',
+          line: 'rgba(80, 255, 120, 0.78)',
+          glow: 'rgba(80, 255, 120, 0.95)',
+        };
+      case 'piercingShot':
+        return {
+          titleTop: '#fff6bf',
+          titleBottom: '#ffdb49',
+          subTop: '#ffffff',
+          subBottom: '#fff09b',
+          line: 'rgba(255, 220, 80, 0.78)',
+          glow: 'rgba(255, 220, 80, 0.95)',
+        };
+      case 'superCharge':
+        return {
+          titleTop: '#dff8ff',
+          titleBottom: '#50dcff',
+          subTop: '#ffffff',
+          subBottom: '#9cecff',
+          line: 'rgba(80, 220, 255, 0.78)',
+          glow: 'rgba(80, 220, 255, 0.95)',
+        };
+      default:
+        return {
+          titleTop: '#f2dcff',
+          titleBottom: '#b978ff',
+          subTop: '#ffffff',
+          subBottom: '#d5b2ff',
+          line: 'rgba(180, 120, 255, 0.78)',
+          glow: 'rgba(180, 120, 255, 0.95)',
+        };
+    }
   }
 
   getTheme() {
@@ -230,6 +519,15 @@ class Upgrades {
           iconBg: 'rgba(180, 120, 255, 0.18)',
           icon: '🛡',
         };
+      case 'petFaster':
+        return {
+          bgTop: 'rgba(70, 220, 255, 0.20)',
+          bgBottom: 'rgba(0, 0, 0, 0.55)',
+          border: 'rgba(70, 220, 255, 0.85)',
+          glow: 'rgba(70, 220, 255, 0.95)',
+          iconBg: 'rgba(70, 220, 255, 0.18)',
+        };
+
       case 'damageUp':
         return {
           bgTop: 'rgba(255, 140, 60, 0.20)',

@@ -5,28 +5,67 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Loading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bungee&family=Orbitron:wght@600;700;800;900&family=Rubik:wght@500;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./cssFiles/loading.css">
+    <link rel="stylesheet" href="./cssFiles/performance.css">
     <script defer src="./javaScriptFiles/loading.js"></script>
 </head>
 
 <body>
     <div class="phone-frame">
-        <div class="loading-bg"></div>
-
-        <div class="loadingCard">
-            <div class="loadingLogo">
-                <img src="./images/logo.png" alt=""
-                    style="width:60%;height:60%;object-fit:contain;pointer-events:none;">
-            </div>
-
-            <div class="loadingTitle">Loading…</div>
-
-            <div class="loadingBar">
-                <div id="loadingFill" class="loadingFill"></div>
-            </div>
-
-            <div id="loadingPct" class="loadingPct">0%</div>
+        <div class="loading-bg">
+            <div class="starfield starsFar"></div>
+            <div class="starfield starsNear"></div>
+            <div class="spaceCloud cloudOne"></div>
+            <div class="spaceCloud cloudTwo"></div>
         </div>
+        <div class="scanlines"></div>
+
+        <main class="launchPanel">
+            <div class="systemTag">
+                <span class="onlinePulse"></span>
+                ORBIT VELOCITY // FLIGHT SYSTEM
+            </div>
+
+            <div class="reactorCore">
+                <div class="orbit orbitOuter"><i></i></div>
+                <div class="orbit orbitInner"><i></i></div>
+                <div class="coreGlow"></div>
+                <div class="loadingLogo">
+                    <img src="./images/logo.png" alt="ORBIT VELOCITY">
+                </div>
+            </div>
+
+            <h1 id="loadingTitle" class="loadingTitle">PREPARING LAUNCH</h1>
+            <p id="loadingSubtitle" class="loadingSubtitle">Synchronizing cosmic systems</p>
+
+            <div class="loadingReadout">
+                <div class="readoutLine">
+                    <span id="loadingModeLabel" class="readoutLabel">GAME SYSTEMS</span>
+                    <span id="loadingPct" class="loadingPct">0%</span>
+                </div>
+
+                <div class="loadingBar">
+                    <div id="loadingFill" class="loadingFill"></div>
+                    <div class="barGlare"></div>
+                </div>
+
+                <div class="barTicks" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="systemFooter">
+                <span><b></b> NAV ONLINE</span>
+                <span id="loadingSector">HOME SECTOR</span>
+                <span>LINK STABLE</span>
+            </div>
+        </main>
+
+        <div class="hudCorner cornerTopLeft"></div>
+        <div class="hudCorner cornerBottomRight"></div>
     </div>
 </body>
 

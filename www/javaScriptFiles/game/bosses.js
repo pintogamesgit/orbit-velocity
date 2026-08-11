@@ -1,3 +1,7 @@
+function getSpriteAnimationDelta(deltaTime) {
+  return deltaTime * (window.OrbitVelocityGamePerf?.spriteAnimScale ?? 1);
+}
+
 class BossBase {
   constructor(game) {
     this.game = game;
@@ -59,6 +63,15 @@ class BossBase {
   }
 }
 
+function shouldPlayerProjectilePierceBossShot(game, projectile) {
+  return (
+    game?.level === 100 &&
+    !game?.isInfinityWorld &&
+    projectile?.piercing &&
+    !projectile.markedForDeletion
+  );
+}
+
 class Boss1 extends BossBase {
   constructor(game) {
     super(game);
@@ -118,7 +131,7 @@ class Boss1 extends BossBase {
     if (this.game.upgradeCardsShowing) return;
     const dt = deltaTime / 16.67;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -133,10 +146,12 @@ class Boss1 extends BossBase {
 
     const centerX = this.game.width / 2 - this.width / 2;
     const targetX = centerX + Math.sin(this.time) * this.moveAmp;
-    this.x += (targetX - this.x) * this.moveSmooth;
+    const moveEase = 1 - Math.pow(1 - this.moveSmooth, dt);
+    this.x += (targetX - this.x) * moveEase;
 
     const targetY = this.baseY + Math.sin(this.time * 1.5) * this.hoverAmp;
-    this.y += (targetY - this.y) * 0.18;
+    const hoverEase = 1 - Math.pow(1 - 0.18, dt);
+    this.y += (targetY - this.y) * hoverEase;
 
     this.shootTimer += deltaTime;
     if (!this.game.gameOver && this.shootTimer >= this.shootInterval) {
@@ -160,8 +175,7 @@ class Boss1 extends BossBase {
       this.enemyBullets.push(new Boss1Bullet(this.game, bx - 5, by, vx, vy));
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
       if (b.markedForDeletion) return;
@@ -461,7 +475,7 @@ class Boss2 extends BossBase {
     const dt = deltaTime / 16.67;
     this.time += deltaTime * 0.001;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -510,8 +524,7 @@ class Boss2 extends BossBase {
       }
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
   }
 
   draw(ctx) {
@@ -619,8 +632,14 @@ class Boss2Bullets {
         if (p.markedForDeletion) continue;
 
         if (checkCollision(p, this)) {
-          p.markedForDeletion = true;
+          if (p.hasHitTarget(this)) continue;
+
           this.lives -= p.damage ?? 1;
+          p.addHitTarget(this);
+
+          if (!p.piercing) {
+            p.markedForDeletion = true;
+          }
 
           if (this.lives <= 0) {
             this.markedForDeletion = true;
@@ -891,8 +910,10 @@ class Boss3 extends BossBase {
       );
       targetY = Math.max(40, Math.min(this.game.height * 0.45, targetY));
 
-      clone.x += (targetX - clone.x) * clone.followSmooth * dt * 1.8;
-      clone.y += (targetY - clone.y) * clone.followSmooth * dt * 1.8;
+      const followEase =
+        1 - Math.pow(1 - Math.min(0.99, clone.followSmooth * 1.8), dt);
+      clone.x += (targetX - clone.x) * followEase;
+      clone.y += (targetY - clone.y) * followEase;
     });
   }
 
@@ -943,7 +964,7 @@ class Boss3 extends BossBase {
 
     const dt = deltaTime / 16.67;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1015,8 +1036,7 @@ class Boss3 extends BossBase {
       }
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
       if (b.markedForDeletion) return;
@@ -1112,8 +1132,14 @@ class Boss3Bullet {
         if (p.markedForDeletion) continue;
 
         if (window.checkCollision(p, this)) {
-          p.markedForDeletion = true;
+          if (p.hasHitTarget(this)) continue;
+
           this.lives -= p.damage ?? 1;
+          p.addHitTarget(this);
+
+          if (!p.piercing) {
+            p.markedForDeletion = true;
+          }
 
           if (this.lives <= 0) {
             this.markedForDeletion = true;
@@ -1170,7 +1196,7 @@ class Boss4 extends BossBase {
     if (splitLevel === 0) {
       this.width = 140;
       this.height = 180;
-      this.maxLives = 80;
+      this.maxLives = 100;
       this.speedX = 2.2;
       this.speedY = 1.2;
       this.shootInterval = 1300;
@@ -1180,7 +1206,7 @@ class Boss4 extends BossBase {
     } else if (splitLevel === 1) {
       this.width = 60;
       this.height = 90;
-      this.maxLives = 20;
+      this.maxLives = 35;
       this.speedX = 2.6;
       this.speedY = 1.4;
       this.shootInterval = 1300;
@@ -1190,7 +1216,7 @@ class Boss4 extends BossBase {
     } else {
       this.width = 35;
       this.height = 45;
-      this.maxLives = 8;
+      this.maxLives = 20;
       this.speedX = 2.8;
       this.speedY = 1.4;
       this.shootInterval = 1800;
@@ -1232,7 +1258,7 @@ class Boss4 extends BossBase {
 
     const dt = deltaTime / 16.67;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1257,7 +1283,8 @@ class Boss4 extends BossBase {
       }
 
       if (this.splitLevel > 0) {
-        this.y += Math.sin(performance.now() * 0.002 + this.x * 0.01) * 0.35;
+        this.y +=
+          Math.sin(performance.now() * 0.002 + this.x * 0.01) * 0.35 * dt;
       }
 
       this.shootTimer += deltaTime;
@@ -1267,8 +1294,7 @@ class Boss4 extends BossBase {
       }
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
       if (b.markedForDeletion) return;
@@ -1487,7 +1513,9 @@ class Boss4Bullet {
       if (p.markedForDeletion) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (!shouldPlayerProjectilePierceBossShot(this.game, p)) {
+          p.markedForDeletion = true;
+        }
         this.markedForDeletion = true;
         break;
       }
@@ -1621,7 +1649,7 @@ class Boss5 extends BossBase {
     this.baseY = 90;
     this.entered = false;
 
-    this.maxLives = 170;
+    this.maxLives = 220;
     this.lives = this.maxLives;
 
     this.phase = 1;
@@ -1646,6 +1674,10 @@ class Boss5 extends BossBase {
 
     this.holdTimer = 0;
     this.holdDuration = 650;
+    this.teleportTimer = 0;
+    this.teleportDuration = 470;
+    this.teleportMode = 'toPlayer';
+    this.teleportEffects = [];
 
     this.moveSmooth = 0.12;
     this.hitFlash = 0;
@@ -1693,7 +1725,7 @@ class Boss5 extends BossBase {
 
     const dt = deltaTime / 16.67;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1738,24 +1770,10 @@ class Boss5 extends BossBase {
         this.savedX = this.x;
         this.savedY = this.y;
         this.pickAttackPositionNearPlayer();
-        this.state = 'movingToPlayerZone';
+        this.startTeleport('toPlayer');
       }
-    } else if (this.state === 'movingToPlayerZone') {
-      this.x += (this.moveTargetX - this.x) * this.moveSmooth;
-      this.y += (this.moveTargetY - this.y) * this.moveSmooth;
-
-      if (!this.game.gameOver && this.shootTimer >= this.shootInterval * 0.9) {
-        this.shootTimer = 0;
-        this.shoot();
-      }
-
-      if (
-        Math.abs(this.x - this.moveTargetX) < 6 &&
-        Math.abs(this.y - this.moveTargetY) < 6
-      ) {
-        this.holdTimer = 0;
-        this.state = 'holdingNearPlayer';
-      }
+    } else if (this.state === 'teleportWindup') {
+      this.updateTeleportWindup(deltaTime);
     } else if (this.state === 'holdingNearPlayer') {
       this.holdTimer += deltaTime;
 
@@ -1767,29 +1785,12 @@ class Boss5 extends BossBase {
       if (this.holdTimer >= this.holdDuration) {
         this.moveTargetX = this.savedX;
         this.moveTargetY = this.savedY;
-        this.state = 'returning';
-      }
-    } else if (this.state === 'returning') {
-      this.x += (this.moveTargetX - this.x) * this.moveSmooth;
-      this.y += (this.moveTargetY - this.y) * this.moveSmooth;
-
-      if (!this.game.gameOver && this.shootTimer >= this.shootInterval) {
-        this.shootTimer = 0;
-        this.shoot();
-      }
-
-      if (
-        Math.abs(this.x - this.moveTargetX) < 6 &&
-        Math.abs(this.y - this.moveTargetY) < 6
-      ) {
-        this.x = this.moveTargetX;
-        this.y = this.moveTargetY;
-        this.state = 'normal';
+        this.startTeleport('return');
       }
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    this.updateTeleportEffects(deltaTime);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
       if (b.markedForDeletion) return;
@@ -1805,6 +1806,96 @@ class Boss5 extends BossBase {
         b.markedForDeletion = true;
       }
     });
+  }
+
+  startTeleport(mode) {
+    this.teleportMode = mode;
+    this.teleportTimer = 0;
+    this.state = 'teleportWindup';
+    this.shootTimer = Math.min(this.shootTimer, this.shootInterval * 0.35);
+
+    this.spawnTeleportEffect(
+      this.x + this.width / 2,
+      this.y + this.height / 2,
+      'depart'
+    );
+    this.spawnTeleportEffect(
+      this.moveTargetX + this.width / 2,
+      this.moveTargetY + this.height / 2,
+      'arrival'
+    );
+
+    this.game.triggerShake(360, mode === 'return' ? 12 : 18);
+  }
+
+  updateTeleportWindup(deltaTime) {
+    this.teleportTimer += deltaTime;
+    const p = Math.min(1, this.teleportTimer / this.teleportDuration);
+    const flicker = Math.sin(performance.now() * 0.09) * 0.5 + 0.5;
+
+    if (Math.random() < 0.7) {
+      const cx = this.x + this.width / 2 + (Math.random() - 0.5) * this.width;
+      const cy = this.y + this.height / 2 + (Math.random() - 0.5) * this.height;
+      this.teleportEffects.push({
+        x: cx,
+        y: cy,
+        age: 0,
+        duration: 260 + Math.random() * 220,
+        type: 'ember',
+        spin: Math.random() * Math.PI * 2,
+      });
+    }
+
+    this.hitFlash = Math.max(this.hitFlash, 40 + flicker * 70);
+
+    if (p < 1) return;
+
+    this.spawnTeleportEffect(
+      this.x + this.width / 2,
+      this.y + this.height / 2,
+      'collapse'
+    );
+
+    this.x = this.moveTargetX;
+    this.y = this.moveTargetY;
+
+    this.spawnTeleportEffect(
+      this.x + this.width / 2,
+      this.y + this.height / 2,
+      'burst'
+    );
+    this.game.triggerShake(this.teleportMode === 'return' ? 300 : 520, this.teleportMode === 'return' ? 15 : 24);
+
+    if (this.teleportMode === 'return') {
+      this.state = 'normal';
+    } else {
+      this.holdTimer = 0;
+      this.state = 'holdingNearPlayer';
+      if (!this.game.gameOver) this.shoot();
+    }
+  }
+
+  spawnTeleportEffect(x, y, type) {
+    this.teleportEffects.push({
+      x,
+      y,
+      age: 0,
+      duration: type === 'arrival' ? 780 : 620,
+      type,
+      spin: Math.random() * Math.PI * 2,
+    });
+  }
+
+  updateTeleportEffects(deltaTime) {
+    let write = 0;
+    for (let i = 0; i < this.teleportEffects.length; i++) {
+      const fx = this.teleportEffects[i];
+      fx.age += deltaTime;
+      if (fx.age < fx.duration) {
+        this.teleportEffects[write++] = fx;
+      }
+    }
+    this.teleportEffects.length = write;
   }
 
   pickAttackPositionNearPlayer() {
@@ -1930,8 +2021,18 @@ class Boss5 extends BossBase {
   draw(ctx) {
     ctx.save();
 
+    this.drawTeleportEffects(ctx, false);
+
     if (this.hitFlash > 0) {
       ctx.globalAlpha = 0.8 + Math.sin(performance.now() * 0.05) * 0.2;
+    }
+
+    if (this.state === 'teleportWindup') {
+      const p = Math.min(1, this.teleportTimer / this.teleportDuration);
+      ctx.globalAlpha *= 1 - p * 0.72 + Math.sin(performance.now() * 0.12) * 0.12;
+      ctx.shadowColor = 'rgba(255, 25, 38, 0.95)';
+      ctx.shadowBlur = 22 + p * 26;
+      ctx.translate((Math.random() - 0.5) * 5 * p, (Math.random() - 0.5) * 5 * p);
     }
 
     ctx.drawImage(
@@ -1948,8 +2049,92 @@ class Boss5 extends BossBase {
 
     ctx.restore();
 
+    this.drawTeleportEffects(ctx, true);
     this.enemyBullets.forEach((b) => b.draw(ctx));
     this.drawHealthBar(ctx);
+  }
+
+  drawTeleportEffects(ctx, foreground) {
+    if (!this.teleportEffects.length) return;
+
+    for (let i = 0; i < this.teleportEffects.length; i++) {
+      const fx = this.teleportEffects[i];
+      const p = Math.max(0, Math.min(1, fx.age / fx.duration));
+      const isEmber = fx.type === 'ember';
+
+      if (foreground !== (isEmber || fx.type === 'burst')) continue;
+
+      const alpha = isEmber ? 1 - p : Math.sin(p * Math.PI);
+      if (alpha <= 0) continue;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(fx.x, fx.y);
+      ctx.rotate(fx.spin + p * Math.PI * (fx.type === 'arrival' ? -1.5 : 2.2));
+      ctx.globalCompositeOperation = 'lighter';
+
+      if (isEmber) {
+        const len = 10 + p * 20;
+        ctx.strokeStyle = `rgba(255, ${30 + p * 40}, 45, ${0.75 * alpha})`;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ff1f2f';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(-len * 0.5, 0);
+        ctx.lineTo(len * 0.5, 0);
+        ctx.stroke();
+        ctx.restore();
+        continue;
+      }
+
+      const radius =
+        fx.type === 'arrival'
+          ? 38 + p * 95
+          : fx.type === 'burst'
+            ? 28 + p * 120
+            : 72 * (1 - p) + 14;
+
+      const g = ctx.createRadialGradient(0, 0, 5, 0, 0, radius);
+      g.addColorStop(0, `rgba(255, 242, 235, ${0.72 * alpha})`);
+      g.addColorStop(0.2, `rgba(255, 28, 48, ${0.72 * alpha})`);
+      g.addColorStop(0.55, `rgba(75, 0, 12, ${0.82 * alpha})`);
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius * 0.72, radius * 1.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(255, 30, 45, ${0.9 * alpha})`;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#ff1f2f';
+      ctx.shadowBlur = 18;
+      for (let r = 0; r < 3; r++) {
+        ctx.beginPath();
+        ctx.ellipse(
+          0,
+          0,
+          radius * (0.34 + r * 0.18),
+          radius * (0.72 + r * 0.13),
+          r * 0.62 + p * 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = `rgba(8, 0, 0, ${0.85 * alpha})`;
+      ctx.lineWidth = 5;
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.2, -radius * 0.9);
+      ctx.lineTo(radius * 0.1, -radius * 0.32);
+      ctx.lineTo(-radius * 0.12, radius * 0.05);
+      ctx.lineTo(radius * 0.22, radius * 0.75);
+      ctx.stroke();
+
+      ctx.restore();
+    }
   }
 }
 
@@ -1979,7 +2164,9 @@ class Boss5Bullet {
       if (p.markedForDeletion) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (!shouldPlayerProjectilePierceBossShot(this.game, p)) {
+          p.markedForDeletion = true;
+        }
         this.markedForDeletion = true;
         break;
       }
@@ -2170,9 +2357,15 @@ class Boss6 extends BossBase {
       if (blocked) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (p.hasHitTarget(this)) continue;
+
         this.lives -= p.damage ?? 1;
+        p.addHitTarget(this);
         this.hitFlash = 120;
+
+        if (!p.piercing) {
+          p.markedForDeletion = true;
+        }
 
         if (this.lives <= 0) {
           this.lives = 0;
@@ -2231,7 +2424,7 @@ class Boss6 extends BossBase {
   }
 
   update(deltaTime) {
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -2241,7 +2434,7 @@ class Boss6 extends BossBase {
 
     const dt = deltaTime / 16.67;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -2275,8 +2468,7 @@ class Boss6 extends BossBase {
 
     this.handlePlayerShots();
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
       if (b.markedForDeletion) return;
@@ -2415,7 +2607,9 @@ class Boss6Bullet {
       if (p.markedForDeletion) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (!shouldPlayerProjectilePierceBossShot(this.game, p)) {
+          p.markedForDeletion = true;
+        }
         this.markedForDeletion = true;
         break;
       }
@@ -2746,7 +2940,7 @@ class Boss7 extends BossBase {
   }
 
   update(deltaTime) {
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -2780,10 +2974,7 @@ class Boss7 extends BossBase {
 
     this.updateAttackState(deltaTime);
 
-    this.activeLasers.forEach((laser) => laser.update(deltaTime));
-    this.activeLasers = this.activeLasers.filter(
-      (laser) => !laser.markedForDeletion
-    );
+    updateAndCompact(this.activeLasers, deltaTime);
 
     if (this.hitFlash > 0) this.hitFlash -= deltaTime;
   }
@@ -3257,7 +3448,7 @@ class Boss8 extends BossBase {
   }
 
   update(deltaTime) {
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -3331,8 +3522,7 @@ class Boss8 extends BossBase {
 
     this.applyPullToPlayer(deltaTime);
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     if (this.hitFlash > 0) this.hitFlash -= deltaTime;
   }
@@ -3430,7 +3620,9 @@ class Boss8Bullet {
         if (p.markedForDeletion) continue;
 
         if (window.checkCollision(p, this)) {
-          p.markedForDeletion = true;
+          if (!shouldPlayerProjectilePierceBossShot(this.game, p)) {
+            p.markedForDeletion = true;
+          }
           this.markedForDeletion = true;
           break;
         }
@@ -3723,7 +3915,7 @@ class Boss9 extends BossBase {
   update(deltaTime) {
     if (this.game.upgradeCardsShowing) return;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -3765,8 +3957,7 @@ class Boss9 extends BossBase {
       }
     }
 
-    this.waveWalls.forEach((wall) => wall.update(deltaTime));
-    this.waveWalls = this.waveWalls.filter((wall) => !wall.markedForDeletion);
+    updateAndCompact(this.waveWalls, deltaTime);
 
     if (this.hitFlash > 0) this.hitFlash -= deltaTime;
   }
@@ -4143,7 +4334,7 @@ class Boss10 extends BossBase {
   update(deltaTime) {
     if (this.game.upgradeCardsShowing) return;
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -4180,13 +4371,8 @@ class Boss10 extends BossBase {
       this.spawnLightningAtPlayer();
     }
 
-    this.lightningStrikes.forEach((s) => s.update(deltaTime));
-    this.lightningStrikes = this.lightningStrikes.filter(
-      (s) => !s.markedForDeletion
-    );
-
-    this.electricZones.forEach((z) => z.update(deltaTime));
-    this.electricZones = this.electricZones.filter((z) => !z.markedForDeletion);
+    updateAndCompact(this.lightningStrikes, deltaTime);
+    updateAndCompact(this.electricZones, deltaTime);
 
     if (this.hitFlash > 0) this.hitFlash -= deltaTime;
   }
@@ -4600,7 +4786,7 @@ class BossPortalMaster extends BossBase {
   }
 
   animate(deltaTime) {
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer >= this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -4662,19 +4848,22 @@ class BossPortalMaster extends BossBase {
     ];
   }
 
-  updateClones() {
+  updateClones(deltaTime) {
     if (!this.clones.length) return;
 
+    const dt = deltaTime / 16.67;
     const t = performance.now() * 0.002;
 
     this.clones[0].y = this.y + Math.sin(t) * 18;
     this.clones[1].y = this.y + Math.cos(t * 1.2) * 18;
 
-    this.clones[0].x += (Math.max(10, this.x - 170) - this.clones[0].x) * 0.06;
+    const followEase = 1 - Math.pow(1 - 0.06, dt);
+    this.clones[0].x +=
+      (Math.max(10, this.x - 170) - this.clones[0].x) * followEase;
     this.clones[1].x +=
       (Math.min(this.game.width - this.width - 10, this.x + 170) -
         this.clones[1].x) *
-      0.06;
+      followEase;
   }
 
   startDimensionShift() {
@@ -4776,9 +4965,15 @@ class BossPortalMaster extends BossBase {
       if (p.markedForDeletion) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (p.hasHitTarget(this)) continue;
+
         this.lives -= p.damage ?? 1;
+        p.addHitTarget(this);
         this.hitFlash = 120;
+
+        if (!p.piercing) {
+          p.markedForDeletion = true;
+        }
 
         if (this.lives <= 0) {
           this.lives = 0;
@@ -4869,13 +5064,10 @@ class BossPortalMaster extends BossBase {
       }
     }
 
-    this.updateClones();
+    this.updateClones(deltaTime);
 
-    this.portals.forEach((p) => p.update(deltaTime));
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-
-    this.portals = this.portals.filter((p) => !p.markedForDeletion);
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.portals, deltaTime);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
       if (b.markedForDeletion) return;
@@ -5008,8 +5200,9 @@ class PortalMasterPortal {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     this.life -= deltaTime;
-    this.rotation += 0.045 * (deltaTime / 16.67);
+    this.rotation += 0.045 * dt;
 
     if (this.life <= 0) {
       this.markedForDeletion = true;
@@ -5021,8 +5214,9 @@ class PortalMasterPortal {
       const px = player.x + player.width / 2;
       const py = player.y + player.height / 2;
 
-      this.x += (px - this.x) * 0.01;
-      this.y += (py - this.y) * 0.01;
+      const pullEase = 1 - Math.pow(1 - 0.01, dt);
+      this.x += (px - this.x) * pullEase;
+      this.y += (py - this.y) * pullEase;
     }
   }
 
@@ -5118,7 +5312,9 @@ class PortalMasterBullet {
       if (p.markedForDeletion) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (!shouldPlayerProjectilePierceBossShot(this.game, p)) {
+          p.markedForDeletion = true;
+        }
         this.markedForDeletion = true;
         break;
       }
@@ -5192,7 +5388,9 @@ class PortalMasterExitBullet {
       if (p.markedForDeletion) continue;
 
       if (window.checkCollision(p, this)) {
-        p.markedForDeletion = true;
+        if (!shouldPlayerProjectilePierceBossShot(this.game, p)) {
+          p.markedForDeletion = true;
+        }
         this.markedForDeletion = true;
         break;
       }

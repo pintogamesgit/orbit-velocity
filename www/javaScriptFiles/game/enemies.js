@@ -1,3 +1,7 @@
+function getSpriteAnimationDelta(deltaTime) {
+  return deltaTime * (window.OrbitVelocityGamePerf?.spriteAnimScale ?? 1);
+}
+
 class Enemy {
   constructor(game) {
     this.game = game;
@@ -21,18 +25,26 @@ class Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       this.mindTimer += deltaTime;
 
       const tx = this.mindTarget.x + this.mindTarget.width / 2;
       const ty = this.mindTarget.y + this.mindTarget.height / 2;
 
-      this.x += (tx - (this.x + this.width / 2)) * 0.06;
-      this.y += (ty - (this.y + this.height / 2)) * 0.06;
+      const approach = 1 - Math.pow(1 - 0.035, dt);
+      this.x += (tx - (this.x + this.width / 2)) * approach;
+      this.y += (ty - (this.y + this.height / 2)) * approach;
 
       if (checkCollision(this, this.mindTarget)) {
-        this.mindTarget.lives -= this.lives;
-        this.markedForDeletion = true;
+        const target = this.mindTarget;
+
+        this.clearMindControl();
+        target.clearMindControl();
+
+        this.game.handleEnemyDeath(target);
+        this.game.handleEnemyDeath(this);
+        return;
       }
 
       if (
@@ -45,7 +57,7 @@ class Enemy {
       return;
     }
 
-    this.y += this.speedY;
+    this.y += this.speedY * dt;
     if (this.y > this.game.height) this.markedForDeletion = true;
   }
 
@@ -98,7 +110,7 @@ class Angler1 extends Enemy {
   update(deltaTime) {
     super.update(deltaTime);
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % (this.maxFrame + 1);
       this.frameTimer = 0;
@@ -149,7 +161,7 @@ class Angler2 extends Enemy {
   update(deltaTime) {
     super.update(deltaTime);
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
 
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
@@ -184,7 +196,7 @@ class Angler3 extends Enemy {
 
     this.lives = 6;
     this.maxLives = this.lives;
-    this.speedY = 0.5;
+    this.speedY = 2;
     this.x = Math.random() * (this.game.width - this.width);
 
     this.shooterTimer = 0;
@@ -207,7 +219,7 @@ class Angler3 extends Enemy {
   update(deltaTime) {
     super.update(deltaTime);
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -221,13 +233,13 @@ class Angler3 extends Enemy {
 
     if (this.y >= 100) this.speedY = 0;
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter(
-      (b) => !b.markedForDeletion && b.y <= this.game.height
-    );
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     this.enemyBullets.forEach((b) => {
-      if (checkCollision(this.game.player, b)) {
+      if (
+        !this.game.player.invulnerable &&
+        checkCollision(this.game.player, b)
+      ) {
         this.game.player.lives--;
         this.game.triggerShake(520, 26);
         b.markedForDeletion = true;
@@ -281,7 +293,8 @@ class Angler3Shooter {
   }
 
   update(deltaTime) {
-    this.y += this.speedY;
+    const dt = deltaTime / 16.67;
+    this.y += this.speedY * dt;
     if (this.y > this.game.height) this.markedForDeletion = true;
 
     const shots = this.game.player.projectiles;
@@ -375,7 +388,8 @@ class Angler4 extends Enemy {
   }
 
   update(deltaTime) {
-    this.frameTimer += deltaTime;
+    const dt = deltaTime / 16.67;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -393,7 +407,7 @@ class Angler4 extends Enemy {
     const dist = Math.hypot(dx, dy);
 
     if (this.state === 'enter') {
-      this.y += this.speedY;
+      this.y += this.speedY * dt;
 
       if (dist < this.triggerRange) {
         const len = dist || 1;
@@ -402,8 +416,8 @@ class Angler4 extends Enemy {
         this.state = 'charge';
       }
     } else if (this.state === 'charge') {
-      this.x += this.speedX;
-      this.y += this.speedY;
+      this.x += this.speedX * dt;
+      this.y += this.speedY * dt;
 
       if (checkCollision(this, player)) {
         this.explode();
@@ -504,7 +518,7 @@ class BomberExplosion {
       const dy = player.y + player.height / 2 - this.y;
       const dist = Math.hypot(dx, dy);
 
-      if (dist <= this.radius * 0.95) {
+      if (dist <= this.radius * 0.95 && !player.invulnerable) {
         player.lives--;
         this.game.triggerShake(520, 30);
         this.hit = true;
@@ -610,7 +624,7 @@ class Angler5 extends Enemy {
   update(deltaTime) {
     super.update(deltaTime);
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -679,6 +693,7 @@ class Angler5Mini extends Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       super.update(deltaTime);
       return;
@@ -687,8 +702,8 @@ class Angler5Mini extends Enemy {
     this.stateTimer += deltaTime;
 
     if (this.state === 'split') {
-      this.speedX += this.accelX;
-      this.speedY += this.accelY;
+      this.speedX += this.accelX * dt;
+      this.speedY += this.accelY * dt;
 
       if (this.dir < 0 && this.speedX < -this.maxSplitSpeedX) {
         this.speedX = -this.maxSplitSpeedX;
@@ -706,12 +721,13 @@ class Angler5Mini extends Enemy {
         this.state = 'forward';
       }
     } else if (this.state === 'forward') {
-      this.speedX += (0 - this.speedX) * this.turnSpeed;
-      this.speedY += (this.forwardSpeed - this.speedY) * this.turnSpeed;
+      const turn = 1 - Math.pow(1 - this.turnSpeed, dt);
+      this.speedX += (0 - this.speedX) * turn;
+      this.speedY += (this.forwardSpeed - this.speedY) * turn;
     }
 
-    this.x += this.speedX;
-    this.y += this.speedY;
+    this.x += this.speedX * dt;
+    this.y += this.speedY * dt;
 
     if (
       this.y > this.game.height ||
@@ -759,7 +775,7 @@ class Angler6 extends Enemy {
   update(deltaTime) {
     super.update(deltaTime);
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -825,8 +841,9 @@ class MineBomb {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     this.timer += deltaTime;
-    this.y += this.speedY;
+    this.y += this.speedY * dt;
 
     if (this.y >= this.explodeLine) {
       this.explode();
@@ -938,7 +955,7 @@ class Angler7 extends Enemy {
       this.reflectCooldown -= deltaTime;
     }
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1118,16 +1135,17 @@ class Angler8 extends Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       super.update(deltaTime);
       return;
     }
 
     if (this.y < this.stopY) {
-      this.y += this.speedY;
+      this.y += this.speedY * dt;
     }
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1139,8 +1157,7 @@ class Angler8 extends Enemy {
       this.shootFreeze();
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     if (this.y > this.game.height + this.height) {
       this.markedForDeletion = true;
@@ -1430,13 +1447,14 @@ class Angler9 extends Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       super.update(deltaTime);
       return;
     }
 
-    this.y += this.speedY;
-    this.x += this.speedX;
+    this.y += this.speedY * dt;
+    this.x += this.speedX * dt;
 
     if (this.x <= 0) {
       this.x = 0;
@@ -1454,7 +1472,7 @@ class Angler9 extends Enemy {
       this.trailTimer = 0;
     }
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1633,6 +1651,7 @@ class Angler10 extends Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       super.update(deltaTime);
       this.lockActive = false;
@@ -1640,14 +1659,14 @@ class Angler10 extends Enemy {
       return;
     }
     if (this.y < this.stopY) {
-      this.y += this.speedY;
+      this.y += this.speedY * dt;
     } else {
       this.hoverTime += deltaTime * 0.002;
       this.hoverOffsetX = Math.sin(this.hoverTime) * 1.2;
       this.hoverOffsetY = Math.cos(this.hoverTime * 1.4) * 0.4;
 
-      this.x += this.hoverOffsetX;
-      this.y += this.hoverOffsetY;
+      this.x += this.hoverOffsetX * dt;
+      this.y += this.hoverOffsetY * dt;
 
       if (this.x < 0) this.x = 0;
       if (this.x + this.width > this.game.width) {
@@ -1655,7 +1674,7 @@ class Angler10 extends Enemy {
       }
     }
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1835,16 +1854,17 @@ class Angler11 extends Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       super.update(deltaTime);
       return;
     }
 
     if (this.y < this.stopY) {
-      this.y += this.speedY;
+      this.y += this.speedY * dt;
     }
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -1856,8 +1876,7 @@ class Angler11 extends Enemy {
       this.shootBlindShot();
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     if (this.y > this.game.height + this.height) {
       this.markedForDeletion = true;
@@ -2072,16 +2091,17 @@ class Angler12 extends Enemy {
   }
 
   update(deltaTime) {
+    const dt = deltaTime / 16.67;
     if (this.mindControlled && this.mindTarget) {
       super.update(deltaTime);
       return;
     }
 
     if (this.y < this.stopY) {
-      this.y += this.speedY;
+      this.y += this.speedY * dt;
     }
 
-    this.frameTimer += deltaTime;
+    this.frameTimer += getSpriteAnimationDelta(deltaTime);
     if (this.frameTimer > this.frameInterval) {
       this.frameX = (this.frameX + 1) % this.frames;
       this.frameTimer = 0;
@@ -2096,8 +2116,7 @@ class Angler12 extends Enemy {
       }
     }
 
-    this.enemyBullets.forEach((b) => b.update(deltaTime));
-    this.enemyBullets = this.enemyBullets.filter((b) => !b.markedForDeletion);
+    updateAndCompact(this.enemyBullets, deltaTime);
 
     if (this.y > this.game.height + this.height) {
       this.markedForDeletion = true;
@@ -2109,23 +2128,19 @@ class Angler12 extends Enemy {
     const px = player.x + player.width / 2;
     const py = player.y + player.height / 2;
 
-    const candidates = this.game.enemies.filter((enemy) => {
-      if (!enemy || enemy === this) return false;
-      if (enemy.markedForDeletion) return false;
-      if (enemy.mindControlled) return false;
-      if (enemy.lives <= 0) return false;
-      if (enemy instanceof Angler12) return false;
-      if (typeof enemy.maxLives !== 'number') return false;
-      if (enemy.lives >= enemy.maxLives) return false;
-      return true;
-    });
-
-    if (!candidates.length) return null;
-
     let best = null;
     let bestScore = Infinity;
 
-    for (const enemy of candidates) {
+    for (let i = 0; i < this.game.enemies.length; i++) {
+      const enemy = this.game.enemies[i];
+      if (!enemy || enemy === this) continue;
+      if (enemy.markedForDeletion) continue;
+      if (enemy.mindControlled) continue;
+      if (enemy.lives <= 0) continue;
+      if (enemy instanceof Angler12) continue;
+      if (typeof enemy.maxLives !== 'number') continue;
+      if (enemy.lives >= enemy.maxLives) continue;
+
       const ex = enemy.x + enemy.width / 2;
       const ey = enemy.y + enemy.height / 2;
 
@@ -2243,8 +2258,9 @@ class HealShot {
     const desiredVX = (dx / len) * this.speed;
     const desiredVY = (dy / len) * this.speed;
 
-    this.vx += (desiredVX - this.vx) * this.turnSpeed * dt;
-    this.vy += (desiredVY - this.vy) * this.turnSpeed * dt;
+    const turn = 1 - Math.pow(1 - this.turnSpeed, dt);
+    this.vx += (desiredVX - this.vx) * turn;
+    this.vy += (desiredVY - this.vy) * turn;
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;

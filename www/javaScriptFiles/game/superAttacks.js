@@ -37,11 +37,15 @@ class SuperAttack1 {
     }
 
     setTimeout(() => {
-      if (this.sound) {
-        this.sound.pause();
-        this.sound.currentTime = 0;
-      }
+      this.stopSound();
     }, 3000);
+  }
+
+  stopSound() {
+    if (!this.sound) return;
+    this.sound.pause();
+    this.sound.currentTime = 0;
+    this.sound = null;
   }
 
   update(deltaTime) {
@@ -53,11 +57,7 @@ class SuperAttack1 {
     this.alpha = Math.max(0, 1 - this.timer / this.lifeTime);
 
     if (this.timer >= this.lifeTime || this.y < -this.height) {
-      if (this.sound) {
-        this.sound.pause();
-        this.sound.currentTime = 0;
-        this.sound = null;
-      }
+      this.stopSound();
 
       this.markedForDeletion = true;
       this.markedForDeletion = true;
@@ -172,7 +172,7 @@ class SuperLaser {
 
     this.loopPoint = 1.7;
 
-    this.sound.addEventListener('timeupdate', () => {
+    this.handleTimeUpdate = () => {
       if (!this.sound) return;
       if (!isGameAudioEnabled() || getGameAudioVolume() === 0) return;
 
@@ -180,17 +180,8 @@ class SuperLaser {
         this.sound.currentTime = 0;
         this.sound.play().catch(() => {});
       }
-    });
-
-    this.sound.addEventListener('timeupdate', () => {
-      if (!this.sound || !this.loopPoint) return;
-      if (!isGameAudioEnabled() || getGameAudioVolume() === 0) return;
-
-      if (this.sound.currentTime >= this.loopPoint) {
-        this.sound.currentTime = 0;
-        this.sound.play().catch(() => {});
-      }
-    });
+    };
+    this.sound.addEventListener('timeupdate', this.handleTimeUpdate);
 
     if (isGameAudioEnabled() && getGameAudioVolume() > 0) {
       this.sound.currentTime = 0;
@@ -250,9 +241,14 @@ class SuperLaser {
   stopSound() {
     if (!this.sound) return;
 
+    if (this.handleTimeUpdate) {
+      this.sound.removeEventListener('timeupdate', this.handleTimeUpdate);
+      this.handleTimeUpdate = null;
+    }
     this.sound.pause();
     this.sound.currentTime = 0;
-    this.sound.src = '';
+    this.sound.removeAttribute('src');
+    this.sound.load();
     this.sound = null;
   }
 
@@ -293,6 +289,6 @@ class SuperLaser {
 window.SuperAttack1 = SuperAttack1;
 window.SuperLaser = SuperLaser;
 window.SUPER_TYPES = {
-  waveShield: { class: SuperAttack1, duration: 500, charge: 5 },
-  superLaser: { class: SuperLaser, duration: 6000, charge: 5 },
+  waveShield: { class: SuperAttack1, duration: 500, charge: 8 },
+  superLaser: { class: SuperLaser, duration: 6000, charge: 8 },
 };

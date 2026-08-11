@@ -18,7 +18,7 @@
   margin: 0;
   padding: 10px 18px 12px;
 
-  font-family: 'Trebuchet MS', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 34px;
   font-weight: 1000;
   letter-spacing: 6px;
@@ -176,7 +176,7 @@
     0 0 12px #37e2bd;
 
   transform: translateY(5px);
-  font-family: 'Trebuchet MS', system-ui, sans-serif;
+  font-family: var(--font-ui);
 
   transition: 0.2s ease;
 }
@@ -862,6 +862,7 @@
 
   margin-bottom: 16px;
 
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 900;
   letter-spacing: 4px;
@@ -1498,6 +1499,7 @@
 
   transform: translateX(-50%) translateY(10px) scale(0.95);
 
+  font-family: var(--font-display);
   font-size: 26px;
   font-weight: 900;
   letter-spacing: 4px;
@@ -1689,7 +1691,7 @@
   width: 150px;
   height: 42px;
 
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 1px;

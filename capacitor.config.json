@@ -1,5 +1,9 @@
 {
-  "appId": "com.example.app",
-  "appName": "cosmorush",
-  "webDir": "www"
+  "appId": "com.orbitvelocity.game",
+  "appName": "ORBIT VELOCITY",
+  "webDir": "www",
+  "android": {
+    "webContentsDebuggingEnabled": false,
+    "loggingBehavior": "production"
+  }
 }

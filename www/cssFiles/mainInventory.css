@@ -28,7 +28,7 @@
   transform: translateX(-50%);
   margin: 0;
   padding: 10px 18px 12px;
-  font-family: 'Trebuchet MS', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 34px;
   font-weight: 1000;
   letter-spacing: 6px;
@@ -51,6 +51,8 @@
   width: 92%;
   bottom: 100px;
   overflow-y: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   padding: 14px 10px 30px;
 }
 
@@ -122,6 +124,7 @@
 }
 
 .invName {
+  font-family: var(--font-ui);
   font-size: 16px;
   font-weight: 1000;
   letter-spacing: 2px;
@@ -204,6 +207,7 @@
   border-radius: 12px;
   border: 2px solid #000;
   background: linear-gradient(180deg, #ffe97a 0%, #ffd400 45%, #ffb800 100%);
+  font-family: var(--font-ui);
   font-weight: 1000;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -384,6 +388,8 @@
 
   overflow-y: auto;
   overflow-x: hidden;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 
   align-content: start;
 }
@@ -1488,15 +1494,6 @@
     filter 0.14s ease;
 }
 
-.invModalBox.supersTheme .invOwnedCard:hover {
-  transform: translateY(-2px) scale(1.01);
-  border-color: rgba(255, 230, 160, 0.7);
-  box-shadow:
-    inset 0 0 16px rgba(255, 220, 120, 0.1),
-    0 16px 28px rgba(0, 0, 0, 0.7),
-    0 0 18px rgba(255, 190, 60, 0.14);
-}
-
 .invModalBox.supersTheme .invOwnedCard.equipped {
   border-color: rgba(255, 230, 160, 0.85);
   box-shadow:
@@ -1575,15 +1572,16 @@
 }
 
 .invModalBox.supersTheme .invOwnedCard.superCard .invOwnedIcon img {
-  width: 120px;
-  height: 70px;
+  width: 150px;
+  height: 88px;
   border-radius: 16px;
   object-fit: cover;
 }
 
 .invModalBox.supersTheme .invOwnedCard.superCard {
-  height: 150px;
-  padding: 14px 12px 12px;
+  width: min(210px, 82vw);
+  height: 185px;
+  padding: 16px 14px 14px;
 }
 
 .invModalBox.supersTheme .invOwnedCard.superCard .invOwnedBody {
@@ -1652,26 +1650,35 @@
 }
 
 .invModalBox.supersTheme .invLockedDivider {
+  grid-column: 1 / -1;
+  width: min(310px, 92%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
+  margin: 26px auto 20px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  text-align: center;
 }
 
 .invModalBox.supersTheme .invLockedDivider::before,
 .invModalBox.supersTheme .invLockedDivider::after {
   content: '';
-  flex: 1;
+  flex: 1 1 56px;
+  min-width: 44px;
   height: 2px;
 
   background: linear-gradient(
     to right,
     transparent,
-    rgba(255, 200, 120, 0.45),
+    rgba(255, 210, 120, 0.72),
+    rgba(255, 170, 45, 0.86),
+    rgba(255, 210, 120, 0.72),
     transparent
   );
 
-  box-shadow: 0 0 10px rgba(255, 180, 60, 0.25);
+  box-shadow: 0 0 12px rgba(255, 180, 60, 0.5);
 }
 
 .superGoShopBtn {
@@ -1889,15 +1896,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-.invModal.isSkins .invOwnedCard.skinCard:hover {
-  transform: translateY(-2px) scale(1.01);
-  border-color: rgba(190, 230, 255, 0.78);
-  box-shadow:
-    inset 0 0 16px rgba(160, 220, 255, 0.1),
-    0 16px 28px rgba(0, 0, 0, 0.7),
-    0 0 18px rgba(190, 140, 255, 0.12);
 }
 
 .invModal.isSkins .invOwnedCard.skinCard .invOwnedBody {
@@ -2184,10 +2182,6 @@
     0 6px 12px rgba(0, 0, 0, 0.45);
 }
 
-.invModalGrid::-webkit-scrollbar-thumb:hover {
-  filter: brightness(1.06) saturate(1.08);
-}
-
 .invModalGrid::-webkit-scrollbar-thumb:active {
   filter: brightness(0.98) saturate(1.12);
 }
@@ -2222,15 +2216,6 @@
     transform 0.14s ease,
     box-shadow 0.14s ease,
     border-color 0.14s ease;
-}
-
-.invModal.isPets .invOwnedCard:hover {
-  transform: translateY(-2px) scale(1.01);
-  border-color: rgba(220, 200, 255, 0.78);
-  box-shadow:
-    inset 0 0 16px rgba(190, 140, 255, 0.12),
-    0 16px 28px rgba(0, 0, 0, 0.7),
-    0 0 18px rgba(120, 220, 255, 0.12);
 }
 
 .invModal.isPets .invOwnedIcon {
@@ -2787,4 +2772,1002 @@
     0 4px 0 rgba(0, 0, 0, 0.85),
     0 12px 20px rgba(0, 0, 0, 0.55),
     inset 0 2px 6px rgba(255, 255, 255, 0.55);
+}
+
+/* ================= Orbit Velocity INVENTORY BAY REDESIGN ================= */
+#inventoryScreen {
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 50% -12%,
+      rgba(92, 238, 255, 0.28),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 12% 76%,
+      rgba(255, 210, 90, 0.13),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 92% 72%,
+      rgba(255, 82, 128, 0.14),
+      transparent 36%
+    ),
+    linear-gradient(180deg, #061434 0%, #030712 54%, #000 100%);
+}
+
+#inventoryScreen::before {
+  background:
+    linear-gradient(rgba(126, 236, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 236, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 50% 20%, rgba(0, 198, 255, 0.14), transparent 46%);
+  background-size:
+    34px 34px,
+    34px 34px,
+    auto;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.84), transparent 82%);
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.84),
+    transparent 82%
+  );
+  opacity: 0.95;
+}
+
+#inventoryScreen::after {
+  content: '';
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 112px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #7df3ff,
+    #ffe56b,
+    #ff4f7b,
+    transparent
+  );
+  box-shadow: 0 0 20px rgba(125, 243, 255, 0.62);
+  pointer-events: none;
+}
+
+#inventoryTitle {
+  top: calc(50px + var(--safe-t));
+  padding: 0;
+  font-size: 36px;
+  letter-spacing: 0;
+  color: #f5fbff;
+  text-shadow:
+    0 0 10px rgba(126, 236, 255, 0.95),
+    0 0 24px rgba(0, 198, 255, 0.45),
+    0 4px 0 rgba(0, 0, 0, 0.86);
+}
+
+.invWrap {
+  top: calc(124px + var(--safe-t));
+  bottom: calc(112px + var(--safe-b));
+  width: min(370px, calc(100% - 22px));
+  padding: 6px 5px 26px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(126, 236, 255, 0.78) rgba(0, 0, 0, 0.22);
+}
+
+.invSection {
+  --inv-a: 0, 198, 255;
+  --inv-b: 255, 229, 107;
+  min-height: 166px;
+  margin-bottom: 12px;
+  padding: 13px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--inv-a), 0.56);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12),
+      transparent 26% 74%,
+      rgba(255, 255, 255, 0.06)
+    ),
+    radial-gradient(
+      circle at 18% 16%,
+      rgba(var(--inv-a), 0.26),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 86% 88%,
+      rgba(var(--inv-b), 0.16),
+      transparent 48%
+    ),
+    linear-gradient(180deg, rgba(7, 22, 52, 0.96), rgba(2, 6, 18, 0.97));
+  box-shadow:
+    0 13px 24px rgba(0, 0, 0, 0.62),
+    0 0 20px rgba(var(--inv-a), 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 -22px 34px rgba(0, 0, 0, 0.34);
+}
+
+.invSection[data-inv='supers'] {
+  --inv-a: 255, 216, 94;
+  --inv-b: 255, 74, 122;
+}
+
+.invSection[data-inv='pets'] {
+  --inv-a: 174, 118, 255;
+  --inv-b: 102, 232, 255;
+}
+
+.invSection[data-inv='skins'] {
+  --inv-a: 103, 232, 255;
+  --inv-b: 218, 148, 255;
+}
+
+.invSection::before {
+  inset: 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(var(--inv-a), 0.14);
+  background:
+    linear-gradient(90deg, rgba(var(--inv-a), 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(var(--inv-a), 0.11) 1px, transparent 1px);
+  background-size: 26px 26px;
+  filter: none;
+  opacity: 0.45;
+}
+
+.invSection::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+        90deg,
+        rgba(var(--inv-a), 0.9),
+        transparent 18% 82%,
+        rgba(var(--inv-b), 0.72)
+      )
+      top / 100% 2px no-repeat,
+    linear-gradient(
+        180deg,
+        rgba(var(--inv-a), 0.7),
+        transparent 38%,
+        rgba(var(--inv-b), 0.46)
+      )
+      left / 2px 100% no-repeat,
+    linear-gradient(
+        180deg,
+        rgba(var(--inv-b), 0.55),
+        transparent 38%,
+        rgba(var(--inv-a), 0.7)
+      )
+      right / 2px 100% no-repeat;
+  pointer-events: none;
+}
+
+.invHead,
+.invGrid,
+.invBtn {
+  position: relative;
+  z-index: 1;
+}
+
+.invHead {
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.invIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background:
+    radial-gradient(
+      circle at 34% 24%,
+      rgba(255, 255, 255, 0.22),
+      transparent 36%
+    ),
+    linear-gradient(180deg, rgba(var(--inv-a), 0.34), rgba(0, 0, 0, 0.42));
+  border: 1px solid rgba(var(--inv-a), 0.72);
+  box-shadow:
+    0 0 16px rgba(var(--inv-a), 0.34),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.36);
+}
+
+.invName {
+  font-size: 15px;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+.invSub {
+  max-width: 190px;
+  color: rgba(205, 236, 255, 0.76);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.invPill {
+  min-width: 48px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #08101a;
+  background: linear-gradient(180deg, rgb(var(--inv-b)), rgb(var(--inv-a)));
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.75),
+    0 0 13px rgba(var(--inv-a), 0.42);
+}
+
+.invGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.invCard {
+  border-radius: 8px;
+  border: 1px solid rgba(var(--inv-a), 0.28);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 35%),
+    rgba(0, 0, 0, 0.34);
+  box-shadow:
+    inset 0 0 13px rgba(0, 0, 0, 0.72),
+    0 8px 12px rgba(0, 0, 0, 0.28);
+  display: grid;
+  place-items: center;
+}
+
+.invCard.filled {
+  border-color: rgba(var(--inv-a), 0.62);
+  background:
+    radial-gradient(
+      circle at 50% 44%,
+      rgba(var(--inv-a), 0.24),
+      transparent 58%
+    ),
+    rgba(0, 0, 0, 0.34);
+}
+
+.invCard img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  image-rendering: auto;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.62));
+}
+
+.invBtn {
+  height: 40px;
+  border-radius: 8px;
+  color: #07101a;
+  background: linear-gradient(180deg, #fff7a8 0%, #ffe15a 42%, #ffb932 100%);
+  letter-spacing: 1px;
+}
+
+.invModal {
+  background:
+    radial-gradient(
+      circle at 50% 18%,
+      rgba(0, 198, 255, 0.18),
+      transparent 42%
+    ),
+    rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(7px);
+}
+
+.invModalBox {
+  width: min(368px, calc(100vw - 22px));
+  height: min(660px, calc(100dvh - 34px));
+  margin-top: 0;
+  border-radius: 8px;
+  padding: 14px 12px;
+  border: 1px solid rgba(126, 236, 255, 0.72);
+  background:
+    linear-gradient(rgba(126, 236, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 236, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(126, 236, 255, 0.18),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgba(7, 20, 48, 0.98), rgba(1, 5, 16, 0.99));
+  background-size:
+    30px 30px,
+    30px 30px,
+    auto,
+    auto;
+  box-shadow:
+    0 0 30px rgba(0, 198, 255, 0.28),
+    0 24px 54px rgba(0, 0, 0, 0.82),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.invModalTitle {
+  margin: 5px 44px 4px;
+  font-size: 23px;
+  letter-spacing: 0;
+  color: #f5fbff;
+}
+
+#invModalClose {
+  top: 10px;
+  right: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+}
+
+.invModalGrid {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  padding: 10px 4px 14px;
+}
+
+.invOwnedCard,
+.invModal.isPets .invOwnedCard {
+  height: 142px;
+  min-width: 0;
+  padding: 10px 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(126, 236, 255, 0.42);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 36%),
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(126, 236, 255, 0.16),
+      transparent 58%
+    ),
+    rgba(0, 0, 0, 0.32);
+}
+
+.invOwnedCard.equipped {
+  border-color: rgba(122, 255, 203, 0.82);
+  box-shadow:
+    0 0 18px rgba(122, 255, 203, 0.22),
+    0 12px 22px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.invOwnedCard.locked {
+  opacity: 0.48;
+  filter: grayscale(0.65);
+}
+
+.invOwnedIcon,
+.invModal.isPets .invOwnedIcon {
+  height: 72px;
+}
+
+.invOwnedIcon img,
+.invModal.isPets .invOwnedIcon img {
+  width: 66px;
+  height: 66px;
+  border-radius: 8px;
+  border: 1px solid rgba(126, 236, 255, 0.58);
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.invOwnedName,
+.invModal.isPets .invOwnedName {
+  width: 100%;
+  height: 32px;
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 15px;
+  letter-spacing: 0;
+  transform: none;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+}
+
+.EquipBtn,
+.invModal.isPets .EquipBtn {
+  position: static;
+  transform: none;
+  height: 28px;
+  max-width: 100%;
+  margin-top: auto;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.EquipBtn:active,
+.invModal.isPets .EquipBtn:active {
+  transform: translateY(2px);
+}
+
+.invLockedDivider {
+  margin: 10px 0 6px;
+  letter-spacing: 1px;
+}
+
+.skinPreview {
+  inset: 54px 10px 10px;
+  border-radius: 8px;
+}
+
+/* ================= INVENTORY LAYER SAFETY ================= */
+#inventoryScreen #invModal {
+  z-index: 120000;
+  pointer-events: auto;
+}
+
+#inventoryScreen #invModal:not(.hidden) {
+  display: flex;
+}
+
+#inventoryScreen #invModal .invModalBox {
+  position: relative;
+  z-index: 120010;
+  pointer-events: auto;
+}
+
+#inventoryScreen #skinPreview,
+#inventoryScreen #petPreview,
+#inventoryScreen #weaponPreview,
+#inventoryScreen #superPreview {
+  z-index: 120020;
+  pointer-events: auto;
+}
+
+#inventoryScreen #skinPreview.hidden,
+#inventoryScreen #petPreview.hidden,
+#inventoryScreen #weaponPreview.hidden,
+#inventoryScreen #superPreview.hidden {
+  display: none;
+}
+
+#inventoryScreen #skinPreviewClose,
+#inventoryScreen #petPreviewClose,
+#inventoryScreen #weaponPreviewClose,
+#inventoryScreen #superPreviewClose,
+#inventoryScreen #invModalClose {
+  z-index: 120030;
+  pointer-events: auto;
+}
+
+body.inventory-modal-open #inventoryScreen.active {
+  z-index: 120000;
+  contain: layout style;
+}
+
+body.inventory-modal-open #bottomBtns {
+  pointer-events: none;
+}
+
+/* ================= INVENTORY PREVIEW SLOT CENTERING ================= */
+.invGrid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.invGrid .invCard {
+  flex: 0 0 min(74px, calc((100% - 24px) / 4));
+  width: min(74px, calc((100% - 24px) / 4));
+}
+
+/* ================= INVENTORY PREVIEW FULL-BLEED ICONS ================= */
+.invGrid .invCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.invGrid .invCard img,
+#invSupersGrid .invCard img {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+  display: block;
+  filter: none;
+}
+
+#invSupersGrid .invCard img {
+  box-shadow: none;
+}
+
+.invOwnedCard.superCard .invOwnedIcon img,
+.invModalBox.supersTheme .invOwnedCard.superCard .invOwnedIcon img {
+  border: 0;
+  box-shadow: none;
+}
+
+/* ================= LOCKED INVENTORY PREVIEW ICONS ================= */
+.invGrid .invCard.ghost img,
+#invSupersGrid .invCard.ghost img {
+  filter: grayscale(1) saturate(0) brightness(0.42) contrast(0.88);
+  opacity: 0.5;
+}
+
+.invGrid .invCard.ghost {
+  border-color: rgba(180, 200, 220, 0.18);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 38%),
+    rgba(0, 0, 0, 0.4);
+}
+
+#invSupersGrid .invCard.ghost {
+  border-color: rgba(210, 190, 150, 0.2);
+}
+
+.invGrid .invCard.ghost::after,
+#invSupersGrid .invCard.ghost::after {
+  display: none;
+  animation: none;
+}
+
+/* ================= INVENTORY PREVIEW STRONGER FRAMES ================= */
+.invGrid .invCard,
+#invSupersGrid .invCard {
+  border-width: 3.5px;
+}
+
+#invSupersGrid .invCard {
+  flex: 0 0 min(120px, calc((100% - 8px) / 2));
+  width: min(120px, calc((100% - 8px) / 2));
+  aspect-ratio: auto;
+  height: 82px;
+}
+
+.invSection[data-inv='skins'] {
+  --inv-a: 95, 232, 255;
+  --inv-b: 255, 103, 204;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 24% 72%, rgba(255, 255, 255, 0.08)),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 18px),
+    radial-gradient(circle at 18% 18%, rgba(95, 232, 255, 0.32), transparent 42%),
+    radial-gradient(circle at 84% 26%, rgba(255, 103, 204, 0.24), transparent 44%),
+    linear-gradient(180deg, rgba(12, 24, 64, 0.98), rgba(4, 8, 28, 0.98));
+  border-color: rgba(132, 226, 255, 0.78);
+  box-shadow:
+    0 14px 26px rgba(0, 0, 0, 0.64),
+    0 0 22px rgba(95, 232, 255, 0.18),
+    0 0 18px rgba(255, 103, 204, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 -24px 34px rgba(0, 0, 0, 0.35);
+}
+
+.invSection[data-inv='skins']::after {
+  background:
+    linear-gradient(90deg, #5fe8ff, transparent 32% 68%, #ff67cc) top / 100% 2px no-repeat,
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent) 0 66px / 100% 1px no-repeat,
+    linear-gradient(180deg, rgba(95, 232, 255, 0.78), transparent 42%, rgba(255, 103, 204, 0.5)) left / 2px 100% no-repeat,
+    linear-gradient(180deg, rgba(255, 103, 204, 0.64), transparent 42%, rgba(95, 232, 255, 0.7)) right / 2px 100% no-repeat;
+}
+
+.invSection[data-inv='skins'] .invIcon {
+  border-color: rgba(180, 238, 255, 0.9);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.22), transparent 44%),
+    linear-gradient(180deg, rgba(95, 232, 255, 0.38), rgba(255, 103, 204, 0.2));
+  box-shadow:
+    0 0 18px rgba(95, 232, 255, 0.42),
+    0 0 16px rgba(255, 103, 204, 0.18),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.36);
+}
+
+.invSection[data-inv='skins'] .invName {
+  color: #ffffff;
+  text-shadow:
+    0 0 9px rgba(95, 232, 255, 0.78),
+    0 0 16px rgba(255, 103, 204, 0.38),
+    0 3px 0 rgba(0, 0, 0, 0.9);
+}
+
+.invSection[data-inv='skins'] .invPill {
+  background: linear-gradient(180deg, #f6fdff 0%, #75ecff 48%, #ff72d2 100%);
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.78),
+    0 0 16px rgba(95, 232, 255, 0.48),
+    inset 0 1px 2px rgba(255, 255, 255, 0.75);
+}
+
+#invSkinsGrid {
+  gap: 10px;
+}
+
+#invSkinsGrid .invCard {
+  border-color: rgba(166, 236, 255, 0.7);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 36%),
+    radial-gradient(circle at 50% 42%, rgba(95, 232, 255, 0.18), transparent 60%),
+    linear-gradient(180deg, rgba(11, 23, 55, 0.72), rgba(0, 0, 0, 0.42));
+  box-shadow:
+    inset 0 0 14px rgba(95, 232, 255, 0.14),
+    0 0 14px rgba(95, 232, 255, 0.14),
+    0 8px 14px rgba(0, 0, 0, 0.36);
+}
+
+#invSkinsGrid .invCard.filled {
+  border-color: rgba(246, 252, 255, 0.85);
+  box-shadow:
+    inset 0 0 16px rgba(95, 232, 255, 0.2),
+    0 0 16px rgba(95, 232, 255, 0.22),
+    0 0 12px rgba(255, 103, 204, 0.13),
+    0 10px 16px rgba(0, 0, 0, 0.4);
+}
+
+.invSection[data-inv='skins'] .invBtn {
+  background: linear-gradient(180deg, #ffffff 0%, #7df4ff 44%, #ff73d5 100%);
+  border-color: #020813;
+  box-shadow:
+    0 5px 0 rgba(0, 0, 0, 0.82),
+    0 0 16px rgba(95, 232, 255, 0.28),
+    inset 0 2px 4px rgba(255, 255, 255, 0.8);
+}
+
+.invModal.isSkins .invModalBox {
+  border-radius: 14px;
+  border-color: rgba(130, 232, 255, 0.9);
+  background:
+    radial-gradient(circle at 50% 8%, rgba(95, 232, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 92% 24%, rgba(255, 103, 204, 0.18), transparent 38%),
+    radial-gradient(circle at 8% 58%, rgba(118, 255, 196, 0.13), transparent 36%),
+    radial-gradient(circle at 72% 82%, rgba(157, 112, 255, 0.16), transparent 34%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg, rgba(16, 32, 74, 0.98), rgba(3, 8, 25, 0.99));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 32px rgba(95, 232, 255, 0.24),
+    0 0 22px rgba(255, 103, 204, 0.12),
+    0 24px 58px rgba(0, 0, 0, 0.82),
+    inset 0 0 28px rgba(95, 232, 255, 0.08);
+}
+
+.invModal.isSkins .invModalTitle {
+  color: #f5fcff;
+  font-size: 28px;
+  text-shadow:
+    0 0 10px rgba(95, 232, 255, 0.92),
+    0 0 20px rgba(255, 103, 204, 0.32),
+    0 4px 0 rgba(0, 0, 0, 0.92);
+}
+
+.invModal.isSkins .invModalTitle::after {
+  width: min(230px, 78%);
+  margin-top: 12px;
+  background: linear-gradient(90deg, transparent, #5fe8ff, #ff67cc, #5fe8ff, transparent);
+  box-shadow:
+    0 0 16px rgba(95, 232, 255, 0.46),
+    0 0 10px rgba(255, 103, 204, 0.22);
+}
+
+.invModal.isSkins .invModalGrid {
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  gap: 16px 12px;
+  padding: 16px 8px 24px;
+}
+
+.invModal.isSkins .invOwnedCard.skinCard {
+  height: 168px;
+  padding: 12px 9px 11px;
+  border-radius: 12px;
+  border-color: rgba(150, 238, 255, 0.72);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 38%),
+    radial-gradient(circle at 50% 30%, rgba(95, 232, 255, 0.2), transparent 58%),
+    linear-gradient(180deg, rgba(20, 42, 86, 0.78), rgba(2, 7, 22, 0.72));
+  box-shadow:
+    inset 0 0 16px rgba(95, 232, 255, 0.14),
+    0 0 16px rgba(95, 232, 255, 0.12),
+    0 12px 22px rgba(0, 0, 0, 0.62);
+}
+
+.invModal.isSkins .invOwnedCard.skinCard.equipped {
+  border-color: rgba(118, 255, 214, 0.95);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 38%),
+    radial-gradient(circle at 44% 26%, rgba(118, 255, 214, 0.23), transparent 56%),
+    radial-gradient(circle at 76% 72%, rgba(255, 103, 204, 0.16), transparent 44%),
+    linear-gradient(180deg, rgba(16, 48, 82, 0.84), rgba(4, 10, 32, 0.76));
+  box-shadow:
+    inset 0 0 18px rgba(118, 255, 214, 0.18),
+    0 0 18px rgba(118, 255, 214, 0.24),
+    0 0 12px rgba(255, 103, 204, 0.14),
+    0 12px 22px rgba(0, 0, 0, 0.66);
+}
+
+.invModal.isSkins .invOwnedCard.skinCard.locked {
+  opacity: 0.5;
+  filter: grayscale(0.75) brightness(0.72);
+}
+
+.invModal.isSkins .invOwnedCard.skinCard .invOwnedIcon {
+  height: 78px;
+}
+
+.invModal.isSkins .invOwnedCard.skinCard .invOwnedIcon img {
+  width: 74px;
+  height: 74px;
+  border-radius: 12px;
+  border-color: rgba(122, 242, 255, 0.9);
+  box-shadow:
+    0 0 15px rgba(95, 232, 255, 0.24),
+    inset 0 0 10px rgba(255, 255, 255, 0.08),
+    0 10px 18px rgba(0, 0, 0, 0.58);
+}
+
+.invModal.isSkins .invOwnedCard.skinCard .invOwnedName {
+  height: 34px;
+  font-size: 10px;
+  line-height: 15px;
+  letter-spacing: 0.6px;
+  text-shadow:
+    0 0 8px rgba(95, 232, 255, 0.52),
+    0 2px 0 rgba(0, 0, 0, 0.9);
+}
+
+.invModal.isSkins .invOwnedCard.skinCard .EquipBtn {
+  width: 88%;
+  height: 28px;
+  border-radius: 8px;
+  color: #03101d;
+  background: linear-gradient(180deg, #ffffff 0%, #78efff 52%, #5bb7ff 100%);
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.72),
+    0 0 12px rgba(95, 232, 255, 0.26),
+    inset 0 2px 3px rgba(255, 255, 255, 0.8);
+}
+
+.invModal.isSkins .invOwnedCard.skinCard.equipped .EquipBtn {
+  color: #e0e0e0;
+  background: #6a6a6a;
+  border-color: #555;
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+  cursor: default;
+}
+
+.invModal.isSkins .invLockedDivider {
+  grid-column: 1 / -1;
+  width: min(300px, 92%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px auto 12px;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(190, 230, 255, 0.72);
+  text-shadow:
+    0 0 10px rgba(95, 232, 255, 0.38),
+    0 2px 0 rgba(0, 0, 0, 0.88);
+}
+
+.invModal.isSkins .invLockedDivider::before,
+.invModal.isSkins .invLockedDivider::after {
+  content: '';
+  flex: 1 1 58px;
+  min-width: 42px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(95, 232, 255, 0.76), rgba(255, 103, 204, 0.52), transparent);
+  box-shadow: 0 0 12px rgba(95, 232, 255, 0.32);
+}
+
+#skinPreview {
+  --rarity-a: 130, 232, 255;
+  --rarity-b: 118, 255, 214;
+  --rarity-c: 106, 157, 255;
+  inset: 72px 18px 18px;
+  bottom: auto;
+  height: auto;
+  max-height: min(540px, calc(100dvh - 104px));
+  margin: auto;
+  padding: 12px;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--rarity-a), 0.62);
+  background:
+    radial-gradient(circle at 18% 16%, rgba(var(--rarity-a), 0.18), transparent 38%),
+    radial-gradient(circle at 86% 22%, rgba(var(--rarity-b), 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(10, 20, 42, 0.96), rgba(2, 7, 20, 0.98));
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.76),
+    0 0 22px rgba(var(--rarity-a), 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#skinPreview.rarity-COMMON {
+  --rarity-a: 154, 215, 235;
+  --rarity-b: 112, 255, 214;
+  --rarity-c: 100, 154, 190;
+}
+
+#skinPreview.rarity-RARE {
+  --rarity-a: 76, 190, 255;
+  --rarity-b: 70, 255, 231;
+  --rarity-c: 36, 100, 255;
+}
+
+#skinPreview.rarity-EPIC {
+  --rarity-a: 205, 107, 255;
+  --rarity-b: 255, 91, 204;
+  --rarity-c: 102, 92, 255;
+}
+
+#skinPreview.rarity-LEGENDARY {
+  --rarity-a: 255, 88, 149;
+  --rarity-b: 107, 255, 220;
+  --rarity-c: 125, 105, 255;
+}
+
+#skinPreview::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 9px;
+  border: 1px solid rgba(var(--rarity-a), 0.16);
+  background:
+    linear-gradient(90deg, rgba(var(--rarity-a), 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(var(--rarity-b), 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+#skinPreview .skinPreviewName {
+  position: relative;
+  z-index: 1;
+  min-height: 28px;
+  padding: 0 44px;
+  font-size: 17px;
+  line-height: 26px;
+  letter-spacing: 5px;
+  color: #f8fdff;
+  text-shadow:
+    0 0 10px rgba(var(--rarity-a), 0.9),
+    0 0 18px rgba(var(--rarity-b), 0.35),
+    0 3px 0 rgba(0, 0, 0, 0.9);
+}
+
+#skinPreview .skinPreviewImgWrap {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 250px;
+  min-height: 0;
+  max-height: 250px;
+  border-radius: 12px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 45% 35%, rgba(var(--rarity-a), 0.2), transparent 42%),
+    radial-gradient(circle at 82% 70%, rgba(var(--rarity-b), 0.12), transparent 38%),
+    rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(var(--rarity-a), 0.42);
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.34),
+    0 0 20px rgba(var(--rarity-a), 0.12);
+}
+
+#skinPreview .skinPreviewImgWrap::after {
+  content: '';
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 22px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(var(--rarity-a), 0.28), transparent 70%);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+#skinPreviewImg {
+  max-width: 78%;
+  max-height: 78%;
+  filter:
+    drop-shadow(0 12px 18px rgba(0, 0, 0, 0.62))
+    drop-shadow(0 0 12px rgba(var(--rarity-a), 0.24));
+}
+
+#skinPreview .skinPreviewMeta {
+  position: relative;
+  z-index: 1;
+  gap: 8px;
+}
+
+#skinPreview .skinMetaRow {
+  min-height: 50px;
+  border-radius: 12px;
+  border-color: rgba(var(--rarity-a), 0.34);
+  background:
+    linear-gradient(90deg, rgba(var(--rarity-a), 0.1), transparent 54%, rgba(var(--rarity-b), 0.08)),
+    rgba(0, 0, 0, 0.28);
+}
+
+#skinPreview .rarityPill {
+  border-color: rgba(var(--rarity-a), 0.9);
+  color: rgb(var(--rarity-a));
+  background: rgba(0, 0, 0, 0.32);
+  box-shadow:
+    0 0 14px rgba(var(--rarity-a), 0.26),
+    inset 0 1px 2px rgba(255, 255, 255, 0.08);
+}
+
+#skinPreview .skinPreviewEquip {
+  position: relative;
+  z-index: 1;
+  height: 46px;
+  border-radius: 12px;
+  color: #06111f;
+  background: linear-gradient(180deg, #ffffff 0%, rgb(var(--rarity-a)) 48%, rgb(var(--rarity-c)) 100%);
+  box-shadow:
+    0 5px 0 rgba(0, 0, 0, 0.74),
+    0 0 16px rgba(var(--rarity-a), 0.24),
+    inset 0 2px 3px rgba(255, 255, 255, 0.76);
+}
+
+#skinPreview .skinPreviewEquip:disabled {
+  cursor: default;
+  opacity: 1;
+  color: rgba(235, 235, 235, 0.58);
+  background:
+    linear-gradient(180deg, #9a9a9a 0%, #686868 52%, #3f3f3f 100%);
+  border: 1px solid rgba(230, 230, 230, 0.18);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.42),
+    0 2px 0 rgba(0, 0, 0, 0.68);
+  filter: grayscale(0.45) saturate(0.55);
+  transform: none;
+  pointer-events: none;
+}
+
+#skinPreview.rarity-EPIC .skinPreviewEquip,
+#skinPreview.rarity-LEGENDARY .skinPreviewEquip {
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.72);
+}
+
+#skinPreview .skinPreviewClose {
+  top: 11px;
+  right: 11px;
+  border-radius: 12px;
+  border-color: rgba(var(--rarity-a), 0.34);
+  box-shadow:
+    0 8px 14px rgba(0, 0, 0, 0.58),
+    0 0 10px rgba(var(--rarity-a), 0.16);
+}
+
+/* ================= INVENTORY SECTION IMAGE ICONS ================= */
+.invIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: auto;
+}
+
+.invIcon {
+  overflow: hidden;
+  padding: 0;
+}
+
+/* ================= MOBILE INVENTORY POSITION ================= */
+@media (max-width: 520px), (max-height: 760px) {
+  #inventoryTitle {
+    top: calc(22px + var(--safe-t));
+  }
+
+  #inventoryScreen::after {
+    top: calc(86px + var(--safe-t));
+  }
+
+  .invWrap {
+    top: calc(94px + var(--safe-t));
+    bottom: calc(96px + var(--safe-b));
+    padding-bottom: calc(64px + var(--safe-b));
+  }
 }

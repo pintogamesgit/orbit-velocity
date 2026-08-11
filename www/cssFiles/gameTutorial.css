@@ -1,0 +1,272 @@
+.gameTutorialOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20000;
+  overflow: hidden;
+  color: #ecfbff;
+  font-family: 'Archivo Black', system-ui, sans-serif;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout paint style;
+}
+
+.gameTutorialOverlay.no-spotlight {
+  background: rgba(0, 3, 14, 0.84);
+}
+
+.gameTutorialOverlay.is-interactive {
+  pointer-events: none;
+}
+
+.gameTutorialCompactPrompt .gameTutorialCard {
+  pointer-events: none;
+}
+
+.gameTutorialCompactPrompt .gameTutorialActions,
+.gameTutorialCompactPrompt .gameTutorialActions button {
+  pointer-events: auto;
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialCard {
+  width: min(78%, 300px);
+  padding: 12px 14px 10px;
+  background: rgba(3, 10, 27, 0.97);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.5);
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialCard[data-placement='top'] {
+  top: 14px;
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialCard[data-placement='bottom'] {
+  bottom: 14px;
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialEyebrow {
+  margin-bottom: 4px;
+  font-size: 7px;
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialTitle {
+  font-size: 16px;
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialText {
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.38;
+}
+
+.gameTutorialOverlay.is-interactive .gameTutorialSpotlight {
+  background: rgba(38, 217, 255, 0.06);
+  box-shadow: 0 0 0 4px rgba(77, 232, 255, 0.14);
+  transition: none;
+}
+
+.gameTutorialSpotlight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  border: 2px solid rgba(77, 232, 255, 0.98);
+  border-radius: 18px;
+  box-sizing: border-box;
+  box-shadow:
+    0 0 0 9999px rgba(0, 3, 14, 0.82),
+    0 0 0 6px rgba(77, 232, 255, 0.13),
+    0 0 30px rgba(77, 232, 255, 0.72);
+  pointer-events: none;
+  will-change: transform;
+  transition: left 180ms ease, top 180ms ease, width 180ms ease, height 180ms ease;
+}
+
+.gameTutorialSpotlight.is-hidden {
+  display: none;
+}
+
+.gameTutorialTarget {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: 62px;
+  height: 62px;
+  border: 3px solid rgba(95, 239, 255, 0.96);
+  border-radius: 50%;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 4px rgba(72, 229, 255, 0.2);
+  will-change: transform;
+}
+
+.gameTutorialTarget span {
+  position: absolute;
+  inset: 10px;
+  border: 2px dashed rgba(210, 251, 255, 0.88);
+  border-radius: inherit;
+  animation: gameTutorialRingPulse 1.05s ease-in-out infinite;
+}
+
+.gameTutorialUpgradeTarget {
+  border-radius: 18px;
+}
+
+.gameTutorialHand {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 42px;
+  line-height: 1;
+  text-shadow: 0 2px 4px #000;
+  will-change: transform;
+}
+
+.gameTutorialHandIcon {
+  display: block;
+  animation: gameTutorialHandBob 0.95s ease-in-out infinite;
+  will-change: transform;
+}
+
+.gameTutorialTarget.is-hidden,
+.gameTutorialHand.is-hidden {
+  display: none;
+}
+
+.gameTutorialCard {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  width: min(84%, 330px);
+  max-height: calc(100% - 28px);
+  padding: 20px 19px 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  border: 1px solid rgba(83, 223, 255, 0.7);
+  border-radius: 22px 7px 22px 7px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(33, 190, 255, 0.22), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(155, 62, 255, 0.18), transparent 42%),
+    linear-gradient(155deg, rgba(10, 25, 53, 0.99), rgba(3, 8, 24, 0.995));
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.72), 0 0 25px rgba(32, 182, 255, 0.24);
+  text-align: start;
+  scrollbar-width: none;
+}
+
+.gameTutorialCard[data-placement='center'] {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gameTutorialCard[data-placement='middle'] {
+  top: 44%;
+  transform: translate(-50%, -50%);
+}
+
+.gameTutorialCard[data-placement='top'] {
+  top: max(14px, 10%);
+}
+
+.gameTutorialCard[data-placement='bottom'] {
+  bottom: max(20px, 10%);
+}
+
+.gameTutorialEyebrow {
+  margin-bottom: 8px;
+  color: rgba(105, 225, 255, 0.86);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.gameTutorialTitle {
+  margin: 0;
+  color: #f4fdff;
+  font-size: 20px;
+  line-height: 1.2;
+  text-shadow: 0 0 14px rgba(75, 214, 255, 0.3);
+}
+
+.gameTutorialText {
+  margin: 10px 0 15px;
+  color: rgba(222, 244, 251, 0.84);
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.gameTutorialProgress {
+  display: flex;
+  gap: 5px;
+  min-height: 6px;
+}
+
+.gameTutorialProgress span {
+  width: 5px;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(128, 196, 220, 0.28);
+}
+
+.gameTutorialProgress span.active {
+  width: 18px;
+  background: linear-gradient(90deg, #42e5ff, #9865ff);
+  box-shadow: 0 0 8px rgba(66, 229, 255, 0.58);
+}
+
+.gameTutorialActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.gameTutorialActions button {
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 1px solid rgba(137, 245, 255, 0.76);
+  border-radius: 10px 3px 10px 3px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.gameTutorialSkip {
+  color: rgba(215, 237, 244, 0.75);
+  border-color: rgba(147, 198, 218, 0.2) !important;
+  background: rgba(10, 20, 38, 0.78);
+}
+
+.gameTutorialNext {
+  color: #04141d;
+  background: linear-gradient(145deg, #d8fbff, #47ddff 55%, #786fff);
+  box-shadow: 0 4px 0 #075a77, 0 0 16px rgba(69, 220, 255, 0.3);
+}
+
+.gameTutorialActions button:active {
+  transform: translateY(2px);
+}
+
+@keyframes gameTutorialRingPulse {
+  50% { transform: scale(0.72); opacity: 0.48; }
+}
+
+@keyframes gameTutorialHandBob {
+  50% { transform: translate3d(-7px, -9px, 0) scale(0.94); }
+}
+
+@media (max-height: 620px) {
+  .gameTutorialCard { padding: 14px 16px 12px; }
+  .gameTutorialText { margin: 7px 0 10px; font-size: 12px; }
+  .gameTutorialActions { margin-top: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameTutorialSpotlight { transition: none; }
+  .gameTutorialTarget span,
+  .gameTutorialHandIcon { animation: none; }
+}
