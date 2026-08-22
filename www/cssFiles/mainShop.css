@@ -35,20 +35,12 @@
 }
 
 .shopSub {
-  position: absolute;
-  top: 65px;
-  margin-top: 6px;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(190, 235, 255, 0.9);
+  display: none;
 }
 
 #shopScroll {
   position: absolute;
-  top: 18%;
+  top: 15.5%;
   left: 0;
   right: 0;
   bottom: 140px;

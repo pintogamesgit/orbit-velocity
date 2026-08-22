@@ -853,3 +853,123 @@ img[loading='lazy'] {
       0 0 36px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.74) !important;
   }
 }
+
+/* Ultra-light map path for phones: keep the map usable without GPU-heavy glow layers. */
+@media (max-width: 700px), (pointer: coarse) {
+  @keyframes lightMapOpen {
+    from {
+      opacity: 0;
+      transform: translate3d(-50%, -49%, 0) scale(0.985);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(-50%, -50%, 0) scale(1);
+    }
+  }
+
+  @keyframes lightCurrentNodePulse {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    50% {
+      transform: translate3d(0, -2px, 0) scale(1.025);
+    }
+  }
+
+  #mapDiv {
+    background: linear-gradient(180deg, rgba(5, 17, 45, 0.98), rgba(1, 5, 18, 0.98)) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.72) !important;
+    transform: translate3d(-50%, -50%, 0) scale(0.985) !important;
+    transition:
+      transform 0.16s ease,
+      opacity 0.14s ease,
+      visibility 0.14s ease !important;
+    will-change: opacity, transform;
+  }
+
+  #mapDiv.open {
+    animation: lightMapOpen 0.18s ease-out both !important;
+    transform: translate3d(-50%, -50%, 0) scale(1) !important;
+  }
+
+  #mapDiv.closing {
+    transform: translate3d(-50%, -50%, 0) scale(1) !important;
+  }
+
+  #mapDiv::before,
+  #mapDiv::after,
+  #mapDiv #levelMapStars,
+  #mapDiv #levelsContainer::before,
+  #mapDiv #levelsContainer::after,
+  #mapDiv .levelNode::before,
+  #mapDiv .levelsBtn::before,
+  #mapDiv .levelsBtn::after {
+    animation: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  #mapDiv::before,
+  #mapDiv::after,
+  #mapDiv #levelMapStars,
+  #mapDiv #levelsContainer::before,
+  #mapDiv #levelsContainer::after {
+    display: none !important;
+  }
+
+  #mapDiv #mapTitle {
+    background: linear-gradient(180deg, rgba(6, 18, 46, 0.96), rgba(2, 7, 20, 0.9)) !important;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.42) !important;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.72) !important;
+  }
+
+  #mapDiv #mapTitle::before,
+  #mapDiv #mapTitle::after {
+    display: none !important;
+  }
+
+  #mapDiv #levelsContainer {
+    background: linear-gradient(180deg, rgba(2, 8, 24, 0.98), var(--map-deep)) !important;
+    contain: strict;
+  }
+
+  #mapDiv .levelNode::after,
+  #mapDiv .levelNode.current-node::after {
+    box-shadow: none !important;
+    opacity: 0.42 !important;
+  }
+
+  #mapDiv .levelsBtn,
+  #mapDiv .levelsBtn.current,
+  #mapDiv .levelNode.boss-node .levelsBtn,
+  #mapDiv .levelNode.final-level-node .levelsBtn,
+  #mapDiv .levelNode .levelsBtn.final-level-btn {
+    animation: none !important;
+    box-shadow:
+      0 8px 16px rgba(0, 0, 0, 0.48),
+      inset 0 -8px 14px rgba(0, 0, 0, 0.32) !important;
+    filter: none !important;
+    transform: none !important;
+    transition: transform 0.08s ease !important;
+    will-change: auto !important;
+  }
+
+  #mapDiv .levelsBtn:active {
+    transform: scale(0.96) !important;
+  }
+
+  #mapDiv.open .levelNode.current-node .levelsBtn,
+  #mapDiv.open .levelNode .levelsBtn.current {
+    animation: lightCurrentNodePulse 3.2s ease-in-out infinite !important;
+    box-shadow:
+      0 8px 16px rgba(0, 0, 0, 0.5),
+      0 0 12px rgba(var(--node-r, var(--map-r)), var(--node-g, var(--map-g)), var(--node-b, var(--map-b)), 0.34),
+      inset 0 -8px 14px rgba(0, 0, 0, 0.32) !important;
+    will-change: transform !important;
+  }
+}

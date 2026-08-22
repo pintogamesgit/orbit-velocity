@@ -1,4 +1,4 @@
-const ENEMY_SPAWN_TABLE = window.ENEMY_SPAWN_TABLE;
+﻿const ENEMY_SPAWN_TABLE = window.ENEMY_SPAWN_TABLE;
 
 document.addEventListener(
   'touchmove',
@@ -320,6 +320,8 @@ window.addEventListener('load', function () {
   let enemyExplosionSound = null;
   let upgradeSound = null;
   let uiClickSound = null;
+  let playerHitAudioCtx = null;
+  let lastPlayerHitSoundAt = 0;
   let gameButtonClicksBound = false;
 
   function loadImage(src) {
@@ -390,7 +392,7 @@ window.addEventListener('load', function () {
     const enabled = getMusicEnabled();
     const volume = getMusicVolume();
 
-    bgMusic.volume = volume / 100;
+    bgMusic.volume = (volume / 100) * gameMusicDuckScale;
 
     if (!enabled || volume === 0) {
       bgMusic.pause();
@@ -400,6 +402,39 @@ window.addEventListener('load', function () {
     if (musicStarted && bgMusic.paused) {
       bgMusic.play().catch(() => {});
     }
+  }
+
+  function tweenGameMusicDuck(targetScale, duration = 420) {
+    const startScale = gameMusicDuckScale;
+    const target = Math.max(0.12, Math.min(1, targetScale));
+    const startTime = performance.now();
+
+    if (gameMusicDuckRaf) cancelAnimationFrame(gameMusicDuckRaf);
+
+    const step = (time) => {
+      const progress = Math.min(1, (time - startTime) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      gameMusicDuckScale = startScale + (target - startScale) * eased;
+      applyGameMusicSettings();
+
+      if (progress < 1) {
+        gameMusicDuckRaf = requestAnimationFrame(step);
+      } else {
+        gameMusicDuckScale = target;
+        gameMusicDuckRaf = 0;
+        applyGameMusicSettings();
+      }
+    };
+
+    gameMusicDuckRaf = requestAnimationFrame(step);
+  }
+
+  function duckGameMusicForBossEntrance() {
+    tweenGameMusicDuck(0.28, 520);
+  }
+
+  function restoreGameMusicAfterBossEntrance() {
+    tweenGameMusicDuck(1, 720);
   }
   ('');
 
@@ -413,10 +448,7 @@ window.addEventListener('load', function () {
   function setupSounds() {
     enemyExplosionSound = createAudioPool(ASSETS.enemyExplosionSound, 10, 0.5);
     uiClickSound = createAudioPool(ASSETS.uiClickSound, 4, 0.8);
-    upgradeSound = createAudioPool(
-      './sounds/game/soundEffects/powerUp.wav',
-      3
-    );
+    upgradeSound = createAudioPool('./sounds/game/soundEffects/powerUp.wav', 3);
   }
 
   function playGameButtonClick() {
@@ -445,11 +477,144 @@ window.addEventListener('load', function () {
     enemyExplosionSound.play();
   }
 
+  function getPlayerHitAudioContext() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    if (!playerHitAudioCtx) {
+      playerHitAudioCtx = new AudioContextClass();
+    }
+
+    return playerHitAudioCtx;
+  }
+
+  function playPlayerHitSound() {
+    if (!getAudioEnabled() || getAudioVolume() === 0) return;
+
+    const nowMs = performance.now();
+    if (nowMs - lastPlayerHitSoundAt < 120) return;
+    lastPlayerHitSoundAt = nowMs;
+
+    const audioCtx = getPlayerHitAudioContext();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+
+    const now = audioCtx.currentTime;
+    const master = audioCtx.createGain();
+    const compressor = audioCtx.createDynamicsCompressor();
+    master.gain.setValueAtTime(getSfxVolume(0.62), now);
+    compressor.threshold.setValueAtTime(-22, now);
+    compressor.knee.setValueAtTime(16, now);
+    compressor.ratio.setValueAtTime(5, now);
+    compressor.attack.setValueAtTime(0.003, now);
+    compressor.release.setValueAtTime(0.13, now);
+    master.connect(compressor).connect(audioCtx.destination);
+
+    const pulse = (gain, start, peak, duration, attack = 0.006) => {
+      const t = now + start;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(peak, t + attack);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    };
+
+    const playTone = (
+      type,
+      from,
+      to,
+      start,
+      duration,
+      peak,
+      filterType = null,
+      filterFreq = 1200,
+      filterQ = 1
+    ) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      let target = gain;
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(from, now + start);
+      osc.frequency.exponentialRampToValueAtTime(
+        Math.max(20, to),
+        now + start + duration
+      );
+
+      if (filterType) {
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = filterType;
+        filter.frequency.setValueAtTime(filterFreq, now + start);
+        filter.Q.setValueAtTime(filterQ, now + start);
+        gain.connect(filter).connect(master);
+        target = filter;
+        window.setTimeout(() => target.disconnect(), 420);
+      } else {
+        gain.connect(master);
+      }
+
+      pulse(gain, start, peak, duration);
+      osc.connect(gain);
+      osc.start(now + start);
+      osc.stop(now + start + duration + 0.03);
+      window.setTimeout(() => osc.disconnect(), 420);
+      window.setTimeout(() => gain.disconnect(), 420);
+    };
+
+    const playNoise = (
+      start,
+      duration,
+      peak,
+      filterType,
+      filterFreq,
+      filterQ,
+      crackle = false
+    ) => {
+      const length = Math.max(1, Math.floor(audioCtx.sampleRate * duration));
+      const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let held = 0;
+
+      for (let i = 0; i < length; i++) {
+        const fade = Math.pow(1 - i / length, 1.6);
+        if (!crackle || i % 9 === 0) held = Math.random() * 2 - 1;
+        data[i] = held * fade;
+      }
+
+      const source = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const gain = audioCtx.createGain();
+      source.buffer = buffer;
+      filter.type = filterType;
+      filter.frequency.setValueAtTime(filterFreq, now + start);
+      filter.Q.setValueAtTime(filterQ, now + start);
+      pulse(gain, start, peak, duration, 0.003);
+      source.connect(filter).connect(gain).connect(master);
+      source.start(now + start);
+      source.stop(now + start + duration + 0.03);
+      window.setTimeout(() => {
+        source.disconnect();
+        filter.disconnect();
+        gain.disconnect();
+      }, 430);
+    };
+
+    playTone('sine', 118, 54, 0, 0.22, 0.32);
+    playTone('triangle', 420, 185, 0.012, 0.18, 0.2, 'bandpass', 760, 5.5);
+    playTone('square', 1800, 680, 0.018, 0.075, 0.09, 'highpass', 900, 0.8);
+    playNoise(0, 0.09, 0.28, 'highpass', 2600, 0.9, true);
+    playNoise(0.025, 0.18, 0.14, 'bandpass', 980, 4.8);
+
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+    window.setTimeout(() => {
+      master.disconnect();
+      compressor.disconnect();
+    }, 460);
+  }
+
   function startMusic() {
     if (!bgMusic || musicStarted) return;
     if (!getMusicEnabled() || getMusicVolume() === 0) return;
 
-    bgMusic.volume = getMusicVolume() / 100;
+    applyGameMusicSettings();
 
     bgMusic
       .play()
@@ -480,6 +645,8 @@ window.addEventListener('load', function () {
   let game = null;
   let bgMusic = null;
   let musicStarted = false;
+  let gameMusicDuckScale = 1;
+  let gameMusicDuckRaf = 0;
 
   async function preload() {
     const [bgImg, explosionImg] = await Promise.all([
@@ -1167,13 +1334,20 @@ window.addEventListener('load', function () {
   window.drawRoundedRect = drawRoundedRect;
   window.checkCollision = checkCollision;
 
+  function getPlayerWeaponDamage(player, baseDamage) {
+    const multiplier = Number.isFinite(player.damageMultiplier)
+      ? player.damageMultiplier
+      : 1;
+    return baseDamage * multiplier;
+  }
+
   const WEAPON_BEHAVIOR = {
     laser: {
       fireRate: 200,
       fire(player) {
         const centerX = player.x + player.width / 2;
         const y = player.y;
-        const damage = player.damage || 1;
+        const damage = getPlayerWeaponDamage(player, 1);
         const piercing = !!player.piercingShot;
 
         const p1 = new Projectile(player.game, centerX - 8, y);
@@ -1195,7 +1369,7 @@ window.addEventListener('load', function () {
       fire(player) {
         const centerX = player.x + player.width / 2;
         const y = player.y;
-        const damage = 5 + ((player.damage || 1) - 1);
+        const damage = getPlayerWeaponDamage(player, 5);
         const piercing = !!player.piercingShot;
         const spacing = 20;
 
@@ -1218,7 +1392,7 @@ window.addEventListener('load', function () {
       fire(player) {
         const centerX = player.x + player.width / 2;
         const y = player.y;
-        const damage = 5 + ((player.damage || 1) - 1);
+        const damage = getPlayerWeaponDamage(player, 5);
         const piercing = !!player.piercingShot;
 
         const t1 = new TriangleProjectile(player.game, centerX - 13, y);
@@ -1506,7 +1680,10 @@ window.addEventListener('load', function () {
         const layerCount =
           i === layerDefs.length - 1
             ? remaining
-            : Math.max(0, Math.min(remaining, Math.round(this.count * def.share)));
+            : Math.max(
+                0,
+                Math.min(remaining, Math.round(this.count * def.share))
+              );
         if (layerCount <= 0) continue;
         remaining -= layerCount;
         this.layers.push(this.createStarLayer(def, layerCount));
@@ -1525,7 +1702,10 @@ window.addEventListener('load', function () {
       layerCtx.globalCompositeOperation = 'screen';
 
       for (let i = 0; i < count; i++) {
-        const starDepth = Math.max(0, Math.min(1, def.depth + rand(-0.12, 0.12)));
+        const starDepth = Math.max(
+          0,
+          Math.min(1, def.depth + rand(-0.12, 0.12))
+        );
         const x = Math.random() * this.w;
         const y = Math.random() * layerHeight;
         const r = 0.55 + starDepth * 1.45 + Math.random() * 0.45;
@@ -1655,6 +1835,7 @@ window.addEventListener('load', function () {
       this.projectiles = [];
       this.lives = 3;
       this.damage = 1;
+      this.damageMultiplier = 1;
       this.moveBoost = 1;
       this.piercingShot = false;
       this.doubleShot = false;
@@ -2274,7 +2455,10 @@ window.addEventListener('load', function () {
       this.scoreGainPulse *= Math.pow(0.88, dt);
 
       const lives = Math.max(0, this.game.player.lives);
-      if (lives < this.prevLives) this.hurtPulse = 1;
+      if (lives < this.prevLives) {
+        this.hurtPulse = 1;
+        playPlayerHitSound();
+      }
       this.prevLives = lives;
       this.hurtPulse *= Math.pow(0.9, dt);
     }
@@ -2592,6 +2776,8 @@ window.addEventListener('load', function () {
       this.fireTrails = [];
       this.particles = [];
       this.shake = 0;
+      this.mindTintCanvas = document.createElement('canvas');
+      this.mindTintCtx = this.mindTintCanvas.getContext('2d');
 
       this.isBossRushLevel = this.level === 100 && !this.isInfinityWorld;
 
@@ -2613,6 +2799,9 @@ window.addEventListener('load', function () {
       this.currentBossRushIndex = 0;
       this.bossRushPendingSpawn = false;
       this.bossRushCleared = false;
+      this.bossEntranceMusicWaiting = false;
+      this.bossEntranceMusicDucked = false;
+      this.bossEntranceDarkness = 0;
       this.finalBossEntranceActive = false;
       this.finalBossEntranceTimer = 0;
       this.finalBossEntranceDuration = 5200;
@@ -2648,6 +2837,71 @@ window.addEventListener('load', function () {
       this.shakeDuration = duration;
       this.shakeTime = duration;
       this.shakeMagnitude = Math.max(this.shakeMagnitude, magnitude);
+    }
+
+    beginBossEntranceMusicDuck() {
+      if (this.bossEntranceMusicDucked) return;
+      this.bossEntranceMusicDucked = true;
+      this.bossEntranceMusicWaiting = true;
+      duckGameMusicForBossEntrance();
+    }
+
+    updateBossEntranceMusicDuck() {
+      if (!this.bossEntranceMusicWaiting) return;
+
+      const boss = this.enemies.find(
+        (enemy) => enemy?.isBoss && !enemy.markedForDeletion
+      );
+
+      if (!boss) {
+        if (!this.finalBossEntranceActive) {
+          this.bossEntranceMusicWaiting = false;
+          this.bossEntranceMusicDucked = false;
+          restoreGameMusicAfterBossEntrance();
+        }
+        return;
+      }
+
+      const bossSettled =
+        boss.entered === true ||
+        (Number.isFinite(boss.baseY) && boss.y >= boss.baseY - 1);
+
+      if (!bossSettled) return;
+
+      this.bossEntranceMusicWaiting = false;
+      this.bossEntranceMusicDucked = false;
+      restoreGameMusicAfterBossEntrance();
+    }
+
+    updateBossEntranceDarkness(deltaTime) {
+      const target = this.bossEntranceMusicDucked ? 1 : 0;
+      const speed = target > this.bossEntranceDarkness ? 0.012 : 0.006;
+      const ease = 1 - Math.pow(1 - speed, deltaTime);
+      this.bossEntranceDarkness += (target - this.bossEntranceDarkness) * ease;
+
+      if (this.bossEntranceDarkness < 0.01) this.bossEntranceDarkness = 0;
+      if (this.bossEntranceDarkness > 0.99) this.bossEntranceDarkness = 1;
+    }
+
+    drawBossEntranceDarkness(ctx) {
+      if (this.bossEntranceDarkness <= 0 || this.finalBossEntranceActive)
+        return;
+
+      const alpha = 0.58 * this.bossEntranceDarkness;
+      const cx = this.width / 2;
+      const cy = this.height * 0.26;
+
+      ctx.save();
+      const shade = ctx.createRadialGradient(cx, cy, 40, cx, cy, this.height);
+      shade.addColorStop(0, `rgba(33, 8, 48, ${alpha * 0.58})`);
+      shade.addColorStop(0.42, `rgba(4, 8, 24, ${alpha * 0.82})`);
+      shade.addColorStop(1, `rgba(0, 0, 0, ${alpha})`);
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, this.width, this.height);
+
+      ctx.fillStyle = `rgba(255, 35, 83, ${0.08 * this.bossEntranceDarkness})`;
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.restore();
     }
 
     addSuperCharge(amount = 1) {
@@ -2730,6 +2984,7 @@ window.addEventListener('load', function () {
       this.enemies.length = 0;
       this.enemies.push(new BossClass(this));
       this.ui.showBoss('BOSS INCOMING!');
+      this.beginBossEntranceMusicDuck();
       return true;
     }
 
@@ -2806,6 +3061,7 @@ window.addEventListener('load', function () {
       }
 
       this.ui.update(deltaTime);
+      this.updateBossEntranceDarkness(deltaTime);
       if (this.finalBossEntranceActive) {
         this.updateFinalBossEntrance(deltaTime);
         return;
@@ -2860,6 +3116,7 @@ window.addEventListener('load', function () {
         this.enemies[i].update(deltaTime);
       }
       compactArray(this.enemies);
+      this.updateBossEntranceMusicDuck();
 
       if (this.pet && this.pet.markedForDeletion) this.pet = null;
 
@@ -3369,7 +3626,7 @@ window.addEventListener('load', function () {
 
       // Characters occupy the main world layer.
       for (let i = 0; i < this.enemies.length; i++) {
-        this.enemies[i].draw(context);
+        this.drawEnemy(context, this.enemies[i]);
       }
 
       if (this.pet) this.pet.draw(context);
@@ -3436,6 +3693,8 @@ window.addEventListener('load', function () {
         context.restore();
       }
 
+      this.drawBossEntranceDarkness(context);
+
       // HUD layers do not shake and always stay above the battlefield.
       const boss4s = [];
       for (let i = 0; i < this.enemies.length; i++) {
@@ -3464,6 +3723,66 @@ window.addEventListener('load', function () {
           this.upgradeCards[i].draw(context);
         }
       }
+    }
+
+    drawEnemy(context, enemy) {
+      if (!enemy?.mindControlled || !this.mindTintCtx) {
+        enemy.draw(context);
+        return;
+      }
+
+      const pad = 18;
+      const w = Math.ceil(enemy.width + pad * 2);
+      const h = Math.ceil(enemy.height + pad * 2);
+      const tintCanvas = this.mindTintCanvas;
+      const tintCtx = this.mindTintCtx;
+
+      if (tintCanvas.width < w) tintCanvas.width = w;
+      if (tintCanvas.height < h) tintCanvas.height = h;
+
+      tintCtx.clearRect(0, 0, w, h);
+      tintCtx.save();
+      tintCtx.translate(-enemy.x + pad, -enemy.y + pad);
+      enemy.draw(tintCtx);
+      tintCtx.restore();
+
+      tintCtx.save();
+      tintCtx.globalCompositeOperation = 'source-atop';
+      tintCtx.globalAlpha = 0.62;
+      tintCtx.fillStyle = '#a100ff';
+      tintCtx.fillRect(0, 0, w, h);
+      tintCtx.restore();
+
+      context.save();
+      context.globalCompositeOperation = 'lighter';
+      context.globalAlpha = 0.34;
+      context.shadowColor = '#b14cff';
+      context.shadowBlur = 16;
+      context.fillStyle = 'rgba(177, 76, 255, 0.32)';
+      context.beginPath();
+      context.ellipse(
+        enemy.x + enemy.width / 2,
+        enemy.y + enemy.height / 2,
+        enemy.width * 0.56,
+        enemy.height * 0.56,
+        0,
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+      context.restore();
+
+      context.drawImage(
+        tintCanvas,
+        0,
+        0,
+        w,
+        h,
+        enemy.x - pad,
+        enemy.y - pad,
+        w,
+        h
+      );
     }
 
     getEnemyBulletRect(bullet) {
@@ -3760,7 +4079,9 @@ window.addEventListener('load', function () {
           }
           break;
         case 'damageUp':
-          this.player.damage = (this.player.damage || 1) + 1;
+          this.player.damageMultiplier =
+            (this.player.damageMultiplier || 1) * 1.5;
+          this.player.damage = this.player.damageMultiplier;
           break;
 
         case 'speedBoost':
@@ -3842,6 +4163,7 @@ window.addEventListener('load', function () {
       this.enemyMines = [];
       this.player.projectiles.forEach((p) => (p.markedForDeletion = true));
       this.mouse.pressed = false;
+      this.beginBossEntranceMusicDuck();
       this.triggerShake(1600, 18);
     }
 
@@ -4530,7 +4852,10 @@ window.addEventListener('load', function () {
       perfWindowTime = 0;
       perfWindowFrames = 0;
 
-      if (fps < 48 && renderQualityScale > GAME_PERFORMANCE_PROFILE.minRenderScale) {
+      if (
+        fps < 48 &&
+        renderQualityScale > GAME_PERFORMANCE_PROFILE.minRenderScale
+      ) {
         perfLowWindows++;
         if (perfLowWindows >= 2) {
           renderQualityScale = Math.max(
@@ -4543,7 +4868,10 @@ window.addEventListener('load', function () {
         return;
       }
 
-      if (fps > 57 && renderQualityScale < GAME_PERFORMANCE_PROFILE.renderScale) {
+      if (
+        fps > 57 &&
+        renderQualityScale < GAME_PERFORMANCE_PROFILE.renderScale
+      ) {
         perfLowWindows = 0;
         renderQualityScale = Math.min(
           GAME_PERFORMANCE_PROFILE.renderScale,

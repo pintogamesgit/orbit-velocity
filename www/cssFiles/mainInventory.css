@@ -2291,12 +2291,20 @@
   position: static;
   transform: none;
   margin-top: auto;
+  width: 72px;
+  max-width: 100%;
   height: 28px;
-  padding: 0 12px;
+  padding: 0 6px;
   border-radius: 999px;
   border: 1px solid rgba(220, 200, 255, 0.85);
   background: linear-gradient(180deg, #e7d0ff, #8a55ff);
   color: #0b0f1d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
   box-shadow:
     0 3px 0 rgba(0, 0, 0, 0.65),
     0 10px 16px rgba(0, 0, 0, 0.55),
@@ -2347,7 +2355,7 @@
   pointer-events: none;
   cursor: default;
 
-  transform: translateX(-32%);
+  transform: none;
   animation: petActiveGradient 3.5s ease infinite;
 }
 
@@ -3219,6 +3227,51 @@
 #inventoryScreen #weaponPreview.hidden,
 #inventoryScreen #superPreview.hidden {
   display: none;
+}
+
+/* Keep pet inventory action buttons centered, regardless of EQUIP/EQUIPPED text width. */
+.invModal.isPets .invModalBox {
+  height: auto;
+  min-height: 0;
+  max-height: min(420px, calc(100dvh - 70px));
+}
+
+.invModal.isPets .invModalGrid {
+  flex: 0 1 auto;
+  max-height: 324px;
+}
+
+.invModal.isPets .invOwnedCard {
+  padding-bottom: 42px;
+}
+
+.invModal.isPets .EquipBtn,
+.invModal.isPets .invOwnedCard.equipped .EquipBtn {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  bottom: 10px;
+  width: min(84px, calc(100% - 16px));
+  max-width: calc(100% - 16px);
+  height: 28px;
+  margin: 0;
+  padding: 0 4px;
+  transform: translateX(-50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.7px;
+}
+
+.invModal.isPets .EquipBtn:active {
+  transform: translateX(-50%) translateY(2px);
 }
 
 #inventoryScreen #skinPreviewClose,

@@ -2160,3 +2160,271 @@
   letter-spacing: normal;
   text-transform: none;
 }
+
+/* ================= SUPER SHOP REDESIGN ================= */
+#superShopDiv {
+  width: min(350px, calc(100vw - 36px));
+  height: min(600px, calc(100dvh - 118px));
+  padding: 18px 16px 20px;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-direction: column;
+
+  background-image:
+    linear-gradient(180deg, rgba(3, 10, 27, 0.18), rgba(3, 7, 19, 0.34)),
+    url('../images/backgroundImages/divsBackgroundIMAGES/superDivImage.png');
+  background-size:
+    cover,
+    cover;
+  background-position:
+    center,
+    center;
+  background-repeat: no-repeat;
+
+  border-radius: 18px;
+  border: 1px solid rgba(110, 230, 255, 0.76);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 24px rgba(77, 213, 255, 0.34),
+    0 22px 46px rgba(0, 0, 0, 0.76);
+}
+
+#superShopDiv::before {
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 12, 31, 0.72), rgba(3, 7, 18, 0.62)),
+    radial-gradient(circle at 50% 12%, rgba(95, 222, 255, 0.2), transparent 44%);
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+#superShopDiv::after {
+  inset: 10px;
+  z-index: 0;
+  border-radius: 13px;
+  border: 1px solid rgba(110, 230, 255, 0.2);
+  background:
+    linear-gradient(90deg, rgba(110, 230, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(110, 230, 255, 0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+  filter: none;
+  opacity: 0.8;
+  transform: none;
+  animation: none;
+}
+
+#superShopDiv .superShopHeader,
+#superShopDiv .superShopBody {
+  position: relative;
+  z-index: 1;
+}
+
+#superShopDiv .superShopHeader {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+#superShopDiv .superTitle {
+  position: static;
+  transform: none;
+  margin: 0;
+  color: #f2fbff;
+  font-size: 30px;
+  letter-spacing: 4px;
+  text-shadow:
+    0 0 12px rgba(103, 225, 255, 0.86),
+    0 3px 0 rgba(0, 0, 0, 0.86);
+}
+
+#superShopDiv .superTitle::after {
+  content: '';
+  display: block;
+  width: 124px;
+  height: 2px;
+  margin: 9px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #7beaff, #ff5fd7, transparent);
+  box-shadow: 0 0 12px rgba(123, 234, 255, 0.58);
+}
+
+#superShopDiv .closeSuperShopDiv {
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 132, 157, 0.76);
+  background:
+    radial-gradient(circle at 36% 26%, rgba(255, 255, 255, 0.35), transparent 34%),
+    linear-gradient(180deg, #ff566f, #6f101e);
+  color: #fff5f6;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.56),
+    0 0 12px rgba(255, 67, 108, 0.34),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.34);
+}
+
+#superShopDiv .superShopBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+#superShopDiv .superButtonsRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  align-content: center;
+  justify-items: center;
+}
+
+#superShopDiv .superCard {
+  width: min(260px, 100%);
+  height: 146px;
+  padding: 12px 12px 46px;
+  border-radius: 16px;
+  border: 1px solid rgba(127, 232, 255, 0.46);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 34%),
+    rgba(4, 12, 28, 0.58);
+  box-shadow:
+    0 14px 24px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#superShopDiv .superCard::before {
+  inset: auto 18px 42px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(127, 232, 255, 0.65), transparent);
+  filter: none;
+  opacity: 1;
+}
+
+#superShopDiv .superCard::after {
+  inset: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent);
+  box-shadow: none;
+}
+
+#superShopDiv .selectSuperBtn {
+  position: relative;
+  width: 100%;
+  height: 82px;
+  border-radius: 12px;
+  border: 1px solid rgba(127, 232, 255, 0.7);
+  box-shadow:
+    0 8px 14px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+#superShopDiv .selectSuperBtn::before {
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+}
+
+#superShopDiv .superEquipBtn {
+  bottom: 10px;
+  width: 132px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 235, 255, 0.72);
+  color: #04121e;
+  background: linear-gradient(180deg, #f8feff, #79e8ff 52%, #1f7bff);
+  box-shadow:
+    0 4px 0 rgba(7, 50, 106, 0.86),
+    0 8px 14px rgba(0, 0, 0, 0.5),
+    0 0 14px rgba(95, 222, 255, 0.34);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#superShopDiv .superEquipBtn .check {
+  right: 7px;
+}
+
+#superShopDiv .superEquipBtn.equipped {
+  padding: 0 30px 0 10px;
+  color: #f5fbff;
+  background: linear-gradient(180deg, #53257e, #24103f);
+  border-color: rgba(255, 120, 230, 0.74);
+  box-shadow:
+    0 2px 0 rgba(29, 10, 52, 0.9),
+    0 0 16px rgba(255, 95, 215, 0.32),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+#superShopDiv .superEquipBtn.buy {
+  color: #04180d;
+  background: linear-gradient(180deg, #baffd0, #40ee85 52%, #159c54);
+  border-color: rgba(130, 255, 180, 0.7);
+  box-shadow:
+    0 4px 0 rgba(12, 98, 50, 0.9),
+    0 8px 14px rgba(0, 0, 0, 0.5),
+    0 0 14px rgba(64, 238, 133, 0.34);
+}
+
+#superShopDiv .superInfoPanel {
+  width: 100%;
+  min-height: 0;
+  pointer-events: none;
+}
+
+#superShopDiv .superInfoDiv {
+  top: 94px;
+  width: min(300px, calc(100% - 22px));
+  height: auto;
+  min-height: 300px;
+  padding: 46px 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(127, 232, 255, 0.66);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(127, 232, 255, 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(7, 18, 44, 0.97), rgba(3, 7, 19, 0.98));
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.72),
+    0 0 22px rgba(95, 222, 255, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#superShopDiv .superInfoHeader {
+  color: #f2fbff;
+  text-shadow:
+    0 0 10px rgba(127, 232, 255, 0.72),
+    0 2px 0 rgba(0, 0, 0, 0.82);
+}
+
+#superShopDiv .superInfoDesc {
+  color: rgba(232, 247, 255, 0.92);
+}
+
+#superShopDiv .statRow {
+  border-color: rgba(127, 232, 255, 0.26);
+  background: rgba(0, 0, 0, 0.34);
+}
+
+#superShopDiv .statLabel {
+  color: rgba(180, 238, 255, 0.92);
+}
+
+#superShopDiv .statValue {
+  color: #ff7be6;
+}

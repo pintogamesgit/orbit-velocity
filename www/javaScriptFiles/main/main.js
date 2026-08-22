@@ -1,6 +1,7 @@
 let currentPageIndex = 2;
 let swipeStartX = 0;
 let swipeStartY = 0;
+let swipeStartTime = 0;
 let swipeTracking = false;
 let suppressClickUntil = 0;
 let isPageTransitioning = false;
@@ -69,11 +70,13 @@ function startMainInputWarmupIfNeeded() {
 startMainInputWarmupIfNeeded();
 
 const SWIPE_MIN_DISTANCE = {
-  touch: 34,
-  pen: 34,
-  mouse: 36,
+  touch: 22,
+  pen: 22,
+  mouse: 34,
 };
-const SWIPE_AXIS_BIAS = 1.25;
+const SWIPE_FLICK_DISTANCE = 14;
+const SWIPE_FLICK_VELOCITY = 0.28;
+const SWIPE_AXIS_BIAS = 1.08;
 const SWIPE_SUPPRESS_CLICK_MS = 420;
 const WHEEL_PAGE_THRESHOLD = 42;
 let wheelPageDelta = 0;
@@ -968,6 +971,11 @@ function bindMusicLoopVisibility() {
   });
 }
 
+function makeBuyConfirmGlobal() {
+  if (!DOM.buySuperConfirm || DOM.buySuperConfirm.parentElement === document.body) return;
+  document.body.appendChild(DOM.buySuperConfirm);
+}
+
 function closeAll() {
   UI.profile()?.classList.remove('show', 'open');
   UI.weapon()?.classList.remove('open');
@@ -1547,7 +1555,7 @@ function closeMap(e) {
     activeMapThemeClass = '';
     clearVisibleLevelNodes();
     mapClosingTimer = 0;
-  }, 1000);
+  }, 180);
 }
 
 function playStartGameAnimation() {
@@ -2644,31 +2652,40 @@ function getPageWheelDirection(e, dominantDelta) {
 function shouldIgnoreSwipeStart(target) {
   if (target.closest('.bottomButton[data-target]')) return true;
 
-  const scrollable = target.closest(
-    '#shopScroll, #levelsContainer, .invWrap, .invModalGrid, .cardsRow, [data-no-page-wheel], [data-no-page-swipe]'
-  );
-
   if (
-    scrollable &&
-    (scrollable.scrollHeight > scrollable.clientHeight ||
-      scrollable.scrollWidth > scrollable.clientWidth)
+    target.closest(
+      '#mapDiv, #weaponDiv, #buyWeaponPopup, #settingsDiv, #performanceDiv, #profileSettingsDiv, #socialDiv, #superShopDiv, #buySuperConfirm, #invModal, #shopModal, #petInfoOverlay, #petShoopDiv, input, textarea, select, [data-no-page-swipe]'
+    )
   ) {
     return true;
   }
 
-  return !!target.closest(
-    '#mapDiv, #weaponDiv, #buyWeaponPopup, #settingsDiv, #performanceDiv, #profileSettingsDiv, #socialDiv, #superShopDiv, #buySuperConfirm, #invModal, #shopModal, #petInfoOverlay, #petShoopDiv, input, textarea, select'
+  const horizontalScrollable = target.closest(
+    '.cardsRow, [data-no-page-wheel]'
   );
+
+  if (
+    horizontalScrollable &&
+    horizontalScrollable.scrollWidth > horizontalScrollable.clientWidth
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function getSwipeMinDistance(pointerType) {
   return SWIPE_MIN_DISTANCE[pointerType] || SWIPE_MIN_DISTANCE.touch;
 }
 
-function isSwipeReady(absX, absY, pointerType) {
+function isSwipeReady(absX, absY, pointerType, elapsedMs = 0) {
+  const horizontalEnough = absX >= Math.max(8, absY * SWIPE_AXIS_BIAS);
+  const velocity = elapsedMs > 0 ? absX / elapsedMs : 0;
+
   return (
-    absX >= getSwipeMinDistance(pointerType) &&
-    absX >= Math.max(10, absY * SWIPE_AXIS_BIAS)
+    horizontalEnough &&
+    (absX >= getSwipeMinDistance(pointerType) ||
+      (absX >= SWIPE_FLICK_DISTANCE && velocity >= SWIPE_FLICK_VELOCITY))
   );
 }
 
@@ -2707,6 +2724,7 @@ function bindSwipeNavigation() {
     pointerId = e.pointerId;
     swipeStartX = e.clientX;
     swipeStartY = e.clientY;
+    swipeStartTime = performance.now();
     swipeConsumed = false;
     swipeAxis = null;
 
@@ -2727,7 +2745,7 @@ function bindSwipeNavigation() {
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    if (!swipeAxis && Math.max(absX, absY) >= 12) {
+    if (!swipeAxis && Math.max(absX, absY) >= 8) {
       if (absX >= absY * SWIPE_AXIS_BIAS) {
         swipeAxis = 'x';
       } else if (absY >= absX * SWIPE_AXIS_BIAS) {
@@ -2737,7 +2755,8 @@ function bindSwipeNavigation() {
 
     if (swipeAxis === 'y') return;
 
-    if (isSwipeReady(absX, absY, pointerType)) {
+    const elapsedMs = performance.now() - swipeStartTime;
+    if (isSwipeReady(absX, absY, pointerType, elapsedMs)) {
       swipeConsumed = true;
       suppressClickUntil = Date.now() + SWIPE_SUPPRESS_CLICK_MS;
       e.preventDefault();
@@ -2760,7 +2779,8 @@ function bindSwipeNavigation() {
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    if (!isSwipeReady(absX, absY, pointerType)) {
+    const elapsedMs = performance.now() - swipeStartTime;
+    if (!isSwipeReady(absX, absY, pointerType, elapsedMs)) {
       if (screenEl.releasePointerCapture && pointerId !== null) {
         try {
           screenEl.releasePointerCapture(pointerId);
@@ -2769,6 +2789,7 @@ function bindSwipeNavigation() {
 
       pointerType = '';
       pointerId = null;
+      swipeStartTime = 0;
       swipeConsumed = false;
       swipeAxis = null;
       return;
@@ -2789,6 +2810,7 @@ function bindSwipeNavigation() {
 
     pointerType = '';
     pointerId = null;
+    swipeStartTime = 0;
     swipeConsumed = false;
     swipeAxis = null;
   });
@@ -2804,6 +2826,7 @@ function bindSwipeNavigation() {
     swipeTracking = false;
     pointerType = '';
     pointerId = null;
+    swipeStartTime = 0;
     swipeConsumed = false;
     swipeAxis = null;
   });
@@ -2820,6 +2843,7 @@ function bindSwipeNavigation() {
       swipeTracking = false;
       pointerType = '';
       pointerId = null;
+      swipeStartTime = 0;
       swipeConsumed = false;
       swipeAxis = null;
     }
@@ -3172,6 +3196,7 @@ function bindEvents() {
 
 function init() {
   cacheDom();
+  makeBuyConfirmGlobal();
   bindMusicLoopVisibility();
   document.body.classList.remove('benchmark-result-open', 'performance-panel-open');
   loadSettings();
