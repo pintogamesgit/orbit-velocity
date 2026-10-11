@@ -19,19 +19,21 @@
 <main>
   <p><a href="./main.html">Back to game / חזרה למשחק</a></p>
   <h1>ORBIT VELOCITY Privacy Policy</h1>
-  <p class="meta">Last updated: September 24, 2026</p>
-  <p class="meta">Applies to Android version 1.1 (version code 2).</p>
+  <p class="meta">Last updated: October 11, 2026</p>
+  <p class="meta">Applies to Android version 1.1.10 (version code 18).</p>
   <p>This policy explains how ORBIT VELOCITY (Android package <code>com.orbitvelocity.game</code>) handles information. For privacy questions or requests, contact <a href="mailto:orbit.velocity.games@gmail.com">orbit.velocity.games@gmail.com</a>.</p>
+  <p><a href="#delete-data">Delete ORBIT VELOCITY data or request deletion</a></p>
 
   <h2>Information stored on your device</h2>
   <p>The game saves progress, coins, unlocked levels, owned and equipped items, tutorial status, language, sound settings, and performance preferences on your device. It also stores local performance measurements, a first-use timestamp, and advertising frequency information. These records help the game remember your progress, adjust performance, and manage ad breaks.</p>
+  <p>To display device information and adjust graphics performance, the game reads technical details such as device manufacturer and model, Android version, processor architecture and core count, memory, and graphics renderer. It stores a local performance profile. Cloud synchronization also uses a randomly generated local installation identifier, synchronization timestamps, and a summary of the last confirmed cloud save to distinguish a restored Android backup from current progress. These local technical records are not included in the game's cloud-save payload.</p>
   <p>The current release does not upload these local game records to a developer-operated server. Android backup and restore may preserve app data depending on your device and backup settings.</p>
 
   <h2>Age groups and children</h2>
-  <p>The game is intended for ages 5 and up, including children. Before using advertising services, it asks for an age group without a preselected answer. Only the age group is saved locally; we do not request a birth date. This release does not initialize advertising or request ads for anyone under 18 or whose age is unknown. Social links and Google Play Games sign-in are also disabled for those users. A parent or guardian can contact us about a child's information.</p>
+  <p>The game is intended for ages 5 and up, including children. Before using advertising services, it restores your saved age group or asks for an age group without a preselected answer. We do not request a birth date. Your selected age group is stored on your device and, when connected to Google Play Games, in your account's cloud save so it can be restored on another device or after clearing app data. This release does not initialize advertising or request ads for anyone under 18 or whose age is unknown. Social links are also disabled for those users. Optional Google Play Games connection is available to every age group, subject to Google's account eligibility and parental controls. The game can be played without connecting to Play Games. A parent or guardian can contact us about a child's information.</p>
 
   <h2>Advertising for adults</h2>
-  <p>For users who select 18 and over, the game uses Google AdMob for interstitial and rewarded advertising. Google's advertising SDK collects and shares IP addresses, interaction information such as ad views and taps, diagnostic and performance information, and device or account identifiers, including advertising identifiers where available. IP addresses may be used to estimate approximate location. Google uses this information to provide and measure advertising and to detect fraud.</p>
+  <p>For users who select 18 and over, the game uses Google AdMob for interstitial and rewarded advertising. All ad requests use child-directed treatment, a maximum ad content rating of G (general audiences), and non-personalized ads. Child-directed treatment disables interest-based advertising and remarketing and prevents transmission of the Android advertising identifier by the Google Mobile Ads SDK. Google's advertising SDK still collects and shares information such as IP addresses, ad views and taps, and diagnostic and performance information. IP addresses may be used to estimate approximate location. Google uses this information to provide and measure advertising and to detect fraud.</p>
   <p>Advertising data handling depends on consent, device settings, and Google's services. The game requests advertising consent information and displays a consent form when applicable. A Privacy options control appears in settings when Google's consent service requires it. You can also manage advertising identifiers through your Android settings.</p>
   <p>See <a href="https://policies.google.com/privacy">Google's Privacy Policy</a> and <a href="https://developers.google.com/admob/android/privacy/play-data-disclosure">Google Mobile Ads data disclosures</a>.</p>
 
@@ -39,14 +41,31 @@
   <p>Fonts are bundled with the game and do not require requests to Google Fonts. For adult users, the game includes links to social platforms. Opening those links is optional, and those services handle information under their own privacy policies.</p>
 
   <h2>Accounts and cloud saves</h2>
-  <p>The current release does not provide a separate developer-managed account system. Google Play Games sign-in and cloud saving are not enabled in this release. Progress is stored locally as described above. This policy will be updated if account or cloud features are enabled.</p>
+  <p>The game does not provide a separate developer-managed account system. It uses Google Play Games for optional platform authentication and cloud saves. Google may automatically authenticate an existing Play Games profile according to your account settings. Players without a profile can continue as guests without an automatic profile-creation prompt, or choose the Connect Play Games button. If connection is unavailable or declined, local gameplay remains available.</p>
+  <p>When connected, the game accesses your Play Games player ID and display name, and sends progress (coins, unlocked levels, owned and equipped items, tutorial completion, daily rewards, the date of a shop advertising reward, first-use timestamp, and save timestamps), language and sound preferences, and your selected age group to Google's Saved Games service to restore them across devices. Google Play Games also processes service activity and diagnostic data as described in <a href="https://developer.android.com/games/pgs/data-collection">Google's Play Games data disclosures</a>.</p>
 
   <h2>Contacting us</h2>
   <p>If you email us, we receive your email address and the information you choose to include. We use that information to answer your request and provide support. Email is processed through our email provider, Google. Please do not send passwords or other unnecessary sensitive information.</p>
 
-  <h2>Retention and deletion</h2>
+  <h2 id="delete-data">Delete ORBIT VELOCITY data</h2>
+  <p>You can delete game data without deleting your entire Google account. Local records, cloud saves, and support emails are stored separately; follow the steps below for the data you want to remove.</p>
+  <h3>Delete data stored on your device</h3>
+  <p>Close the game. In Android Settings, open Apps, select ORBIT VELOCITY, then open Storage (or Storage &amp; cache) and choose Clear storage / Clear data. Menu names vary by device. This removes local progress, coins, unlocked levels, owned and equipped items, preferences, age group, and local performance and advertising records.</p>
   <p>Local game records remain until you clear the app's storage or remove the app, subject to Android backup and restore. Clearing storage can permanently remove progress and items. Backups may need to be managed separately in your device or Google account settings.</p>
+  <h3>Delete Google Play Games data and cloud progress</h3>
+  <ol>
+    <li>Close ORBIT VELOCITY on all devices where you play.</li>
+    <li>Open <a href="https://play.google.com/games/profile">your Google Play Games profile</a> in a browser using the Google account connected to the game.</li>
+    <li>Open Your Data, then Delete Play Games Account &amp; Data.</li>
+    <li>Under Delete individual game data, find ORBIT VELOCITY and choose Delete. You do not need to delete your entire Play Games profile.</li>
+  </ol>
+  <p>See <a href="https://support.google.com/googleplay/answer/9130646?hl=en">Google's current deletion instructions</a> for the browser and Android options. This is the deletion route for game data held by Play Games, including saved progress and the preferences and age group included in the cloud save. Removing the app alone does not delete cloud saves. Clear local storage on your devices before reopening the game to avoid uploading old local progress again. Restored Android backups may also bring back local records.</p>
+  <h3>Request deletion of support correspondence</h3>
+  <p>Email <a href="mailto:orbit.velocity.games@gmail.com?subject=ORBIT%20VELOCITY%20data%20deletion%20request">orbit.velocity.games@gmail.com</a> with the subject <strong>ORBIT VELOCITY data deletion request</strong>. Send the request from the address you used to contact us and identify the correspondence you want deleted. We may ask for enough information to verify the request. Do not send passwords or authentication codes. A parent or guardian can contact us for help with a child's data.</p>
+  <p>This request covers support messages and the associated email address held by us. We cannot clear your device remotely or delete your Google account; use the steps above for local and Play Games data. Contact us at the same address if you need help following those steps.</p>
+  <h3>Retention and data that may remain</h3>
   <p>Support correspondence is retained while needed to handle your request and related follow-up. You can request deletion of correspondence we hold by emailing the contact address above. Some records may need to be retained to meet applicable legal obligations or resolve disputes.</p>
+  <p>There is no automatic 90-day deletion schedule for game data. Local records remain until cleared, and cloud records are managed through Google. If we must retain support records after a deletion request, we will explain the reason and applicable retention period in our response.</p>
   <p>Google controls retention of information processed by its services under its policies. Removing the game does not automatically delete information already held by Google. You can use Google's privacy and account controls, including <a href="https://myaccount.google.com/data-and-privacy">Google Account data and privacy settings</a>, to manage that information.</p>
 
   <h2>Security and your choices</h2>

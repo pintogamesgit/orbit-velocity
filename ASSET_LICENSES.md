@@ -184,3 +184,7 @@ Sound credits:
 
 For `CC0` assets, credit is not required, but keeping the source in this file is
 still recommended.
+
+## Bundled Google Fonts
+
+Alfa Slab One, Archivo Black, Bungee, Orbitron, and Rubik are bundled under the SIL Open Font License 1.1. Original license and copyright notices are in `www/fonts/*-OFL.txt`. Sources: https://github.com/google/fonts/tree/main/ofl (family directories). Font binaries were downloaded through the Google Fonts CSS API on 2026-09-24.

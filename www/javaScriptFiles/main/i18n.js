@@ -1500,6 +1500,7 @@ function applyLanguage(lang) {
 
   shopOnEnter?.();
   invRerenderIfOpen?.();
+  window.OrbitVelocityCloud?.refreshUi();
 }
 
 const LANGUAGE_NAMES = {
@@ -1652,6 +1653,11 @@ function initLanguageUI() {
       if (!confirmed) return;
 
       localStorage.setItem('language', nextLang);
+      window.OrbitVelocityCloud?.markDirty?.();
+      await Promise.race([
+        window.OrbitVelocityCloud?.saveNow?.(),
+        new Promise(resolve => window.setTimeout(resolve, 2500)),
+      ]);
       window.location.href = `loadingScreen.html?to=${encodeURIComponent('main.html')}&language=1`;
     });
   });

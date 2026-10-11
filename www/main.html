@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="./cssFiles/lobbyTutorial.css">
   <link rel="stylesheet" href="./cssFiles/performance.css">
   <script defer src="./javaScriptFiles/main/i18n.js"></script>
+  <link rel="stylesheet" href="./cssFiles/audience.css">
+  <script src="./javaScriptFiles/audience.js"></script>
   <script defer src="./javaScriptFiles/ads.js"></script>
   <script defer src="./javaScriptFiles/playGamesConfig.js"></script>
   <script defer src="./javaScriptFiles/playGames.js"></script>
@@ -22,12 +24,7 @@
   <script defer src="./javaScriptFiles/main/mainInventory.js"></script>
   <script defer src="./javaScriptFiles/main/mainShop.js"></script>
   <script defer src="./javaScriptFiles/main/lobbyTutorial.js"></script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bungee&family=Orbitron:wght@600;700;800;900&family=Rubik:wght@500;700;800;900&display=swap"
-    rel="stylesheet">
+  <link rel="stylesheet" href="./cssFiles/fonts.css">
 </head>
 
 <body data-title-i18n="main.title">
@@ -50,6 +47,9 @@
                 id="playGamesPlayerName">Guest</span></span>
             <span class="profileLine"><strong data-i18n="profile.daysPlayed">Days Played:</strong> <span
                 id="accountDaysPlayed">1</span></span>
+            <span id="playGamesConnectionStatus" role="status" aria-live="polite"></span>
+            <span id="playGamesCloudStatus" role="status" aria-live="polite" hidden></span>
+            <span id="playGamesCloudDetails" role="status" aria-live="polite" hidden></span>
           </div>
 
           <button id="playGamesAchievementsBtn" class="profileSettingsInsideDivBtn"><span
@@ -65,7 +65,7 @@
                   d="M10.2 13.2v2.1H8.1v2h2.1v2.1h2v-2.1h2.1v-2h-2.1v-2.1h-2Zm10.7 1.4a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm3.1 3.1a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Z" />
               </svg>
             </span>
-            <span class="playGamesLoginLabel" data-i18n="profile.connectPlayGames">LOGIN</span>
+            <span class="playGamesLoginLabel">CONNECT PLAY GAMES</span>
           </button>
         </div>
 
@@ -99,6 +99,7 @@
           <button id="performanceBtn" class="settingsActionBtn performanceSettingsBtn">PERFORMANCE</button>
           <button id="languageBtn" class="settingsActionBtn languageSettingsBtn"
             data-i18n="settings.language">Language</button>
+          <a id="privacyPolicyLink" href="./privacy.html">Privacy policy</a>
           <button id="privacyOptionsBtn" class="settingsActionBtn" data-i18n="settings.privacy"
             onclick="OrbitVelocityAds.showPrivacyOptions()" hidden>Privacy options</button>
         </div>

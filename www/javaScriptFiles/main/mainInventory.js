@@ -988,7 +988,9 @@ function setEquippedPet(id) {
 }
 
 function closePetPreview() {
-  document.getElementById('petPreview')?.classList.add('hidden');
+  const preview = document.getElementById('petPreview');
+  preview?.classList.add('hidden');
+  preview?.closest('.invModalBox')?.classList.remove('hasPetPreview');
 }
 
 function openPetPreview(p) {
@@ -1008,6 +1010,9 @@ function openPetPreview(p) {
   const goShopBtn = document.getElementById('petPreviewGoShop');
 
   if (!wrap || !img || !nameEl || !equipBtn || !goBuyBtn) return;
+
+  wrap.closest('.invModalBox')?.classList.add('hasPetPreview');
+  wrap.scrollTop = 0;
 
   const id = normalizeSkinId(p.id || p.petId || p.key || p.name);
   const owned = isPetOwned(id);

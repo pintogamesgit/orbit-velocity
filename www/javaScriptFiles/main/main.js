@@ -257,8 +257,8 @@ let audioUnlocked = false;
 let selectedWeaponId = null;
 let pendingSuperBuy = null;
 let pendingPetBuy = null;
-let lastMusicVolume = Number(localStorage.getItem('musicVolume') ?? 70);
-let lastAudioVolume = Number(localStorage.getItem('audioVolume') ?? 80);
+let lastMusicVolume = Number(localStorage.getItem('musicVolumeBeforeMute') ?? localStorage.getItem('musicVolume') ?? 70);
+let lastAudioVolume = Number(localStorage.getItem('audioVolumeBeforeMute') ?? localStorage.getItem('audioVolume') ?? 80);
 let musicLoopInterval = null;
 let musicLoopVisibilityBound = false;
 
@@ -2970,7 +2970,8 @@ function bindEvents() {
 
   DOM.musicToggle?.addEventListener('change', () => {
     if (!DOM.musicToggle.checked) {
-      lastMusicVolume = Number(DOM.musicVolume?.value) || 70;
+      lastMusicVolume = Number(DOM.musicVolume?.value) || lastMusicVolume || 70;
+      localStorage.setItem('musicVolumeBeforeMute', String(lastMusicVolume));
       music.pause();
       music.volume = 0;
 
@@ -2987,11 +2988,13 @@ function bindEvents() {
       localStorage.setItem('musicVolume', restore);
       localStorage.setItem('music', 'on');
     }
+    window.OrbitVelocityCloud?.markDirty?.();
   });
 
   DOM.audioToggle?.addEventListener('change', () => {
     if (!DOM.audioToggle.checked) {
       lastAudioVolume = Number(DOM.audioVolume?.value) || lastAudioVolume || 80;
+      localStorage.setItem('audioVolumeBeforeMute', String(lastAudioVolume));
       if (DOM.audioVolume) DOM.audioVolume.value = 0;
       localStorage.setItem('audioVolume', 0);
       localStorage.setItem('audio', 'off');
@@ -3001,6 +3004,7 @@ function bindEvents() {
       localStorage.setItem('audioVolume', restore);
       localStorage.setItem('audio', 'on');
     }
+    window.OrbitVelocityCloud?.markDirty?.();
   });
 
   DOM.performanceBtn?.addEventListener('click', (e) => {
@@ -3080,6 +3084,10 @@ function bindEvents() {
     const value = Number(DOM.musicVolume.value);
 
     localStorage.setItem('musicVolume', value);
+    if (value > 0) {
+      lastMusicVolume = value;
+      localStorage.setItem('musicVolumeBeforeMute', String(value));
+    }
     music.volume = value / 100;
 
     if (value === 0) {
@@ -3094,11 +3102,16 @@ function bindEvents() {
         music.play().then(startMusicLoopWatcher).catch(() => {});
       }
     }
+    window.OrbitVelocityCloud?.markDirty?.();
   });
 
   DOM.audioVolume?.addEventListener('input', () => {
     const value = Number(DOM.audioVolume.value);
     localStorage.setItem('audioVolume', value);
+    if (value > 0) {
+      lastAudioVolume = value;
+      localStorage.setItem('audioVolumeBeforeMute', String(value));
+    }
 
     if (value === 0) {
       if (DOM.audioToggle) DOM.audioToggle.checked = false;
@@ -3107,6 +3120,7 @@ function bindEvents() {
       if (DOM.audioToggle) DOM.audioToggle.checked = true;
       localStorage.setItem('audio', 'on');
     }
+    window.OrbitVelocityCloud?.markDirty?.();
   });
 
   DOM.buyCancelBtn?.addEventListener('click', (e) => {

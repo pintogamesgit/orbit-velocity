@@ -4,8 +4,7 @@
     <string name="title_activity_main">ORBIT VELOCITY</string>
     <string name="package_name">com.orbitvelocity.game</string>
     <string name="custom_url_scheme">com.orbitvelocity.game</string>
-    <!-- Google sample App ID. Replace with your AdMob App ID before release. -->
-    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
-    <!-- Replace with the numeric Play Games Services project ID from Play Console. -->
-    <string translatable="false" name="game_services_project_id">0000000000</string>
+    <string name="admob_app_id">ca-app-pub-2678945030773900~4687578795</string>
+    <!-- Play Games Services project linked to ORBIT VELOCITY in Play Console. -->
+    <string translatable="false" name="game_services_project_id">488211155337</string>
 </resources>

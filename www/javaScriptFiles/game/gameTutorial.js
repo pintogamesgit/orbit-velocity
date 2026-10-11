@@ -400,6 +400,8 @@
   function finishScriptedTraining() {
     state = 'normal';
     localStorage.setItem(INTRO_KEY, '1');
+    window.OrbitVelocityCloud?.markDirty?.();
+    void window.OrbitVelocityCloud?.saveNow?.();
     game.tutorialSuppressSpawns = false;
     game.tutorialControlsUpgrades = false;
     game.tutorialInvulnerable = false;
@@ -443,6 +445,8 @@
     window.setTimeout(() => {
       if (state !== 'bossFightGuide') return;
       localStorage.setItem(BOSS_KEY, '1');
+      window.OrbitVelocityCloud?.markDirty?.();
+      void window.OrbitVelocityCloud?.saveNow?.();
       state = 'done';
       clearOverlay();
     }, 4200);
@@ -451,6 +455,8 @@
   function skipTutorial() {
     localStorage.setItem(INTRO_KEY, '1');
     localStorage.setItem(BOSS_KEY, '1');
+    window.OrbitVelocityCloud?.markDirty?.();
+    void window.OrbitVelocityCloud?.saveNow?.();
     clearTimeout(superDemoTimer);
     clearOverlay();
     if (game) {
@@ -523,8 +529,14 @@
     if (state === 'bossFightGuide') updateEnemyFocus(watchedEnemy);
   }
 
-  function initialize(nextGame) {
+  async function initialize(nextGame) {
     game = nextGame;
+    pause(true);
+    await window.OrbitVelocityCloud?.ready;
+    await window.OrbitVelocityAudience?.ready;
+    if (game !== nextGame) return;
+    pause(false);
+    if (window.OrbitVelocityCloud?.canStartTutorial?.() === false) return;
     window.resetGameTutorial = () => {
       localStorage.removeItem(INTRO_KEY);
       localStorage.removeItem(BOSS_KEY);

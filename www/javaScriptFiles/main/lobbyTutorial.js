@@ -68,6 +68,8 @@
 
   function completeTutorial() {
     localStorage.setItem(STORAGE_KEY, '1');
+    window.OrbitVelocityCloud?.markDirty?.();
+    void window.OrbitVelocityCloud?.saveNow?.();
     window.removeEventListener('resize', positionTutorial);
     window.removeEventListener('orientationchange', positionTutorial);
     document.removeEventListener('keydown', handleKeydown);
@@ -264,5 +266,10 @@
   }
 
   window.resetLobbyTutorial = () => localStorage.removeItem(STORAGE_KEY);
-  document.addEventListener('DOMContentLoaded', () => window.setTimeout(startTutorial, 350));
+  document.addEventListener('DOMContentLoaded', async () => {
+    await window.OrbitVelocityCloud?.ready;
+    await window.OrbitVelocityAudience?.ready;
+    if (window.OrbitVelocityCloud?.canStartTutorial?.() === false) return;
+    window.setTimeout(startTutorial, 350);
+  });
 })();

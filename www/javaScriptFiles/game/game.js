@@ -5018,7 +5018,7 @@ function showVictoryScreen(data) {
     nextBtn.classList.remove('hidden');
 
     const activeGame = window.currentOrbitVelocityGame;
-    if (reviveBtn && activeGame && !activeGame.reviveAdUsed) {
+    if (reviveBtn && activeGame && !activeGame.reviveAdUsed && window.OrbitVelocityAudience?.isAdult()) {
       reviveBtn.classList.remove('hidden');
       reviveBtn.disabled = false;
       reviveBtn.textContent = gameT('game.reviveAd');

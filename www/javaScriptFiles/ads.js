@@ -1,10 +1,8 @@
 (function () {
   'use strict';
 
-  // Google test interstitial. Replace this with your AdMob ad-unit ID before release.
-  const INTERSTITIAL_AD_ID = 'ca-app-pub-3940256099942544/1033173712';
-  // Google test rewarded ad. Replace this with your rewarded ad-unit ID before release.
-  const REWARDED_AD_ID = 'ca-app-pub-3940256099942544/5224354917';
+  const INTERSTITIAL_AD_ID = 'ca-app-pub-2678945030773900/1594511593';
+  const REWARDED_AD_ID = 'ca-app-pub-2678945030773900/5290214025';
   const BREAKS_BETWEEN_ADS = 3;
   const MIN_TIME_BETWEEN_ADS_MS = 2 * 60 * 1000;
   const BREAK_COUNT_KEY = 'orbitvelocity.adBreakCount';
@@ -41,7 +39,8 @@
     try {
       await admob.prepareInterstitial({
         adId: INTERSTITIAL_AD_ID,
-        isTesting: true,
+        npa: true,
+        isTesting: false,
         immersiveMode: true,
       });
       ready = true;
@@ -59,7 +58,8 @@
       try {
         await admob.prepareRewardVideoAd({
           adId: REWARDED_AD_ID,
-          isTesting: true,
+          npa: true,
+          isTesting: false,
           immersiveMode: true,
         });
         rewardedReady = true;
@@ -87,6 +87,8 @@
   }
 
   async function initialize() {
+    await window.OrbitVelocityAudience?.ready;
+    if (!window.OrbitVelocityAudience?.isAdult()) return;
     admob = window.Capacitor?.Plugins?.AdMob;
     if (!admob) return;
 
@@ -125,16 +127,22 @@
         finishRewardedAd({ shown: false, rewarded: false });
       });
 
-      await admob.initialize();
-      let consentInfo = await admob.requestConsentInfo();
+      let consentInfo = await admob.requestConsentInfo({ tagForUnderAgeOfConsent: false });
 
       if (!consentInfo.canRequestAds && consentInfo.isConsentFormAvailable) {
         consentInfo = await admob.showConsentForm();
       }
 
       updatePrivacyButton(consentInfo);
-      initialized = Boolean(consentInfo.canRequestAds);
-      if (initialized) {
+      if (consentInfo.canRequestAds) {
+        await admob.initialize({
+          // Apply family-friendly treatment to every ad, including adult users.
+          // This does not change the adult-only audience gate above.
+          tagForChildDirectedTreatment: true,
+          tagForUnderAgeOfConsent: false,
+          maxAdContentRating: 'General',
+        });
+        initialized = true;
         await Promise.all([prepareInterstitial(), prepareRewardedAd()]);
       }
     } catch (error) {
@@ -184,6 +192,8 @@
     if (!admob) return;
     try {
       await admob.showPrivacyOptionsForm();
+      // Drop cached ads and re-evaluate consent before any further requests.
+      window.location.reload();
     } catch (error) {
       console.warn('AdMob privacy options could not be opened.', error);
     }

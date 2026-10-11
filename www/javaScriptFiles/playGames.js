@@ -3,9 +3,12 @@
 
   const META_KEY = 'orbitvelocity.cloudSaveMeta.v1';
   const ACCOUNT_CREATED_KEY = 'orbitvelocity.accountCreatedAt';
+  const AGE_KEY = 'orbitvelocity.ageBand.v1';
+  const AGE_BANDS = new Set(['5-and-under', '6-8', '9-12', '13-15', '16-17', '18-plus', 'unknown']);
   const SAVE_VERSION = 1;
   const SYNC_KEYS = [
     ACCOUNT_CREATED_KEY,
+    AGE_KEY,
     'coins',
     'maxUnlockedLevel',
     'ownedSkins',
@@ -17,6 +20,21 @@
     'ownedSupers',
     'equippedSuper',
     'ownedDaily',
+    'ownedFeatured',
+    'language',
+    'music',
+    'audio',
+    'musicVolume',
+    'audioVolume',
+    'musicVolumeBeforeMute',
+    'audioVolumeBeforeMute',
+    'dailyGiftLastClaim',
+    'dailyGiftToday',
+    'dailyGiftPoolVersion',
+    'orbitvelocity.shopAdRewardDate',
+    'orbitvelocity.lobbyTutorialCompleted.v3',
+    'orbitvelocity.interactiveGameTutorialCompleted.v2',
+    'orbitvelocity.interactiveBossTutorialCompleted.v3',
   ];
   const ARRAY_KEYS = new Set([
     'ownedSkins',
@@ -25,6 +43,10 @@
     'ownedSupers',
     'ownedDaily',
   ]);
+  const TUTORIAL_KEYS = new Set(SYNC_KEYS.filter(key => key.includes('TutorialCompleted')));
+  let finishInitialization;
+  const ready = new Promise(resolve => { finishInitialization = resolve; });
+  let initialization = null;
 
   let plugin = null;
   let configured = false;
@@ -33,9 +55,33 @@
   let initialized = false;
   let applyingCloud = false;
   let lastStateHash = '';
+  let lastUploadedHash = '';
   let saveTimer = null;
   let pollTimer = null;
   let saveInFlight = null;
+  let connecting = false;
+  let authState = 'checking';
+  let authErrorCode = '';
+  let cloudState = '';
+  let cloudErrorCode = '';
+  // Never upload until this connection has successfully checked the remote save.
+  let cloudReady = false;
+  let installationId = '';
+  let restoredAndroidBackup = false;
+  const startupMeta = readMeta();
+
+  function acceptInstallationStatus(status) {
+    installationId = typeof status?.installationId === 'string' ? status.installationId : '';
+    restoredAndroidBackup = Boolean(installationId && (
+      (startupMeta.installationId && startupMeta.installationId !== installationId) ||
+      (!startupMeta.installationId && status.freshInstall === true && startupMeta.stateHash)
+    ));
+  }
+
+  function authDiagnostic(error) {
+    const code = String(error?.code || '');
+    return /^PGS_[A-Z_]+(?:_\d+)?$/.test(code) ? code : 'PGS_UNKNOWN';
+  }
 
   function getPlugin() {
     return window.Capacitor?.Plugins?.PlayGames || null;
@@ -49,13 +95,29 @@
     }
   }
 
-  function writeMeta(updatedAt) {
-    localStorage.setItem(META_KEY, JSON.stringify({ updatedAt }));
+  function writeMeta(updatedAt, synced = readMeta().synced === true) {
+    localStorage.setItem(META_KEY, JSON.stringify({ ...readMeta(), updatedAt, synced, stateHash: stateHash() }));
+  }
+
+  function detectLocalChanges() {
+    const meta = readMeta();
+    if (meta.stateHash && meta.stateHash !== stateHash()) writeMeta(Date.now());
+  }
+
+  function rememberRemote(data, updatedAt) {
+    localStorage.setItem(META_KEY, JSON.stringify({ ...readMeta(),
+      ...(installationId ? { installationId } : {}),
+      remoteHash: stateHash(data),
+      confirmedSave: { coins: Number(data.coins) || 0,
+        level: Number(data.maxUnlockedLevel) || 1, updatedAt },
+    }));
+    restoredAndroidBackup = false;
   }
 
   function readValue(key) {
     const raw = localStorage.getItem(key);
     if (raw === null) return null;
+    if (key === AGE_KEY && !AGE_BANDS.has(raw)) return null;
     if (ARRAY_KEYS.has(key)) {
       try {
         const parsed = JSON.parse(raw);
@@ -92,6 +154,14 @@
       0
     );
     return maxLevel * 1000000 + ownedCount * 10000 + Math.min(coins, 9999);
+  }
+
+  function hasEarnedProgress(data) {
+    if (Number(data.maxUnlockedLevel) > 1 || Number(data.coins) > 50 || data.ownedFeatured === '1') return true;
+    const defaults = { ownedSkins: ['default'], ownedWeapons: ['laser'],
+      ownedPets: ['chimpo'], ownedSupers: ['superlaser'], ownedDaily: [] };
+    return [...ARRAY_KEYS].some(key => (data[key] || []).some(id =>
+      !defaults[key].includes(normalizeId(id))));
   }
 
   function readArray(key) {
@@ -433,7 +503,11 @@
     for (const key of SYNC_KEYS) {
       if (!Object.hasOwn(data, key)) continue;
       const value = data[key];
-      if (key === ACCOUNT_CREATED_KEY) {
+      if (key === AGE_KEY && !AGE_BANDS.has(value)) {
+        continue;
+      } else if (TUTORIAL_KEYS.has(key) && localStorage.getItem(key) === '1') {
+        continue;
+      } else if (key === ACCOUNT_CREATED_KEY) {
         const incoming = Number(value);
         if (!Number.isFinite(incoming) || incoming <= 0) continue;
         const current = getAccountCreatedAt();
@@ -443,6 +517,7 @@
       }
     }
     applyingCloud = false;
+    window.OrbitVelocityAudience?.restoreBand?.(localStorage.getItem(AGE_KEY));
     lastStateHash = stateHash();
     setAccountAgeUi();
     window.dispatchEvent(new CustomEvent('orbitvelocity:cloud-restored', { detail: data }));
@@ -456,15 +531,55 @@
       es: { guest: 'Invitado', setup: 'CONFIGURAR', connected: 'PLAY GAMES CONECTADO', connect: 'CONECTAR PLAY GAMES' },
     };
     const text = labels[lang] || labels.en;
+    const statusCopy = {
+      en: { checking: 'Checking Play Games…', connecting: 'Connecting…', guest: 'Not connected — progress is saved on this device.', connected: 'Connected to Google Play Games', failed: 'Could not sign in to Play Games. Try again.', unavailable: 'Play Games is unavailable in this version.', syncing: 'Syncing cloud progress…', saved: 'Progress saved to the cloud', error: 'Cloud sync failed. Your local progress is still available.', retry: 'TRY AGAIN', player: 'Play Games player' },
+      he: { checking: 'בודק חיבור ל־Play Games…', connecting: 'מתחבר…', guest: 'לא מחובר — ההתקדמות נשמרת במכשיר הזה.', connected: 'מחובר ל־Google Play Games', failed: 'ההתחברות ל־Play Games לא הצליחה. נסה שוב.', unavailable: 'Play Games אינו זמין בגרסה הזאת.', syncing: 'מסנכרן התקדמות בענן…', saved: 'ההתקדמות נשמרה בענן', error: 'הסנכרון נכשל. ההתקדמות המקומית עדיין זמינה.', retry: 'נסה שוב', player: 'שחקן Play Games' },
+      es: { checking: 'Comprobando Play Games…', connecting: 'Conectando…', guest: 'Sin conexión — el progreso se guarda en este dispositivo.', connected: 'Conectado a Google Play Games', failed: 'No se pudo iniciar sesión en Play Games. Inténtalo de nuevo.', unavailable: 'Play Games no está disponible en esta versión.', syncing: 'Sincronizando el progreso…', saved: 'Progreso guardado en la nube', error: 'Falló la sincronización. Tu progreso local sigue disponible.', retry: 'REINTENTAR', player: 'Jugador de Play Games' },
+      ar: { checking: 'جارٍ التحقق من Play Games…', connecting: 'جارٍ الاتصال…', guest: 'غير متصل — يتم حفظ التقدم على هذا الجهاز.', connected: 'متصل بـ Google Play Games', failed: 'تعذر تسجيل الدخول إلى Play Games. حاول مجددًا.', unavailable: 'Play Games غير متاح في هذا الإصدار.', syncing: 'جارٍ مزامنة التقدم…', saved: 'تم حفظ التقدم في السحابة', error: 'فشلت المزامنة. تقدمك المحلي ما زال متاحًا.', retry: 'حاول مجددًا', player: 'لاعب Play Games' },
+    };
+    const copy = statusCopy[lang] || statusCopy.en;
+    const syncCopy = {
+      en: { pending: 'Saved on this device; cloud upload is not confirmed. Connect to the internet and sync again.', sync: 'SYNC NOW' },
+      he: { pending: 'נשמר במכשיר; ההעלאה לענן טרם אושרה. התחבר לאינטרנט וסנכרן שוב.', sync: 'סנכרן עכשיו' },
+      es: { pending: 'Guardado en este dispositivo; la subida no está confirmada. Conéctate y sincroniza de nuevo.', sync: 'SINCRONIZAR' },
+      ar: { pending: 'تم الحفظ على الجهاز؛ لم يتم تأكيد الرفع للسحابة. اتصل بالإنترنت وزامن مجددًا.', sync: 'مزامنة الآن' },
+    };
+    Object.assign(copy, syncCopy[lang] || syncCopy.en);
     const name = document.getElementById('playGamesPlayerName');
     const account = document.getElementById('playGamesAccountBtn');
     const achievements = document.getElementById('playGamesAchievementsBtn');
-    if (name) name.textContent = player?.displayName || text.guest;
+    if (name) name.textContent = signedIn ? (player?.displayName || copy.player) : text.guest;
+    const status = document.getElementById('playGamesConnectionStatus');
+    if (status) {
+      status.textContent = copy[authState] || copy.guest;
+      if (authState === 'failed' && authErrorCode) status.textContent += ` (${authErrorCode})`;
+      status.dataset.state = authState;
+    }
+    const cloud = document.getElementById('playGamesCloudStatus');
+    if (cloud) {
+      cloud.textContent = signedIn && cloudState ? copy[cloudState] : '';
+      if (signedIn && cloudState === 'error' && cloudErrorCode) cloud.textContent += ` (${cloudErrorCode})`;
+      cloud.hidden = !cloud.textContent;
+    }
+    const details = document.getElementById('playGamesCloudDetails');
+    if (details) {
+      const confirmed = readMeta().confirmedSave;
+      const labels = {
+        en: ['Last confirmed cloud save', 'coins', 'level'],
+        he: ['השמירה האחרונה שאושרה בענן', 'מטבעות', 'שלב'],
+        es: ['Última partida confirmada en la nube', 'monedas', 'nivel'],
+        ar: ['آخر حفظ مؤكد في السحابة', 'عملات', 'مرحلة'],
+      }[lang] || ['Last confirmed cloud save', 'coins', 'level'];
+      details.hidden = !signedIn || !confirmed;
+      details.textContent = signedIn && confirmed
+        ? `${labels[0]}: ${confirmed.coins} ${labels[1]} · ${labels[2]} ${confirmed.level}` : '';
+    }
     setAccountAgeUi();
     if (account) {
       const label = account.querySelector('.playGamesLoginLabel') || account;
-      label.textContent = !configured ? text.setup : signedIn ? text.connected : text.connect;
-      account.disabled = signedIn || !configured;
+      label.textContent = connecting ? copy.connecting : authState === 'checking' ? copy.checking :
+        authState === 'failed' || (signedIn && cloudState === 'error') ? copy.retry : !configured ? copy.unavailable : signedIn ? copy.sync : text.connect;
+      account.disabled = connecting || cloudState === 'syncing' || authState === 'checking' || (!configured && authState !== 'failed');
     }
     if (achievements) achievements.disabled = false;
   }
@@ -472,9 +587,14 @@
   async function saveNow() {
     clearTimeout(saveTimer);
     saveTimer = null;
-    if (!plugin || !configured || !signedIn || applyingCloud) return false;
-    if (saveInFlight) return saveInFlight;
+    if (!plugin || !configured || !signedIn || !cloudReady || applyingCloud) return false;
+    if (saveInFlight) {
+      const saved = await saveInFlight;
+      if (!saved || stateHash() === lastUploadedHash) return saved;
+      return saveNow();
+    }
 
+    detectLocalChanges();
     let updatedAt = Number(readMeta().updatedAt) || Date.now();
     writeMeta(updatedAt);
     const payload = {
@@ -482,86 +602,187 @@
       updatedAt,
       data: captureData(),
     };
+    cloudState = 'syncing';
+    cloudErrorCode = '';
+    setProfileUi();
 
-    saveInFlight = plugin.saveGame({ data: JSON.stringify(payload) })
-      .then(() => {
-        lastStateHash = stateHash(payload.data);
-        window.dispatchEvent(new CustomEvent('orbitvelocity:cloud-saved'));
-        return true;
+    saveInFlight = Promise.resolve().then(() => plugin.saveGame({ data: JSON.stringify(payload) }))
+      .then(result => {
+        if (result?.saved !== true) throw { code: 'PGS_CLOUD_SAVE_NOT_CONFIRMED' };
+        // Only the uploaded snapshot is acknowledged; newer local changes remain dirty.
+        if (stateHash() === stateHash(payload.data)) {
+          const verified = result.cloudVerified === true;
+          writeMeta(updatedAt, verified || readMeta().synced === true);
+          localStorage.setItem(META_KEY, JSON.stringify({ ...readMeta(), pendingUpload: !verified }));
+        }
+        if (result.cloudVerified === true) rememberRemote(payload.data, updatedAt);
+        cloudState = result.cloudVerified === true ? 'saved' : 'pending';
+        setProfileUi();
+        lastUploadedHash = stateHash(payload.data);
+        if (cloudState === 'saved') window.dispatchEvent(new CustomEvent('orbitvelocity:cloud-saved'));
+        return cloudState === 'saved';
       })
       .catch((error) => {
+        cloudState = 'error';
+        cloudErrorCode = authDiagnostic(error);
+        setProfileUi();
         console.warn('Play Games cloud save failed.', error);
         return false;
       })
       .finally(() => {
         saveInFlight = null;
+        if (['saved', 'pending'].includes(cloudState) && stateHash() !== lastUploadedHash) scheduleSave(0);
       });
     return saveInFlight;
   }
 
   function scheduleSave(delay = 2200) {
-    if (!signedIn || applyingCloud) return;
-    clearTimeout(saveTimer);
+    if (!signedIn || !cloudReady || applyingCloud || saveTimer !== null) return;
     saveTimer = window.setTimeout(saveNow, delay);
   }
 
   function markDirty() {
     if (applyingCloud) return;
     writeMeta(Date.now());
+    if (signedIn && cloudReady && !saveInFlight) {
+      cloudState = 'pending';
+      setProfileUi();
+    }
     scheduleSave();
   }
 
   async function restoreOrCreateCloudSave() {
     if (!plugin || !signedIn) return;
+    cloudReady = false;
+    cloudState = 'syncing';
+    cloudErrorCode = '';
+    setProfileUi();
     let remote = null;
     try {
       const result = await plugin.loadGame();
-      if (result?.found && result.data) remote = JSON.parse(result.data);
+      if (result?.error) throw new Error(result.error);
+      if (result?.stale === true) throw { code: 'PGS_CLOUD_LOAD_STALE' };
+      if (typeof result?.found !== 'boolean') throw new Error('Invalid cloud load response');
+      if (result.found) {
+        remote = JSON.parse(result.data);
+        if (remote?.version !== SAVE_VERSION || !remote.data ||
+            typeof remote.data !== 'object' || Array.isArray(remote.data)) {
+          throw new Error('Unsupported or invalid cloud save');
+        }
+      }
     } catch (error) {
       console.warn('Play Games cloud load failed.', error);
+      cloudState = 'error';
+      cloudErrorCode = authDiagnostic(error);
+      setProfileUi();
+      return;
     }
 
+    detectLocalChanges();
     const localData = captureData();
-    const localUpdatedAt = Number(readMeta().updatedAt) || 0;
+    const meta = readMeta();
+    const localUpdatedAt = Number(meta.updatedAt) || 0;
     if (!remote?.data) {
+      if (restoredAndroidBackup) {
+        // An old Android backup is not evidence that the account has no save.
+        // Keep it locally, but require a successful restore before uploading it.
+        cloudState = 'error';
+        cloudErrorCode = 'PGS_CLOUD_RESTORE_NOT_FOUND';
+        setProfileUi();
+        return;
+      }
+      cloudReady = true;
       if (!localUpdatedAt) writeMeta(Date.now());
       await saveNow();
       return;
     }
 
     const remoteUpdatedAt = Number(remote.updatedAt) || 0;
-    const shouldRestore = localUpdatedAt
-      ? remoteUpdatedAt > localUpdatedAt
-      : progressRank(remote.data) > progressRank(localData);
+    // Age belongs to the account even when local gameplay progress wins the merge.
+    if (AGE_BANDS.has(remote.data[AGE_KEY])) {
+      localStorage.setItem(AGE_KEY, remote.data[AGE_KEY]);
+      window.OrbitVelocityAudience?.restoreBand?.(remote.data[AGE_KEY]);
+    }
+    // A fresh installation's defaults must not beat an existing save just because
+    // they were initialized later. Use timestamps only after a successful sync.
+    const remoteUnchanged = meta.remoteHash === stateHash(remote.data);
+    const shouldRestore = restoredAndroidBackup || ((meta.synced || meta.pendingUpload)
+      ? !remoteUnchanged && remoteUpdatedAt > localUpdatedAt
+      : !hasEarnedProgress(localData) || progressRank(remote.data) >= progressRank(localData));
 
     if (shouldRestore) {
+      const previousHash = stateHash();
       applyData(remote.data);
-      writeMeta(remoteUpdatedAt || Date.now());
-      if (!sessionStorage.getItem('orbitvelocity.cloudReloaded')) {
-        sessionStorage.setItem('orbitvelocity.cloudReloaded', '1');
-        window.location.reload();
+      writeMeta(remoteUpdatedAt || Date.now(), true);
+      localStorage.setItem(META_KEY, JSON.stringify({ ...readMeta(), pendingUpload: false }));
+      rememberRemote(remote.data, remoteUpdatedAt);
+      cloudReady = true;
+      cloudState = 'saved';
+      setProfileUi();
+      if (stateHash() !== previousHash) window.location.reload();
+    } else if (stateHash(localData) !== stateHash(remote.data) || localUpdatedAt > remoteUpdatedAt) {
+      // Completion is permanent even when another device has newer gameplay data.
+      for (const key of TUTORIAL_KEYS) {
+        if (remote.data[key] === '1') localStorage.setItem(key, '1');
       }
-    } else if (localUpdatedAt > remoteUpdatedAt || progressRank(localData) > progressRank(remote.data)) {
+      cloudReady = true;
       await saveNow();
+    } else {
+      writeMeta(remoteUpdatedAt || Date.now(), true);
+      localStorage.setItem(META_KEY, JSON.stringify({ ...readMeta(), pendingUpload: false }));
+      rememberRemote(remote.data, remoteUpdatedAt);
+      cloudReady = true;
+      cloudState = 'saved';
+      setProfileUi();
     }
   }
 
   async function connect(interactive = false) {
-    if (!plugin || !configured) return null;
+    if (connecting || !plugin) return null;
+    connecting = true;
+    cloudReady = false;
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    authErrorCode = '';
+    authState = 'connecting';
+    setProfileUi();
     try {
+      if (saveInFlight) await saveInFlight;
+      if (!configured) {
+        const status = await plugin.getStatus();
+        acceptInstallationStatus(status);
+        configured = Boolean(status?.configured);
+        if (!configured) { authState = 'unavailable'; return null; }
+      }
       const result = await plugin.signIn({ interactive });
       signedIn = Boolean(result?.signedIn);
       player = signedIn ? result : null;
+      authState = signedIn ? 'connected' : interactive ? 'failed' : 'guest';
+      if (authState === 'failed') authErrorCode = 'PGS_SIGNIN_NOT_AUTHENTICATED';
+      cloudState = '';
       setProfileUi();
-      if (signedIn) await restoreOrCreateCloudSave();
-      return player;
+      // Keep connection serialized until restore completes, including app-resume events.
+      if (signedIn) {
+        try { await restoreOrCreateCloudSave(); }
+        catch (error) {
+          console.warn('Play Games cloud restore failed.', error);
+          cloudReady = false;
+          cloudState = 'error';
+          setProfileUi();
+        }
+      }
     } catch (error) {
       console.warn('Play Games connection failed.', error);
+      authErrorCode = authDiagnostic(error);
       signedIn = false;
       player = null;
+      authState = 'failed';
+      cloudState = '';
+    } finally {
+      connecting = false;
       setProfileUi();
-      return null;
     }
+    return player;
   }
 
   async function unlockAchievement(achievementId) {
@@ -598,22 +819,30 @@
     setProfileUi();
   }
 
-  async function initialize() {
+  async function initializeSession() {
     if (initialized) return;
     initialized = true;
     plugin = getPlugin();
     bindUi();
+    detectLocalChanges();
     lastStateHash = stateHash();
-    if (!plugin) return;
+    // Restore the account before the audience dialog; ads still wait for audience.ready.
+    // Optional Play Games access is available to every age group.
+    // Google handles account eligibility; advertising has its own age gate.
+    if (!plugin) { authState = 'unavailable'; setProfileUi(); return; }
 
     try {
       const status = await plugin.getStatus();
+      acceptInstallationStatus(status);
       configured = Boolean(status?.configured);
-      signedIn = Boolean(status?.signedIn);
+      authState = configured ? 'guest' : 'unavailable';
       setProfileUi();
       if (configured) await connect(false);
     } catch (error) {
       console.warn('Play Games initialization skipped.', error);
+      authErrorCode = authDiagnostic(error);
+      authState = 'failed';
+      setProfileUi();
     }
 
     clearInterval(pollTimer);
@@ -625,7 +854,14 @@
     }, 1500);
   }
 
+  function initialize() {
+    if (!initialization) initialization = initializeSession().finally(finishInitialization);
+    return initialization;
+  }
+
   window.OrbitVelocityCloud = {
+    ready,
+    canStartTutorial: () => !plugin || authState === 'guest' || (signedIn && cloudReady),
     initialize,
     connect: () => connect(true),
     saveNow,
@@ -636,13 +872,18 @@
     getPlayer: () => player,
     isSignedIn: () => signedIn,
     isConfigured: () => configured,
+    refreshUi: setProfileUi,
   };
 
   window.addEventListener('DOMContentLoaded', initialize, { once: true });
   window.addEventListener('pagehide', () => {
     if (signedIn) void saveNow();
   });
+  window.addEventListener('online', () => {
+    if (initialized && plugin && !connecting) void connect(false);
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && signedIn) void saveNow();
+    if (document.visibilityState === 'visible' && initialized && plugin && !connecting) void connect(false);
   });
 })();
